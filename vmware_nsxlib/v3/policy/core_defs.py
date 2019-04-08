@@ -56,6 +56,11 @@ EXCLUDE_LIST_PATH_PATTERN = (TENANTS_PATH_PATTERN +
 REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
 
+TIER0_LOCALE_SERVICES_PATH_PATTERN = (TIER0S_PATH_PATTERN +
+                                      "%s/locale-services/")
+TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
+                                      "%s/locale-services/")
+
 
 @six.add_metaclass(abc.ABCMeta)
 class ResourceDef(object):
@@ -416,7 +421,7 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
 
     @property
     def path_pattern(self):
-        return TIER0S_PATH_PATTERN + "%s/locale-services/"
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN
 
     @property
     def path_ids(self):
@@ -427,7 +432,7 @@ class Tier1LocaleServiceDef(RouterLocaleServiceDef):
 
     @property
     def path_pattern(self):
-        return TIER1S_PATH_PATTERN + "%s/locale-services/"
+        return TIER1_LOCALE_SERVICES_PATH_PATTERN
 
     @property
     def path_ids(self):
@@ -442,7 +447,7 @@ class Tier0InterfaceDef(ResourceDef):
 
     @property
     def path_pattern(self):
-        return TIER0S_PATH_PATTERN + "%s/locale-services/%s/interfaces/"
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN + "%s/interfaces/"
 
     @property
     def path_ids(self):
@@ -457,7 +462,7 @@ class Tier1InterfaceDef(ResourceDef):
 
     @property
     def path_pattern(self):
-        return TIER1S_PATH_PATTERN + "%s/locale-services/%s/interfaces/"
+        return TIER1_LOCALE_SERVICES_PATH_PATTERN + "%s/interfaces/"
 
     def get_obj_dict(self):
         body = super(Tier1InterfaceDef, self).get_obj_dict()
