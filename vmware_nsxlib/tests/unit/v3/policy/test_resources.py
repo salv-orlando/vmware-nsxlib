@@ -2583,10 +2583,12 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 static_routes=True,
                 lb_vip=False,
                 lb_snat=True,
+                ipsec_endpoints=True,
                 tenant=TEST_TENANT)
 
             new_adv = self.resourceApi.build_route_advertisement(
-                nat=True, static_routes=True, lb_snat=True)
+                nat=True, static_routes=True, lb_snat=True,
+                ipsec_endpoints=True)
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=obj_id,
@@ -2598,7 +2600,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             self.assert_called_with_def(
                 update_call, expected_def)
 
-    def test_update_route_advand_tier0(self):
+    def test_update_route_adv_and_tier0(self):
         obj_id = '111'
         rtr_name = 'rtr111'
         tier0 = 'tier0-id'
@@ -2935,6 +2937,55 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 route_advertisement_rules=[],
                 tenant=TEST_TENANT)
 
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update_advertisement_rules(self):
+        tier1_id = '111'
+        old_rule = 'old'
+        new_rule = 'new'
+        get_retval = {
+            'id': tier1_id,
+            'route_advertisement_rules': [{'name': old_rule}]}
+        rules = [{'name': new_rule}]
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=get_retval),\
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
+            self.resourceApi.update_advertisement_rules(
+                tier1_id, rules, name_prefix=None, tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=tier1_id,
+                route_advertisement_rules=rules,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update_advertisement_rules_with_replace(self):
+        tier1_id = '111'
+        old_rule1 = 'old1'
+        old_rule2 = 'old2'
+        new_rule = 'new'
+        get_retval = {
+            'id': tier1_id,
+            'route_advertisement_rules': [
+                {'name': old_rule1},
+                {'name': old_rule2}]}
+        rules = [{'name': new_rule}]
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=get_retval),\
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
+            self.resourceApi.update_advertisement_rules(
+                tier1_id, rules, name_prefix='old1', tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=tier1_id,
+                route_advertisement_rules=[
+                    {'name': old_rule2},
+                    {'name': new_rule}],
+                tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
 
