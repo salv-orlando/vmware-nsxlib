@@ -370,7 +370,7 @@ class Tier1Def(RouterDef):
 
         if self.has_attr('tier0'):
             tier0 = self.get_attr('tier0')
-            tier0_path = None
+            tier0_path = ""
             if tier0:
                 tenant = TENANTS_PATH_PATTERN % self.get_tenant()
                 tier0_path = "/%stier-0s/%s" % (tenant, tier0)
