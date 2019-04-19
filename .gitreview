@@ -1,5 +1,5 @@
 [gerrit]
-host=review.openstack.org
+host=review.opendev.org
 port=29418
-project=openstack/vmware-nsxlib.git
+project=x/vmware-nsxlib.git
 defaultbranch=stable/queens
