@@ -192,6 +192,8 @@ class LBPoolDef(ResourceDef):
             body, ['active_monitor_paths',
                    'algorithm', 'member_group', 'snat_translation'])
         members = self.get_attr('members')
+        if members is None:
+            members = []
         if self.has_attr('members'):
             members = members if isinstance(members, list) else [members]
             body['members'] = []
