@@ -274,8 +274,6 @@ class RouteAdvertisement(object):
         # This initializes object based on list coming from backend
         # f.e. [TIER1_NAT, TIER1_LB_SNAT]
 
-        # TODO(annak): for now platform does not return adv types
-        # check this when issue is fixed
         for key, value in self.types.items():
             self.attrs[key] = value in obj_dict
 
@@ -370,7 +368,6 @@ class Tier1Def(RouterDef):
     def get_obj_dict(self):
         body = super(Tier1Def, self).get_obj_dict()
 
-        # TODO(annak): replace with provider path when provider is exposed
         if self.has_attr('tier0'):
             tier0 = self.get_attr('tier0')
             tier0_path = None
@@ -1759,6 +1756,13 @@ class NsxPolicyApi(object):
     def __init__(self, client):
         self.client = client
         self.cache = utils.NsxLibCache(utils.DEFAULT_CACHE_AGE_SEC)
+        self.partial_updates = True
+
+    def disable_partial_updates(self):
+        self.partial_updates = False
+
+    def partial_updates_supported(self):
+        return self.partial_updates
 
     def create_or_update(self, resource_def):
         """Create or update a policy object.
@@ -1771,6 +1775,7 @@ class NsxPolicyApi(object):
         if resource_def.resource_use_cache():
             self.cache.remove(path)
         body = resource_def.get_obj_dict()
+
         self.client.patch(path, body)
 
     def create_with_parent(self, parent_def, resource_def):
@@ -1782,6 +1787,7 @@ class NsxPolicyApi(object):
         else:
             child_dict_key = resource_def.get_last_section_dict_key
             body[child_dict_key] = [resource_def.get_obj_dict()]
+
         self.client.patch(path, body)
 
     def delete(self, resource_def):

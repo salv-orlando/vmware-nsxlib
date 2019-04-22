@@ -110,8 +110,8 @@ class TestPolicyLBClientSSLProfileApi(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         name = 'new name'
         description = 'new desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -142,8 +142,7 @@ class TestPolicyLBCookiePersistenceProfile(
         cookie_path = 'path'
         cookie_time = 'time'
         persistence_shared = False
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
                 persistence_profile_id=obj_id,
@@ -173,8 +172,7 @@ class TestPolicyLBCookiePersistenceProfile(
     def test_create_without_id(self):
         name = 'd1'
         description = 'desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
                 tenant=TEST_TENANT)
@@ -241,8 +239,8 @@ class TestPolicyLBCookiePersistenceProfile(
         cookie_path = 'path'
         cookie_time = 'time'
         persistence_shared = False
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -376,8 +374,9 @@ class TestPolicyLBSourceIpProfileApi(test_resources.NsxPolicyLibTestCase):
         persistence_shared = False
         purge = 'no purge'
         timeout = 101
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -515,8 +514,8 @@ class TestPolicyLBApplicationProfile(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         name = 'new name'
         description = 'new desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -542,8 +541,7 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         size = 'SMALL'
         connectivity_path = 'path'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
                 lb_service_id=obj_id,
@@ -565,8 +563,7 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
     def test_create_without_id(self):
         name = 'd1'
         description = 'desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
                 tenant=TEST_TENANT)
@@ -624,8 +621,8 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         description = 'new desc'
         size = 'SMALL'
         connectivity_path = 'path'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -730,49 +727,30 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         name = 'new name'
         description = 'new desc'
-        dummy_id = 'xxxx'
         vs_name = 'name-name'
-        vs_ip_address = '1.1.1.1'
-        vs_ports = [80]
-        dummy_path = '/test/lb-app-profiles/' + dummy_id
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call, \
-                mock.patch.object(
-                    self.policy_api, "get", return_value={
-                        'ip_address': vs_ip_address,
-                        'ports': vs_ports,
-                        'display_name': vs_name,
-                        'application_profile_path': dummy_path}):
+        with self.mock_get(obj_id, vs_name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
                                     tenant=TEST_TENANT)
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=obj_id, name=name, ports=vs_ports,
-                description=description, ip_address=vs_ip_address,
-                tenant=TEST_TENANT, application_profile_id=dummy_id)
+                virtual_server_id=obj_id, name=name,
+                description=description,
+                tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_add_lb_rule(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
         rule_actions = 'test1'
         rule_match_conditions = 'test2'
         rule_name = 'dummy_rule'
         rule_match_strategy = 'test3'
         rule_phase = 'test4'
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.add_lb_rule(
                 vs_obj_id, actions=rule_actions, name=rule_name,
                 match_conditions=rule_match_conditions,
@@ -782,32 +760,24 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports, rules=[lb_rule])
+                virtual_server_id=vs_obj_id,
+                name=vs_name,
+                rules=[lb_rule])
             self.assert_called_with_def(update_call, expected_def)
 
     def test_add_lb_rule_first(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
         rule_actions = 'test1'
         rule_match_conditions = 'test2'
         rule_name = 'dummy_rule'
         rule_match_strategy = 'test3'
         rule_phase = 'test4'
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx'}, {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.add_lb_rule(
                 vs_obj_id, actions=rule_actions, name=rule_name,
                 match_conditions=rule_match_conditions,
@@ -818,9 +788,8 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                virtual_server_id=vs_obj_id,
+                name=vs_name,
                 rules=[lb_rule,
                        {'display_name': 'xx'},
                        {'display_name': 'yy'}])
@@ -829,24 +798,15 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_add_lb_rule_last(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
         rule_actions = 'test1'
         rule_match_conditions = 'test2'
         rule_name = 'dummy_rule'
         rule_match_strategy = 'test3'
         rule_phase = 'test4'
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx'}, {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
             self.resourceApi.add_lb_rule(
                 vs_obj_id, actions=rule_actions, name=rule_name,
                 match_conditions=rule_match_conditions,
@@ -856,9 +816,8 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                virtual_server_id=vs_obj_id,
+                name=vs_name,
                 rules=[{'display_name': 'xx'},
                        {'display_name': 'yy'},
                        lb_rule])
@@ -867,24 +826,16 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_add_lb_rule_last_over(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
         rule_actions = 'test1'
         rule_match_conditions = 'test2'
         rule_name = 'dummy_rule'
         rule_match_strategy = 'test3'
         rule_phase = 'test4'
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx'}, {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.add_lb_rule(
                 vs_obj_id, actions=rule_actions, name=rule_name,
                 match_conditions=rule_match_conditions,
@@ -896,8 +847,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
                 rules=[{'display_name': 'xx'},
                        {'display_name': 'yy'},
                        lb_rule])
@@ -906,24 +855,15 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_add_lb_rule_mid(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
         rule_actions = 'test1'
         rule_match_conditions = 'test2'
         rule_name = 'dummy_rule'
         rule_match_strategy = 'test3'
         rule_phase = 'test4'
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx'}, {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
             self.resourceApi.add_lb_rule(
                 vs_obj_id, actions=rule_actions, name=rule_name,
                 match_conditions=rule_match_conditions,
@@ -934,9 +874,8 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                name=vs_name,
+                virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'xx'},
                        lb_rule,
                        {'display_name': 'yy'}])
@@ -945,26 +884,16 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_update_lb_rule(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx', 'actions': '11'},
-                              {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(
+                vs_obj_id, vs_name,
+                rules=[{'display_name': 'xx', 'actions': '11'},
+                       {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update_lb_rule(vs_obj_id, 'xx', actions='22')
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                name=vs_name,
+                virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'xx', 'actions': '22'},
                        {'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
@@ -972,27 +901,17 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_update_lb_rule_position(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx', 'actions': '11'},
-                              {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(
+                vs_obj_id, vs_name,
+                rules=[{'display_name': 'xx', 'actions': '11'},
+                       {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update_lb_rule(vs_obj_id, 'xx', actions='22',
                                             position=1)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                virtual_server_id=vs_obj_id,
+                name=vs_name,
                 rules=[{'display_name': 'yy'},
                        {'display_name': 'xx', 'actions': '22'}])
             self.assert_called_with_def(update_call, expected_def)
@@ -1000,25 +919,15 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_remove_lb_rule(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
-        vs_ports = [80]
-        vs_ip_address = '1.1.1.1'
-        app_prof_id = 'xxxx'
-        app_prof_path = '/test/lb-app-profiles/' + app_prof_id
-        with mock.patch.object(
-                self.policy_api, "get", return_value={
-                    'ip_address': vs_ip_address,
-                    'ports': vs_ports,
-                    'display_name': vs_name,
-                    'rules': [{'display_name': 'xx'}, {'display_name': 'yy'}],
-                    'application_profile_path': app_prof_path}), \
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
             self.resourceApi.remove_lb_rule(vs_obj_id, 'xx')
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
-                ip_address=vs_ip_address, application_profile_id=app_prof_id,
-                ports=vs_ports,
+                virtual_server_id=vs_obj_id,
+                name=vs_name,
                 rules=[{'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
 
@@ -1236,8 +1145,9 @@ class TestPolicyLBMonitorProfileHttpApi(test_resources.NsxPolicyLibTestCase):
     def test_update(self):
         obj_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(obj_id,
                                     name=name,
                                     tenant=TEST_TENANT)
