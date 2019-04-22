@@ -37,8 +37,11 @@ class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
             allow_passthrough=kwargs.get('allow_passthrough', True))
 
         # Mock the nsx-lib for the passthrough api
-        with mock.patch('vmware_nsxlib.v3.NsxLib'):
+        # TODO(annak): move version forward with backend releases
+        with mock.patch("vmware_nsxlib.v3.NsxLib") as mock_lib:
+            mock_lib.return_value.get_version.return_value = "2.5.0"
             self.policy_lib = policy.NsxPolicyLib(nsxlib_config)
+
         self.policy_api = self.policy_lib.policy_api
         self.policy_api.client = self.client
 
@@ -83,6 +86,19 @@ class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
         actual_dict = mock_api.call_args_list[call_num][0][0].body
         self.assertEqual(expected_dict, actual_dict)
 
+    def mock_get(self, obj_id, obj_name, **kwargs):
+        obj_dict = {
+            'id': obj_id,
+            'display_name': obj_name,
+            'resource_type': self.resourceApi.entry_def.resource_type()}
+        if kwargs:
+            obj_dict.update(kwargs)
+        return mock.patch.object(self.policy_api, "get",
+                                 return_value=obj_dict)
+
+    def mock_create_update(self):
+        return mock.patch.object(self.policy_api, "create_or_update")
+
 
 class TestPolicyDomain(NsxPolicyLibTestCase):
 
@@ -94,8 +110,7 @@ class TestPolicyDomain(NsxPolicyLibTestCase):
         name = 'd1'
         description = 'desc'
         domain_id = '111'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
                 domain_id=domain_id,
@@ -110,8 +125,7 @@ class TestPolicyDomain(NsxPolicyLibTestCase):
 
     def test_minimalistic_create(self):
         name = 'test'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(name,
                                                           tenant=TEST_TENANT)
             expected_def = core_defs.DomainDef(domain_id=mock.ANY,
@@ -174,8 +188,8 @@ class TestPolicyDomain(NsxPolicyLibTestCase):
         domain_id = '111'
         name = 'new name'
         description = 'new desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(domain_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(domain_id,
                                     name=name,
                                     description=description,
@@ -188,19 +202,21 @@ class TestPolicyDomain(NsxPolicyLibTestCase):
 
     def test_unset(self):
         domain_id = '111'
-        self.resourceApi.update(domain_id,
-                                description=None,
-                                tags=None,
-                                tenant=TEST_TENANT)
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': domain_id}):
+            self.resourceApi.update(domain_id,
+                                    description=None,
+                                    tags=None,
+                                    tenant=TEST_TENANT)
 
-        expected_body = {'id': domain_id,
-                         'resource_type': 'Domain',
-                         'description': None,
-                         'tags': None}
+            expected_body = {'id': domain_id,
+                             'resource_type': 'Domain',
+                             'description': None,
+                             'tags': None}
 
-        self.assert_json_call('PATCH', self.client,
-                              '%s/domains/%s' % (TEST_TENANT, domain_id),
-                              data=expected_body)
+            self.assert_json_call('PATCH', self.client,
+                                  '%s/domains/%s' % (TEST_TENANT, domain_id),
+                                  data=expected_body)
 
 
 class TestPolicyGroup(NsxPolicyLibTestCase):
@@ -496,8 +512,8 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
         group_id = '222'
         name = 'new name'
         description = 'new desc'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(group_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(domain_id, group_id,
                                     name=name,
                                     description=description,
@@ -563,22 +579,23 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
         group_id = '222'
         description = 'new'
 
-        self.resourceApi.update(domain_id,
-                                group_id,
-                                name=None,
-                                description=description,
-                                tenant=TEST_TENANT)
+        with self.mock_get(group_id, 'test'):
+            self.resourceApi.update(domain_id,
+                                    group_id,
+                                    name=None,
+                                    description=description,
+                                    tenant=TEST_TENANT)
 
-        expected_body = {'id': group_id,
-                         'resource_type': 'Group',
-                         'display_name': None,
-                         'description': description}
+            expected_body = {'id': group_id,
+                             'resource_type': 'Group',
+                             'display_name': None,
+                             'description': description}
 
-        self.assert_json_call('PATCH', self.client,
-                              '%s/domains/%s/groups/%s' % (TEST_TENANT,
-                                                           domain_id,
-                                                           group_id),
-                              data=expected_body)
+            self.assert_json_call('PATCH', self.client,
+                                  '%s/domains/%s/groups/%s' % (TEST_TENANT,
+                                                               domain_id,
+                                                               group_id),
+                                  data=expected_body)
 
     def test_get_realized(self):
         domain_id = 'd1'
@@ -2228,8 +2245,8 @@ class TestPolicyDeploymentMap(NsxPolicyLibTestCase):
         name = 'new name'
         domain_id = 'domain2'
         ep_id = 'ep2'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(domain_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     ep_id=ep_id,
@@ -2449,9 +2466,8 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         obj_id = '111'
         name = 'new name'
         tier0 = 'tier0'
-        with mock.patch.object(self.policy_api, "get", return_value={}),\
-            mock.patch.object(self.policy_api,
-                              "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name, tier0=tier0,
                                     enable_standby_relocation=False,
@@ -2513,12 +2529,8 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
     def test_update_route_adv(self):
         obj_id = '111'
         rtr_name = 'rtr111'
-        ndra_profile_id = 'test'
-        ndra_profile_path = '/infra/ipv6-ndra-profiles/%s' % ndra_profile_id
         get_result = {'id': obj_id,
                       'display_name': rtr_name,
-                      'enable_standby_relocation': False,
-                      'ipv6_profile_paths': [ndra_profile_path],
                       'route_advertisement_types': ['TIER1_NAT',
                                                     'TIER1_LB_VIP']}
         with mock.patch.object(self.policy_api, "get",
@@ -2538,9 +2550,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             expected_def = core_defs.Tier1Def(
                 tier1_id=obj_id,
                 name=rtr_name,
-                enable_standby_relocation=False,
                 route_advertisement=new_adv,
-                ipv6_ndra_profile_id=ndra_profile_id,
                 tenant=TEST_TENANT)
 
             self.assert_called_with_def(
@@ -2760,7 +2770,6 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         with mock.patch.object(self.policy_api,
                                "get",
                                return_value={'id': tier1_id,
-                                             'display_name': 'tier1name',
                                              'resource_type': 'Tier1'}),\
                 mock.patch.object(self.policy_api,
                                   'create_or_update') as api_call:
@@ -2772,7 +2781,6 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=tier1_id,
-                name='tier1name',
                 route_advertisement_rules=[
                     core_defs.RouteAdvertisementRule(
                         rule_name,
@@ -2789,7 +2797,6 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         rule_name = 'rule_name'
         get_retval = {
             'id': tier1_id,
-            'display_name': 'tier1name',
             'route_advertisement_rules': [{'name': rule_name}]}
         with mock.patch.object(self.policy_api,
                                "get",
@@ -2801,7 +2808,6 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=tier1_id,
-                name='tier1name',
                 route_advertisement_rules=[],
                 tenant=TEST_TENANT)
 
@@ -3135,8 +3141,8 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
     def test_update(self):
         obj_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     tenant=TEST_TENANT)
@@ -3268,8 +3274,8 @@ class TestPolicyTier1Segment(NsxPolicyLibTestCase):
         tier1_id = '111'
         segment_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(tier1_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(segment_id=segment_id,
                                     tier1_id=tier1_id,
                                     name=name,
@@ -3348,8 +3354,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
     def test_update(self):
         segment_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(segment_id,
                                     name=name,
                                     tenant=TEST_TENANT)
@@ -3434,8 +3441,9 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
     def test_update(self):
         ip_pool_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(ip_pool_id, name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(ip_pool_id,
                                     name=name,
                                     tenant=TEST_TENANT)
@@ -3787,8 +3795,8 @@ class TestPolicySegmentProfileBase(NsxPolicyLibTestCase):
     def test_update(self):
         profile_id = '111'
         name = 'new name'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(profile_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(profile_id,
                                     name=name,
                                     tenant=TEST_TENANT)
@@ -3979,8 +3987,9 @@ class TestPolicySegmentSecProfilesBinding(NsxPolicyLibTestCase):
         port_id = 'port1'
         prf1 = '1'
         prf2 = '2'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
+
             self.resourceApi.update(
                 segment_id=segment_id,
                 port_id=port_id,
@@ -4082,8 +4091,8 @@ class TestPolicySegmentDiscoveryProfilesBinding(NsxPolicyLibTestCase):
         port_id = 'port1'
         prf1 = '1'
         prf2 = '2'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(
                 segment_id=segment_id,
                 port_id=port_id,
@@ -4118,8 +4127,7 @@ class TestPolicySegmentQosProfilesBinding(NsxPolicyLibTestCase):
         segment_id = 'seg1'
         port_id = 'port1'
         prf1 = '1'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, segment_id, port_id,
                 qos_profile_id=prf1,
@@ -4181,8 +4189,8 @@ class TestPolicySegmentQosProfilesBinding(NsxPolicyLibTestCase):
         segment_id = 'seg1'
         port_id = 'port1'
         prf1 = '1'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(
                 segment_id=segment_id,
                 port_id=port_id,
@@ -4220,8 +4228,7 @@ class TestPolicyTier1SegmentPort(NsxPolicyLibTestCase):
         allocate_addresses = "BOTH"
         tags = [{'scope': 'a', 'tag': 'b'}]
 
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, tier1_id, segment_id, description=description,
                 address_bindings=address_bindings,
@@ -4291,8 +4298,7 @@ class TestPolicyDhcpRelayConfig(NsxPolicyLibTestCase):
         description = 'desc'
         server_addr = '1.1.1.1'
 
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
                 server_addresses=[server_addr],
@@ -4348,8 +4354,7 @@ class TestPolicyCertificate(NsxPolicyLibTestCase):
         private_key = 'private_key'
         passphrase = 'passphrase'
         key_algo = 'algo'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
                 certificate_id=obj_id,
@@ -4376,8 +4381,7 @@ class TestPolicyCertificate(NsxPolicyLibTestCase):
         name = 'd1'
         description = 'desc'
         pem_encoded = 'pem_encoded'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
                 tenant=TEST_TENANT,
@@ -4437,8 +4441,8 @@ class TestPolicyCertificate(NsxPolicyLibTestCase):
         private_key = 'private_key'
         passphrase = '12'
         key_algo = 'new_algo'
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as update_call:
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name,
                                     description=description,
@@ -4468,8 +4472,7 @@ class TestPolicyExcludeList(NsxPolicyLibTestCase):
 
     def test_create_or_overwrite(self):
         members = ["/infra/domains/default/groups/adit1"]
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with self.mock_create_update() as api_call:
             self.resourceApi.create_or_overwrite(
                 members=members, tenant=TEST_TENANT)
             expected_def = core_defs.ExcludeListDef(

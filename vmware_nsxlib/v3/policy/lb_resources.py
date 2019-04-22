@@ -26,7 +26,6 @@ from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy.core_resources import IGNORE
 from vmware_nsxlib.v3.policy.core_resources import NsxPolicyResourceBase
 from vmware_nsxlib.v3.policy import lb_defs
-from vmware_nsxlib.v3.policy import utils as p_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -427,36 +426,12 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool_def = self.entry_def(tenant=tenant)
         return self.policy_api.list(lb_pool_def)['results']
 
-    def _update_helper(
-            self, lb_pool_id, tenant, pool_data=None, **kwargs):
-        # TODO(kobis) method should be removed and replaced with a simple
-        #  call to _update(), once the policy backend PATCH method works
-        #  properly
-        if not pool_data:
-            pool_data = self.get(lb_pool_id, tenant)
-
-        if kwargs.get('active_monitor_paths', IGNORE) == IGNORE:
-            kwargs['active_monitor_paths'] = (
-                pool_data.get('active_monitor_paths'))
-
-        if kwargs.get('algorithm', IGNORE) == IGNORE:
-            kwargs['algorithm'] = pool_data.get('algorithm')
-
-        if kwargs.get('members', IGNORE) == IGNORE:
-            kwargs['members'] = pool_data.get('members')
-
-        for k in kwargs.keys():
-            if kwargs.get(k) == IGNORE and pool_data.get(k):
-                kwargs[k] = pool_data[k]
-
-        self._update(lb_pool_id=lb_pool_id, tenant=tenant, **kwargs)
-
     def update(self, lb_pool_id, name=IGNORE, description=IGNORE,
                tags=IGNORE, members=IGNORE, algorithm=IGNORE,
                active_monitor_paths=IGNORE, member_group=IGNORE,
                snat_translation=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
-        self._update_helper(
+        self._update(
             lb_pool_id=lb_pool_id,
             name=name,
             description=description,
@@ -475,7 +450,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool = self.policy_api.get(lb_pool_def)
         monitor_paths = lb_pool.get('active_monitor_paths', [])
         monitor_paths.extend(active_monitor_paths)
-        self._update_helper(
+        self._update(
             lb_pool_id, active_monitor_paths=monitor_paths, pool_data=lb_pool,
             tenant=tenant)
 
@@ -487,8 +462,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         monitor_paths = lb_pool.get('active_monitor_paths', [])
         if monitor_path in monitor_paths:
             monitor_paths.remove(monitor_path)
-            self._update_helper(lb_pool_id, active_monitor_paths=monitor_paths,
-                                pool_data=lb_pool, tenant=tenant)
+            self._update(lb_pool_id, active_monitor_paths=monitor_paths,
+                         pool_data=lb_pool, tenant=tenant)
 
     def create_pool_member_and_add_to_pool(
             self, lb_pool_id, ip_address, port=None,
@@ -505,8 +480,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool = self.policy_api.get(lb_pool_def)
         lb_pool_members = lb_pool.get('members', [])
         lb_pool_members.append(lb_pool_member)
-        self._update_helper(lb_pool_id, members=lb_pool_members,
-                            pool_data=lb_pool, tenant=tenant)
+        self._update(lb_pool_id, members=lb_pool_members,
+                     pool_data=lb_pool, tenant=tenant)
         return lb_pool_member
 
     def update_pool_member(
@@ -529,8 +504,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                 member_to_update[0]['admin_state'] = admin_state
             if backup_member:
                 member_to_update[0]['backup_member'] = backup_member
-            self._update_helper(lb_pool_id, members=lb_pool_members,
-                                pool_data=lb_pool, tenant=tenant)
+            self._update(lb_pool_id, members=lb_pool_members,
+                         pool_data=lb_pool, tenant=tenant)
         else:
             ops = ('Updating member %(address)s:%(port)d failed, not found in '
                    'pool %(pool)s', {'address': ip_address,
@@ -547,8 +522,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool_members = lb_pool.get('members', [])
         lb_pool_members = [x for x in lb_pool_members if (
             x.get('ip_address') != ip_address and x.get('port') != str(port))]
-        self._update_helper(lb_pool_id, members=lb_pool_members,
-                            pool_data=lb_pool, tenant=tenant)
+        self.update(lb_pool_id, members=lb_pool_members,
+                    pool_data=lb_pool, tenant=tenant)
 
     def get_path(self, lb_pool_id,
                  tenant=constants.POLICY_INFRA_TENANT):
@@ -689,49 +664,6 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
         lbvs_def = self.entry_def(tenant=tenant)
         return self.policy_api.list(lbvs_def)['results']
 
-    def _update_helper(
-            self, virtual_server_id, tenant, vs_data=None, **kwargs):
-        # TODO(kobis) method should be removed and replaced with a simple
-        #  call to _update(), once the policy backend PATCH method works
-        #  properly
-        if not vs_data:
-            vs_data = self.get(virtual_server_id, tenant)
-        if (kwargs.get('application_profile_id', IGNORE) == IGNORE and
-                vs_data.get('application_profile_path')):
-            kwargs['application_profile_id'] = p_utils.path_to_id(
-                vs_data['application_profile_path'])
-
-        if kwargs.get('ip_address', IGNORE) == IGNORE:
-            kwargs['ip_address'] = vs_data.get('ip_address')
-
-        if kwargs.get('ports', IGNORE) == IGNORE:
-            kwargs['ports'] = vs_data.get('ports')
-
-        if kwargs.get('name', IGNORE) == IGNORE:
-            kwargs['name'] = vs_data.get('display_name')
-
-        if (kwargs.get('description', IGNORE) == IGNORE and
-                vs_data.get('description')):
-            kwargs['description'] = vs_data.get('description')
-
-        if (kwargs.get('lb_service_id', IGNORE) == IGNORE and
-                vs_data.get('lb_service_path')):
-            kwargs['lb_service_id'] = p_utils.path_to_id(
-                vs_data['lb_service_path'])
-
-        for k in kwargs.keys():
-            if kwargs.get(k) == IGNORE and vs_data.get(k):
-                kwargs[k] = vs_data[k]
-
-        if (kwargs.get('tags', IGNORE) == IGNORE and
-                vs_data.get('tags')):
-            kwargs['tags'] = vs_data['tags']
-
-        self._update(
-            virtual_server_id=virtual_server_id,
-            tenant=tenant,
-            **kwargs)
-
     def update(self, virtual_server_id, name=IGNORE, description=IGNORE,
                rules=IGNORE, application_profile_id=IGNORE,
                ip_address=IGNORE, lb_service_id=IGNORE,
@@ -744,7 +676,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                max_concurrent_connections=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
-        self._update_helper(
+        self._update(
             virtual_server_id=virtual_server_id,
             name=name,
             description=description,
@@ -765,20 +697,20 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
     def update_virtual_server_with_pool(
             self, virtual_server_id, pool_id=IGNORE,
             tenant=constants.POLICY_INFRA_TENANT):
-        return self._update_helper(
+        return self.update(
             virtual_server_id, pool_id=pool_id, tenant=tenant)
 
     def update_virtual_server_application_profile(
             self, virtual_server_id, application_profile_id=IGNORE,
             tenant=constants.POLICY_INFRA_TENANT):
-        return self._update_helper(
+        return self.update(
             virtual_server_id, application_profile_id=application_profile_id,
             tenant=tenant)
 
     def update_virtual_server_persistence_profile(
             self, virtual_server_id, lb_persistence_profile_id=IGNORE,
             tenant=constants.POLICY_INFRA_TENANT):
-        return self._update_helper(
+        return self.update(
             virtual_server_id,
             lb_persistence_profile_id=lb_persistence_profile_id,
             tenant=tenant)
@@ -786,14 +718,14 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
     def update_virtual_server_client_ssl_profile_binding(
             self, virtual_server_id, client_ssl_profile_binding=IGNORE,
             tenant=constants.POLICY_INFRA_TENANT):
-        return self._update_helper(
+        return self.update(
             virtual_server_id,
             client_ssl_profile_binding=client_ssl_profile_binding,
             tenant=tenant)
 
     def update_virtual_server_with_vip(self, virtual_server_id, vip,
                                        tenant=constants.POLICY_INFRA_TENANT):
-        return self._update_helper(
+        return self.update(
             virtual_server_id, ip_address=vip, tenant=tenant)
 
     def build_client_ssl_profile_binding(self, default_certificate_path,
@@ -818,7 +750,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             ssl_profile_path=ssl_profile_path,
             client_auth_ca_paths=client_auth_ca_paths, client_auth=client_auth)
 
-        return self._update_helper(
+        return self.update(
             virtual_server_id, client_ssl_profile_binding=client_ssl_def,
             tenant=tenant)
 
@@ -848,8 +780,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             tenant=tenant)
         body = self.policy_api.get(lbvs_def)
         lb_rules = self._add_rule_in_position(body, lb_rule, position)
-        return self._update_helper(virtual_server_id, vs_data=body,
-                                   rules=lb_rules, tenant=tenant)
+        return self._update(virtual_server_id=virtual_server_id,
+                            vs_data=body,
+                            rules=lb_rules, tenant=tenant)
 
     def update_lb_rule(self, virtual_server_id, lb_rule_name,
                        actions=None, match_conditions=None,
@@ -880,8 +813,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
 
         # Insert new rule
         lb_rules = self._add_rule_in_position(body, lb_rule, position)
-        return self._update_helper(
-            virtual_server_id, rules=lb_rules, vs_data=body, tenant=tenant)
+        return self._update(
+            virtual_server_id=virtual_server_id,
+            rules=lb_rules, vs_data=body, tenant=tenant)
 
     def remove_lb_rule(self, virtual_server_id, lb_rule_name,
                        tenant=constants.POLICY_INFRA_TENANT):
@@ -891,8 +825,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
         lb_rules = body.get('rules', [])
         lb_rules = [r for r in lb_rules if (r.get('display_name') !=
                                             lb_rule_name)]
-        return self._update_helper(
-            virtual_server_id, vs_data=body, rules=lb_rules, tenant=tenant)
+        return self._update(
+            virtual_server_id=virtual_server_id, vs_data=body,
+            rules=lb_rules, tenant=tenant)
 
     def get_path(self, virtual_server_id,
                  tenant=constants.POLICY_INFRA_TENANT):

@@ -145,7 +145,11 @@ class NsxPolicyResourceBase(object):
     def _update(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
 
-        policy_def = self._init_def(**kwargs)
+        if self.policy_api.partial_updates_supported():
+            policy_def = self._init_def(**kwargs)
+        else:
+            policy_def = self._get_and_update_def(**kwargs)
+
         if policy_def.bodyless():
             # Nothing to update - only keys provided in kwargs
             return
@@ -894,31 +898,6 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                route_advertisement_rules=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
                current_body=None):
-        # Note(asarfaty): L2/L3 PATCH APIs don't support partial updates yet
-        # TODO(asarfaty): Remove this when supported
-        if (name == IGNORE or enable_standby_relocation == IGNORE or
-            ipv6_ndra_profile_id == IGNORE or tags == IGNORE or
-            current_body):
-
-            if not current_body:
-                current_body = self.get(tier1_id, tenant=tenant)
-            if name == IGNORE:
-                name = current_body.get('display_name', IGNORE)
-            if enable_standby_relocation == IGNORE:
-                enable_standby_relocation = current_body.get(
-                    'enable_standby_relocation', IGNORE)
-            if ipv6_ndra_profile_id == IGNORE:
-                ipv6_ndra_profile_id = self._get_ipv6_profile_from_dict(
-                    current_body)
-            if route_advertisement_rules == IGNORE:
-                route_advertisement_rules = current_body.get(
-                    'route_advertisement_rules', IGNORE)
-            if route_advertisement == IGNORE and current_body.get(
-                    'route_advertisement_types'):
-                route_advertisement = self.entry_def.get_route_adv(
-                    current_body)
-            if tags == IGNORE:
-                tags = current_body.get('tags', IGNORE)
 
         self._update(tier1_id=tier1_id,
                      name=name,
@@ -934,17 +913,6 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                      route_advertisement_rules=route_advertisement_rules,
                      tags=tags,
                      tenant=tenant)
-
-    # TODO(annak): remove this func when partial update is supported
-    def _get_ipv6_profile_from_dict(self, obj_dict):
-        ipv6_profiles = obj_dict.get('ipv6_profile_paths', [])
-        if not ipv6_profiles:
-            return IGNORE
-
-        for profile in ipv6_profiles:
-            tokens = profile.split('/')
-            if len(tokens) > 3 and tokens[2] == 'ipv6-ndra-profiles':
-                return tokens[3]
 
     def update_route_advertisement(
         self, tier1_id,
@@ -1726,12 +1694,6 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                dns_domain_name=IGNORE,
                vlan_ids=IGNORE, tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
-        # Note(asarfaty): L2/L3 PATCH APIs don't support partial updates yet
-        # TODO(asarfaty): Remove this when supported
-        if name == IGNORE:
-            current_body = self.get(segment_id, tenant=tenant)
-            name = current_body.get('display_name', IGNORE)
-
         self._update(segment_id=segment_id,
                      name=name,
                      description=description,

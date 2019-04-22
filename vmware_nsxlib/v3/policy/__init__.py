@@ -46,7 +46,12 @@ class NsxPolicyLib(lib.NsxLibBase):
             self.nsx_api = v3.NsxLib(config)
         else:
             self.nsx_api = None
+
         self.nsx_version = self.get_version()
+
+        if not self.feature_supported(nsx_constants.FEATURE_PARTIAL_UPDATES):
+            self.policy_api.disable_partial_updates()
+
         args = (self.policy_api, self.nsx_api, self.nsx_version,
                 self.nsxlib_config)
 
@@ -143,6 +148,11 @@ class NsxPolicyLib(lib.NsxLibBase):
                 version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
             if (feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING):
+                return True
+
+        if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_6_0)):
+            if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)

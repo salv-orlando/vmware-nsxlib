@@ -30,7 +30,9 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
 
         nsxlib_config = nsxlib_testcase.get_default_nsxlib_config()
         # Mock the nsx-lib for the passthrough api
-        with mock.patch('vmware_nsxlib.v3.NsxLib'):
+        with mock.patch('vmware_nsxlib.v3.NsxLib.get_version',
+                        return_value='2.5.0'):
+
             self.policy_lib = policy.NsxPolicyLib(nsxlib_config)
         self.policy_api = self.policy_lib.policy_api
         self.policy_api.client = self.client
