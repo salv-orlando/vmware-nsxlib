@@ -121,6 +121,13 @@ class NsxPolicyLBAppProfileBase(NsxPolicyResourceBase):
             tags=tags,
             tenant=tenant)
 
+    def get_path(self, lb_app_profile_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            lb_app_profile_id=lb_app_profile_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
+
 
 class NsxPolicyLBAppProfileHttpApi(NsxPolicyLBAppProfileBase):
     """NSX Policy LB app profile"""
@@ -205,6 +212,13 @@ class NsxPolicyLoadBalancerLBClientSSLProfileApi(NsxPolicyResourceBase):
             protocols=protocols,
             tenant=tenant)
 
+    def get_path(self, profile_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            client_ssl_profile_id=profile_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
+
 
 class NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(
     NsxPolicyResourceBase):
@@ -284,6 +298,13 @@ class NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(
             persistence_shared=persistence_shared,
             tenant=tenant)
 
+    def get_path(self, profile_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            persistence_profile_id=profile_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
+
 
 class NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(
     NsxPolicyResourceBase):
@@ -354,6 +375,13 @@ class NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(
             purge=purge,
             timeout=timeout,
             tenant=tenant)
+
+    def get_path(self, profile_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            persistence_profile_id=profile_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
 
 
 class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
@@ -513,6 +541,13 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         self._update_helper(lb_pool_id, members=lb_pool_members,
                             pool_data=lb_pool, tenant=tenant)
 
+    def get_path(self, lb_pool_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            lb_pool_id=lb_pool_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
+
 
 class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
     """NSX Policy LBService."""
@@ -578,6 +613,13 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             lb_service_id=lb_service_id,
             tenant=constants.POLICY_INFRA_TENANT)
         return self.policy_api.get(lb_service_status_def)
+
+    def get_path(self, lb_service_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            lb_service_id=lb_service_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
 
 
 class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
@@ -846,6 +888,13 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                                             lb_rule_name)]
         return self._update_helper(
             virtual_server_id, vs_data=body, rules=lb_rules, tenant=tenant)
+
+    def get_path(self, virtual_server_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            virtual_server_id=virtual_server_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
 
 
 @six.add_metaclass(abc.ABCMeta)
