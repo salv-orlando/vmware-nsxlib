@@ -32,6 +32,7 @@ class NsxLibBase(object):
     def __init__(self, nsxlib_config):
 
         self.nsx_version = None
+        self.nsx_api = None
         self.set_config(nsxlib_config)
 
         # create the Cluster
