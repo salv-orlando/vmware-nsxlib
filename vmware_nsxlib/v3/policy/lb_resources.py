@@ -820,15 +820,11 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
 
     def _add_rule_in_position(self, body, lb_rule, position):
         lb_rules = body.get('rules', [])
-        if position < 0:
+        if position < 0 or position > len(lb_rules):
+            # Add as the last one
             lb_rules.append(lb_rule)
         elif position <= len(lb_rules):
             lb_rules.insert(position, lb_rule)
-        else:
-            raise nsxlib_exc.InvalidInput(
-                operation='Insert rule in position',
-                arg_val=position,
-                arg_name='position')
 
         return lb_rules
 
