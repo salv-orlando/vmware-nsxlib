@@ -307,11 +307,7 @@ class LogicalPortTestCase(BaseTestResource):
         return fake_profile_dicts
 
     def _get_extra_config_dicts(self, fake_port):
-        fake_extra_config_dicts = []
-        for config in fake_port['extra_configs']:
-            fake_extra_config_dicts.append(
-                {'config_value': config['config_pair']['value'],
-                 'config_key': config['config_pair']['key']})
+        fake_extra_config_dicts = fake_port['extra_configs']
         return fake_extra_config_dicts
 
     def _get_pktcls_bindings(self):

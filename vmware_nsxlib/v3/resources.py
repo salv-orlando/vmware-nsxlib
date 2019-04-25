@@ -129,14 +129,7 @@ class LogicalPort(utils.NsxLibApiBase):
             body['description'] = description
 
         if extra_configs:
-            configs = []
-            for config in extra_configs:
-                configs.append({
-                    'config_pair': {
-                        'value': config.get('config_value'),
-                        'key': config.get('config_key')}
-                })
-            body['extra_configs'] = configs
+            body['extra_configs'] = extra_configs
 
         return body
 
