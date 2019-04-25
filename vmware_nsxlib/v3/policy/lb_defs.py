@@ -55,11 +55,13 @@ class LBRuleDef(object):
 
 class LBPoolMemberDef(object):
     def __init__(self, ip_address, port=None, name=None,
-                 weight=None):
+                 weight=None, admin_state=None, backup_member=None):
         self.name = name
         self.ip_address = ip_address
         self.port = port
         self.weight = weight
+        self.admin_state = admin_state
+        self.backup_member = backup_member
 
     def get_obj_dict(self):
         body = {'ip_address': self.ip_address}
@@ -69,6 +71,10 @@ class LBPoolMemberDef(object):
             body['port'] = self.port
         if self.weight:
             body['weight'] = self.weight
+        if self.admin_state:
+            body['admin_state'] = self.admin_state
+        if self.backup_member:
+            body['backup_member'] = self.backup_member
         return body
 
 
