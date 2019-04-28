@@ -2905,8 +2905,10 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             self.policy_api.create_or_update(entry_def)
 
     def update_entries(self, domain_id, map_id, entries,
+                       category=constants.CATEGORY_APPLICATION,
                        tenant=constants.POLICY_INFRA_TENANT):
-        self.update_with_entries(domain_id, map_id, entries, tenant=tenant)
+        self.update_with_entries(domain_id, map_id, entries, category=category,
+                                 tenant=tenant)
 
     def update_with_entries(self, domain_id, map_id, entries=IGNORE,
                             name=IGNORE, description=IGNORE,
