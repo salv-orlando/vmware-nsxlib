@@ -1890,7 +1890,9 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             self.resourceApi.update_entries(
                 domain_id, map_id, entries, tenant=TEST_TENANT)
             update_call.assert_called_once_with(
-                domain_id, map_id, entries, tenant=TEST_TENANT)
+                domain_id, map_id, entries,
+                category=constants.CATEGORY_APPLICATION,
+                tenant=TEST_TENANT)
 
     def test_update_with_entries(self):
         domain_id = '111'
