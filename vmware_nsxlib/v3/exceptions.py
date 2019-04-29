@@ -99,6 +99,29 @@ class InvalidInput(ManagerError):
                 "for %(arg_name)s")
 
 
+class RealizationError(ManagerError):
+    pass
+
+
+class RealizationErrorStateError(RealizationError):
+    message = _("%(resource_type)s ID %(resource_id)s is in ERROR state: "
+                "%(error)s")
+
+
+class RealizationTimeoutError(RealizationError):
+    message = _("%(resource_type)s ID %(resource_id)s "
+                "was not realized after %(attempts)s attempts "
+                "with %(sleep)s seconds sleep")
+
+
+class DetailedRealizationTimeoutError(RealizationError):
+    message = _("%(resource_type)s ID %(resource_id)s "
+                "was not realized to %(realized_type)s "
+                "for %(related_type)s %(related_id)s "
+                "after %(attempts)s attempts "
+                "with %(sleep)s seconds sleep")
+
+
 class StaleRevision(ManagerError):
     pass
 
