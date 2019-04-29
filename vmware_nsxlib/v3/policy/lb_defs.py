@@ -393,6 +393,17 @@ class LBServiceStatisticsDef(ResourceDef):
         return ('tenant', 'lb_service_id', '')
 
 
+class LBServiceStatusDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return LB_SERVICES_PATH_PATTERN + '%s/detailed-status/'
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'lb_service_id', '')
+
+
 class LBServiceUsageDef(ResourceDef):
 
     @property
@@ -402,6 +413,18 @@ class LBServiceUsageDef(ResourceDef):
     @property
     def path_ids(self):
         return ('tenant', 'lb_service_id', '')
+
+
+class LBVirtualServerStatusDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return (LB_SERVICES_PATH_PATTERN +
+                '%s/lb-virtual-servers/%s/detailed-status/')
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'lb_service_id', 'lb_virtual_server_id', '')
 
 
 class LBMonitorProfileBaseDef(ResourceDef):

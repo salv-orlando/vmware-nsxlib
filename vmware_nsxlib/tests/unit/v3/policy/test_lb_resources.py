@@ -638,6 +638,35 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 connectivity_path=connectivity_path)
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_get_status(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get_status(obj_id, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServiceStatusDef(
+                lb_service_id=obj_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get_statistics(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get_statistics(obj_id, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServiceStatisticsDef(
+                lb_service_id=obj_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get_virtual_server_status(self):
+        obj_id = '111'
+        vs_id = '222'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get_virtual_server_status(
+                obj_id, vs_id, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBVirtualServerStatusDef(
+                lb_service_id=obj_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
 
 class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
