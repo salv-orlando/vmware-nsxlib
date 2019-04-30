@@ -1064,7 +1064,7 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
         description = 'new desc'
         members = [{'ip_address': '10.0.0.1'}]
         algorithm = 'algo'
-        active_monitor_paths = 'path1'
+        active_monitor_paths = ['path1']
         member_group = 'group1'
         snat_translation = False
         with mock.patch.object(self.policy_api, "get",
@@ -1089,6 +1089,81 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 algorithm=algorithm,
                 member_group=member_group,
                 snat_translation=snat_translation,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_add_monitor_to_pool(self):
+        obj_id = '111'
+        active_monitor_paths = ['path1']
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}), \
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.add_monitor_to_pool(
+                obj_id,
+                active_monitor_paths,
+                tenant=TEST_TENANT)
+            expected_def = lb_defs.LBPoolDef(
+                lb_pool_id=obj_id,
+                active_monitor_paths=active_monitor_paths,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_remove_monitor_from_pool(self):
+        obj_id = '111'
+        removed_monitor_path = 'path1'
+        stay_monitor_path = 'path2'
+        active_monitors = [removed_monitor_path, stay_monitor_path]
+        with mock.patch.object(
+            self.policy_api, "get", return_value={
+                'id': obj_id, 'active_monitor_paths': active_monitors}), \
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.remove_monitor_from_pool(
+                obj_id,
+                removed_monitor_path,
+                tenant=TEST_TENANT)
+            expected_def = lb_defs.LBPoolDef(
+                lb_pool_id=obj_id,
+                active_monitor_paths=[stay_monitor_path],
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_create_pool_member_and_add_to_pool(self):
+        obj_id = '111'
+        ip_address = '1.1.1.1'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}), \
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.create_pool_member_and_add_to_pool(
+                obj_id, ip_address,
+                tenant=TEST_TENANT)
+            mem_def = lb_defs.LBPoolMemberDef(ip_address)
+            expected_def = lb_defs.LBPoolDef(
+                lb_pool_id=obj_id,
+                members=[mem_def],
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_update_pool_member(self):
+        obj_id = '111'
+        ip_address = '1.1.1.1'
+        port = '80'
+        new_name = 'mem1'
+        member = {'ip_address': ip_address, 'port': port}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id,
+                                             'members': [member]}), \
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.update_pool_member(
+                obj_id, ip_address, port=port, display_name=new_name,
+                tenant=TEST_TENANT)
+            member['display_name'] = new_name
+            expected_def = lb_defs.LBPoolDef(
+                lb_pool_id=obj_id,
+                members=[member],
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
