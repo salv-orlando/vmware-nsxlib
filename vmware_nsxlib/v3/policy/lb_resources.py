@@ -451,8 +451,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         monitor_paths = lb_pool.get('active_monitor_paths', [])
         monitor_paths.extend(active_monitor_paths)
         self._update(
-            lb_pool_id, active_monitor_paths=monitor_paths, pool_data=lb_pool,
-            tenant=tenant)
+            lb_pool_id=lb_pool_id, active_monitor_paths=monitor_paths,
+            pool_data=lb_pool, tenant=tenant)
 
     def remove_monitor_from_pool(self, lb_pool_id, monitor_path,
                                  tenant=constants.POLICY_INFRA_TENANT):
@@ -462,7 +462,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         monitor_paths = lb_pool.get('active_monitor_paths', [])
         if monitor_path in monitor_paths:
             monitor_paths.remove(monitor_path)
-            self._update(lb_pool_id, active_monitor_paths=monitor_paths,
+            self._update(lb_pool_id=lb_pool_id,
+                         active_monitor_paths=monitor_paths,
                          pool_data=lb_pool, tenant=tenant)
 
     def create_pool_member_and_add_to_pool(
@@ -480,7 +481,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool = self.policy_api.get(lb_pool_def)
         lb_pool_members = lb_pool.get('members', [])
         lb_pool_members.append(lb_pool_member)
-        self._update(lb_pool_id, members=lb_pool_members,
+        self._update(lb_pool_id=lb_pool_id, members=lb_pool_members,
                      pool_data=lb_pool, tenant=tenant)
         return lb_pool_member
 
@@ -504,7 +505,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                 member_to_update[0]['admin_state'] = admin_state
             if backup_member:
                 member_to_update[0]['backup_member'] = backup_member
-            self._update(lb_pool_id, members=lb_pool_members,
+            self._update(lb_pool_id=lb_pool_id, members=lb_pool_members,
                          pool_data=lb_pool, tenant=tenant)
         else:
             ops = ('Updating member %(address)s:%(port)d failed, not found in '
