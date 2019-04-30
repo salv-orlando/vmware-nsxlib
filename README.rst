@@ -3,7 +3,7 @@ vmware-nsxlib
 =============
 
 * Free software: Apache license
-* Source: http://git.openstack.org/cgit/openstack/vmware-nsxlib
+* Source: https://opendev.org/x/vmware-nsxlib
 
 Features
 --------
