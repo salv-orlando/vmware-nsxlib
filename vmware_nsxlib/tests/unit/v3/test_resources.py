@@ -245,6 +245,43 @@ class TestSwitchingProfileTestCase(BaseTestResource):
             data=jsonutils.dumps({
                 'mac_learning': {
                     'enabled': True,
+                    'unicast_flooding_allowed': True,
+                },
+                'resource_type': self.types.MAC_LEARNING,
+                'display_name': 'plugin-mac-learning',
+                'description': 'mac-learning-for-plugin',
+                'tags': tags,
+                'mac_change_allowed': True,
+            }, sort_keys=True),
+            headers=self.default_headers())
+
+    def test_create_mac_learning_disabled_profile(self):
+
+        tags = [
+            {
+                'scope': 'os-project-id',
+                'tag': 'project-1'
+            },
+            {
+                'scope': 'os-api-version',
+                'tag': '2.1.1.0'
+            }
+        ]
+
+        mocked_resource = self.get_mocked_resource()
+
+        mocked_resource.create_mac_learning_profile(
+            'plugin-mac-learning', 'mac-learning-for-plugin',
+            mac_learning_enabled=False,
+            tags=tags)
+
+        test_client.assert_json_call(
+            'post', mocked_resource,
+            'https://1.2.3.4/api/v1/switching-profiles',
+            data=jsonutils.dumps({
+                'mac_learning': {
+                    'enabled': False,
+                    'unicast_flooding_allowed': False,
                 },
                 'resource_type': self.types.MAC_LEARNING,
                 'display_name': 'plugin-mac-learning',
