@@ -351,10 +351,12 @@ class NsxLibSwitchingProfile(utils.NsxLibApiBase):
                            bpdu_filter=bpdu_filter,
                            block_non_ip_traffic=True)
 
-    def create_mac_learning_profile(self, display_name,
-                                    description, tags=None):
+    def create_mac_learning_profile(self, display_name, description,
+                                    mac_learning_enabled=True,
+                                    tags=None):
         mac_learning = {
-            'enabled': True,
+            'enabled': mac_learning_enabled,
+            'unicast_flooding_allowed': mac_learning_enabled
         }
         return self.create(SwitchingProfileTypes.MAC_LEARNING,
                            display_name=display_name,
