@@ -233,12 +233,12 @@ class LBVirtualServerDef(ResourceDef):
         if client_ssl_binding:
             self._set_attr_if_specified(
                 body, 'client_ssl_profile_binding',
-                value=client_ssl_binding.get_obj_dict())
+                value=client_ssl_binding)
         server_ssl_binding = self.get_attr('server_ssl_profile_binding')
         if server_ssl_binding:
             self._set_attr_if_specified(
                 body, 'server_ssl_profile_binding',
-                value=server_ssl_binding.get_obj_dict())
+                value=server_ssl_binding)
         waf_profile_binding = self.get_attr('waf_profile_binding')
         if waf_profile_binding:
             if isinstance(waf_profile_binding, WAFProfileBindingDef):
