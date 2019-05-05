@@ -3653,6 +3653,10 @@ class NsxPolicyCertApi(NsxPolicyResourceBase):
                      key_algo=key_algo,
                      tenant=tenant)
 
+    def get_path(self, certificate_id, tenant=constants.POLICY_INFRA_TENANT):
+        c_def = self.entry_def(certificate_id=certificate_id, tenant=tenant)
+        return c_def.get_resource_full_path()
+
 
 class NsxPolicyExcludeListApi(NsxPolicyResourceBase):
     """NSX Policy Exclude list."""
