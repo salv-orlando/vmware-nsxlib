@@ -681,7 +681,7 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
                 'entity_type': 'RealizedGroup'}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
-            self.assertRaises(nsxlib_exc.ManagerError,
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
                               self.resourceApi.wait_until_realized,
                               domain_id, group_id, max_attempts=5,
                               sleep=0.1, tenant=TEST_TENANT)
@@ -2586,7 +2586,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 'entity_type': 'RealizedLogicalRouter'}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
-            self.assertRaises(nsxlib_exc.ManagerError,
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
                               self.resourceApi.wait_until_realized,
                               tier1_id, max_attempts=5, sleep=0.1,
                               tenant=TEST_TENANT)
@@ -2627,7 +2627,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 'realization_specific_identifier': logical_router_id}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
-            self.assertRaises(nsxlib_exc.ManagerError,
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
                               self.resourceApi.wait_until_realized,
                               tier1_id, tenant=TEST_TENANT,
                               max_attempts=5, sleep=0.1)
@@ -3177,7 +3177,7 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
                 'realization_specific_identifier': logical_router_id}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
-            self.assertRaises(nsxlib_exc.ManagerError,
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
                               self.resourceApi.wait_until_realized,
                               tier1_id, max_attempts=5, sleep=0.1,
                               tenant=TEST_TENANT)
@@ -4268,7 +4268,21 @@ class TestPolicyTier1SegmentPort(NsxPolicyLibTestCase):
                 'entity_type': 'RealizedLogicalPort'}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
-            self.assertRaises(nsxlib_exc.ManagerError,
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              tier1_id, segment_id, port_id, max_attempts=5,
+                              sleep=0.1, tenant=TEST_TENANT)
+
+    def test_wait_until_realized_error(self):
+        tier1_id = '111'
+        port_id = 'port-111'
+        segment_id = 'seg-111'
+        info = {'state': constants.STATE_ERROR,
+                'alarms': [{'message': 'dummy'}],
+                'entity_type': 'RealizedLogicalPort'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationErrorStateError,
                               self.resourceApi.wait_until_realized,
                               tier1_id, segment_id, port_id, max_attempts=5,
                               sleep=0.1, tenant=TEST_TENANT)
