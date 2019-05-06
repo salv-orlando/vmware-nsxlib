@@ -236,21 +236,28 @@ class NsxPolicyResourceBase(object):
         def get_info():
             info = self._get_realization_info(
                 resource_def, entity_type=entity_type, silent=True)
-            if info and info['state'] == constants.STATE_REALIZED:
-                return info
+            if info:
+                if info['state'] == constants.STATE_REALIZED:
+                    return info
+                if info['state'] == constants.STATE_ERROR:
+                    error_msg = (info['alarms'][0].get('message')
+                                 if info.get('alarms') else 'unknown')
+                    raise exceptions.RealizationErrorStateError(
+                        resource_type=resource_def.resource_type(),
+                        resource_id=resource_def.get_id(),
+                        error=error_msg)
 
         try:
             return get_info()
+        except exceptions.RealizationError as e:
+            raise e
         except Exception:
             # max retries reached
-            err_msg = (_("%(type)s ID %(id)s was not realized after "
-                         "%(attempts)s attempts with %(sleep)s seconds "
-                         "sleep") %
-                       {'type': resource_def.resource_type(),
-                        'id': resource_def.get_id(),
-                        'attempts': max_attempts,
-                        'sleep': sleep})
-            raise exceptions.ManagerError(details=err_msg)
+            raise exceptions.RealizationTimeoutError(
+                resource_type=resource_def.resource_type(),
+                resource_id=resource_def.get_id(),
+                attempts=max_attempts,
+                sleep=sleep)
 
     def _get_extended_attr_from_realized_info(self, realization_info,
                                               requested_attr):
@@ -1108,14 +1115,14 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             eventlet.sleep(sleep)
             test_num += 1
 
-        err_msg = (_("Could not find realized downlink port for tier1 "
-                     "%(tier1)s and segment %(seg)s after %(attempts)s "
-                     "attempts with %(sleep)s seconds sleep") %
-                   {'tier1': tier1_id,
-                    'seg': segment_id,
-                    'attempts': max_attempts,
-                    'sleep': sleep})
-        raise exceptions.ManagerError(details=err_msg)
+        raise exceptions.DetailedRealizationTimeoutError(
+            resource_type='Tier1',
+            resource_id=tier1_id,
+            realized_type="downlink port",
+            related_type="segment",
+            related_id=segment_id,
+            attempts=max_attempts,
+            sleep=sleep)
 
     @check_allowed_passthrough
     def set_dhcp_relay(self, tier1_id, segment_id, relay_service_uuid,
