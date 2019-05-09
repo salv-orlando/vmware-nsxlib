@@ -1665,6 +1665,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             dns_domain_name=IGNORE,
                             vlan_ids=IGNORE,
                             transport_zone_id=IGNORE,
+                            ip_pool_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1677,6 +1678,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                                      dns_domain_name=dns_domain_name,
                                      vlan_ids=vlan_ids,
                                      transport_zone_id=transport_zone_id,
+                                     ip_pool_id=ip_pool_id,
                                      tags=tags,
                                      tenant=tenant)
         self._create_or_store(segment_def)

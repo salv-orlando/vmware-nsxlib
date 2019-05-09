@@ -3306,6 +3306,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         name = 'test'
         description = 'desc'
         tier1_id = '111'
+        ip_pool_id = 'external-ip-pool'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
 
         with mock.patch.object(self.policy_api,
@@ -3313,6 +3314,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
                 tier1_id=tier1_id,
+                ip_pool_id=ip_pool_id,
                 subnets=subnets,
                 tenant=TEST_TENANT)
 
@@ -3321,6 +3323,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
                 name=name,
                 description=description,
                 tier1_id=tier1_id,
+                ip_pool_id=ip_pool_id,
                 subnets=subnets,
                 tenant=TEST_TENANT)
 
