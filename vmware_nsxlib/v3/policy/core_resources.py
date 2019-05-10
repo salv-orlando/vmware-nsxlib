@@ -1660,6 +1660,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def create_or_overwrite(self, name,
                             segment_id=None,
                             tier1_id=IGNORE,
+                            tier0_id=IGNORE,
                             description=IGNORE,
                             subnets=IGNORE,
                             dns_domain_name=IGNORE,
@@ -1669,11 +1670,17 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
+        if tier0_id != IGNORE and tier1_id != IGNORE:
+            err_msg = (_("Cannot connect Segment to a Tier-0 and Tier-1 "
+                         "Gateway simultaneously"))
+            raise exceptions.InvalidInput(details=err_msg)
+
         segment_id = self._init_obj_uuid(segment_id)
         segment_def = self._init_def(segment_id=segment_id,
                                      name=name,
                                      description=description,
                                      tier1_id=tier1_id,
+                                     tier0_id=tier0_id,
                                      subnets=subnets,
                                      dns_domain_name=dns_domain_name,
                                      vlan_ids=vlan_ids,
@@ -1699,7 +1706,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
         return self._list(segment_def)
 
     def update(self, segment_id, name=IGNORE, description=IGNORE,
-               tier1_id=IGNORE, subnets=IGNORE,
+               tier1_id=IGNORE, tier0_id=IGNORE, subnets=IGNORE,
                dns_domain_name=IGNORE,
                vlan_ids=IGNORE, tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
@@ -1707,6 +1714,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                      name=name,
                      description=description,
                      tier1_id=tier1_id,
+                     tier0_id=tier0_id,
                      subnets=subnets,
                      dns_domain_name=dns_domain_name,
                      vlan_ids=vlan_ids,

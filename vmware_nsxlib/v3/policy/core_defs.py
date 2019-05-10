@@ -711,6 +711,16 @@ class SegmentDef(BaseSegmentDef):
                                         body_attr='connectivity_path',
                                         value=path)
 
+        if self.has_attr('tier0_id'):
+            path = ""
+            if self.get_attr('tier0_id'):
+                tier0 = Tier0Def(tier0_id=self.get_attr('tier0_id'),
+                                 tenant=self.get_tenant())
+                path = tier0.get_resource_full_path()
+            self._set_attr_if_specified(body, 'tier0_id',
+                                        body_attr='connectivity_path',
+                                        value=path)
+
         if self.has_attr('transport_zone_id'):
             path = ""
             if self.get_attr('transport_zone_id'):
@@ -723,7 +733,6 @@ class SegmentDef(BaseSegmentDef):
                                         body_attr='transport_zone_path',
                                         value=path)
 
-        # TODO(annak): support also tier0
         return body
 
 
