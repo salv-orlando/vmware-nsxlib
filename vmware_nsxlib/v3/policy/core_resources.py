@@ -286,7 +286,15 @@ class NsxPolicyResourceBase(object):
             if child_def:
                 self.policy_api.create_with_parent(policy_def, child_def)
             else:
-                self.policy_api.create_or_update(policy_def)
+                # in case the same object was just deleted, create may need to
+                # be retried
+                @utils.retry_upon_exception(
+                    exceptions.NsxPendingDelete,
+                    max_attempts=self.policy_api.client.max_attempts)
+                def _do_create_with_retry():
+                    self.policy_api.create_or_update(policy_def)
+
+                _do_create_with_retry()
 
 
 class NsxPolicyDomainApi(NsxPolicyResourceBase):
