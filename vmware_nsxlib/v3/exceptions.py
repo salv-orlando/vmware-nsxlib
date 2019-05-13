@@ -196,4 +196,9 @@ class NsxPendingDelete(NsxLibException):
 
 
 class APITransactionAborted(ServerBusy):
-    message = _("API transaction aborted as MP cluster is reconfiguring.")
+    message = _("API transaction aborted as MP cluster is reconfiguring")
+
+
+class ResourceInUse(ManagerError):
+    message = _("The object cannot be deleted as either it has children or it "
+                "is being referenced by other objects")

@@ -37,7 +37,8 @@ def http_error_to_exception(status_code, error_code):
         requests.codes.BAD_REQUEST:
             {'60508': exceptions.NsxIndexingInProgress,
              '60514': exceptions.NsxSearchTimeout,
-             '500045': exceptions.NsxPendingDelete},
+             '500045': exceptions.NsxPendingDelete,
+             '500030': exceptions.ResourceInUse},
         requests.codes.CONFLICT: exceptions.StaleRevision,
         requests.codes.PRECONDITION_FAILED: exceptions.StaleRevision,
         requests.codes.INTERNAL_SERVER_ERROR:
