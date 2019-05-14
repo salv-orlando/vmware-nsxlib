@@ -3302,33 +3302,42 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         super(TestPolicySegment, self).setUp()
         self.resourceApi = self.policy_lib.segment
 
-    def test_create(self):
+    def _test_create(self, tier1_id=None, tier0_id=None):
         name = 'test'
         description = 'desc'
-        tier1_id = '111'
-        ip_pool_id = 'external-ip-pool'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
+        kwargs = {'description': description,
+                  'subnets': subnets,
+                  'ip_pool_id': 'external-ip-pool',
+                  'tenant': TEST_TENANT}
+        if tier1_id:
+            kwargs['tier1_id'] = tier1_id
+
+        if tier0_id:
+            kwargs['tier0_id'] = tier0_id
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
-            result = self.resourceApi.create_or_overwrite(
-                name, description=description,
-                tier1_id=tier1_id,
-                ip_pool_id=ip_pool_id,
-                subnets=subnets,
-                tenant=TEST_TENANT)
+            result = self.resourceApi.create_or_overwrite(name, **kwargs)
 
             expected_def = core_defs.SegmentDef(
                 segment_id=mock.ANY,
                 name=name,
-                description=description,
-                tier1_id=tier1_id,
-                ip_pool_id=ip_pool_id,
-                subnets=subnets,
-                tenant=TEST_TENANT)
+                **kwargs)
 
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
+
+    def test_create_with_t1(self):
+        self._test_create(tier1_id='111')
+
+    def test_create_with_t0(self):
+        self._test_create(tier0_id='000')
+
+    def test_create_with_t0_t1_fail(self):
+        self.assertRaises(nsxlib_exc.InvalidInput,
+                          self.resourceApi.create_or_overwrite,
+                          'seg-name', tier1_id='111', tier0_id='000')
 
     def test_delete(self):
         segment_id = '111'
