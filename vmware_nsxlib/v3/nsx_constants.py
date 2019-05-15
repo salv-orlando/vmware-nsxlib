@@ -114,7 +114,7 @@ LOGGING = 'logging'
 
 # Allowed address pairs
 NUM_ALLOWED_IP_ADDRESSES = 128
-MAX_STATIC_ROUTES = 27
+MAX_STATIC_ROUTES = 26
 
 # QoS directions egress/ingress
 EGRESS = 'egress'
