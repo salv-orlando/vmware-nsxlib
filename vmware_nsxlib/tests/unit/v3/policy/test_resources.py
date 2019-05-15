@@ -2702,8 +2702,35 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
     def test_remove_edge_cluster(self):
         tier1_id = '111'
         with mock.patch.object(self.policy_api,
-                               "delete") as api_call:
+                               "create_or_update") as api_call:
             self.resourceApi.remove_edge_cluster(
+                tier1_id,
+                tenant=TEST_TENANT)
+            expected_def = core_defs.Tier1LocaleServiceDef(
+                tier1_id=tier1_id,
+                service_id=self.resourceApi._locale_service_id(tier1_id),
+                edge_cluster_path=None,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_create_locale_service(self):
+        tier1_id = '111'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.create_locale_service(
+                tier1_id,
+                tenant=TEST_TENANT)
+            expected_def = core_defs.Tier1LocaleServiceDef(
+                tier1_id=tier1_id,
+                service_id=self.resourceApi._locale_service_id(tier1_id),
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_delete_locale_service(self):
+        tier1_id = '111'
+        with mock.patch.object(self.policy_api,
+                               "delete") as api_call:
+            self.resourceApi.delete_locale_service(
                 tier1_id,
                 tenant=TEST_TENANT)
             expected_def = core_defs.Tier1LocaleServiceDef(

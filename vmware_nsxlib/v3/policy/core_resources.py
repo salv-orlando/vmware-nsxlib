@@ -985,13 +985,21 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         # with the same id as the router id with a constant suffix
         return tier1_id + self.LOCALE_SERVICE_SUFF
 
-    def _ensure_locale_service(self, tier1_id,
-                               tenant=constants.POLICY_INFRA_TENANT):
+    def create_locale_service(self, tier1_id,
+                              tenant=constants.POLICY_INFRA_TENANT):
         t1service_def = core_defs.Tier1LocaleServiceDef(
             tier1_id=tier1_id,
             service_id=self._locale_service_id(tier1_id),
             tenant=tenant)
         self.policy_api.create_or_update(t1service_def)
+
+    def delete_locale_service(self, tier1_id,
+                              tenant=constants.POLICY_INFRA_TENANT):
+        t1service_def = core_defs.Tier1LocaleServiceDef(
+            tier1_id=tier1_id,
+            service_id=self._locale_service_id(tier1_id),
+            tenant=tenant)
+        self.policy_api.delete(t1service_def)
 
     def set_edge_cluster_path(self, tier1_id, edge_cluster_path,
                               tenant=constants.POLICY_INFRA_TENANT):
@@ -1004,11 +1012,13 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
 
     def remove_edge_cluster(self, tier1_id,
                             tenant=constants.POLICY_INFRA_TENANT):
+        """Reset the path in the locale-service (deleting it is not allowed)"""
         t1service_def = core_defs.Tier1LocaleServiceDef(
             tier1_id=tier1_id,
             service_id=self._locale_service_id(tier1_id),
+            edge_cluster_path=None,
             tenant=tenant)
-        self.policy_api.delete(t1service_def)
+        self.policy_api.create_or_update(t1service_def)
 
     def get_edge_cluster_path(self, tier1_id,
                               tenant=constants.POLICY_INFRA_TENANT):
@@ -1025,7 +1035,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
     def add_segment_interface(self, tier1_id, interface_id, segment_id,
                               subnets, ipv6_ndra_profile_id=IGNORE,
                               tenant=constants.POLICY_INFRA_TENANT):
-        self._ensure_locale_service(tier1_id, tenant)
+        self.create_locale_service(tier1_id, tenant)
 
         t1interface_def = core_defs.Tier1InterfaceDef(
             tier1_id=tier1_id,
