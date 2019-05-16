@@ -1016,7 +1016,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         t1service_def = core_defs.Tier1LocaleServiceDef(
             tier1_id=tier1_id,
             service_id=self._locale_service_id(tier1_id),
-            edge_cluster_path=None,
+            edge_cluster_path="",
             tenant=tenant)
         self.policy_api.create_or_update(t1service_def)
 

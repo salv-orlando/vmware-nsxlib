@@ -2709,7 +2709,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             expected_def = core_defs.Tier1LocaleServiceDef(
                 tier1_id=tier1_id,
                 service_id=self.resourceApi._locale_service_id(tier1_id),
-                edge_cluster_path=None,
+                edge_cluster_path="",
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
