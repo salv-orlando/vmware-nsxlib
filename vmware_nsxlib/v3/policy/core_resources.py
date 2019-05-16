@@ -221,6 +221,18 @@ class NsxPolicyResourceBase(object):
             realization_info.get('realization_specific_identifier')):
             return realization_info['realization_specific_identifier']
 
+    def _get_realization_error_message(self, info):
+        error_msg = 'unknown'
+        if info.get('alarms'):
+            alarm = info['alarms'][0]
+            error_msg = alarm.get('message')
+            if (alarm.get('error_details') and
+                alarm['error_details'].get('related_errors')):
+                related = alarm['error_details']['related_errors'][0]
+                error_msg = '%s: %s' % (error_msg,
+                                        related.get('error_message'))
+        return error_msg
+
     def _wait_until_realized(self, resource_def, entity_type=None,
                              sleep=None, max_attempts=None):
         """Wait until the resource has been realized
@@ -240,8 +252,7 @@ class NsxPolicyResourceBase(object):
                 if info['state'] == constants.STATE_REALIZED:
                     return info
                 if info['state'] == constants.STATE_ERROR:
-                    error_msg = (info['alarms'][0].get('message')
-                                 if info.get('alarms') else 'unknown')
+                    error_msg = self._get_realization_error_message(info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
