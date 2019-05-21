@@ -34,6 +34,7 @@ from requests import exceptions as requests_exceptions
 import six
 import six.moves.urllib.parse as urlparse
 import tenacity
+import urllib3
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client as nsx_client
@@ -45,7 +46,10 @@ LOG = log.getLogger(__name__)
 
 # disable warning message for each HTTP retry
 logging.getLogger(
-    "requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
+    "urllib3.connectionpool").setLevel(logging.ERROR)
+
+# Hide the InsecureRequestWarning from urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 @six.add_metaclass(abc.ABCMeta)
