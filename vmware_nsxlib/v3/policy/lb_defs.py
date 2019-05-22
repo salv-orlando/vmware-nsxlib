@@ -406,8 +406,15 @@ class LBServiceStatusDef(ResourceDef):
 
 class LBServiceUsageDef(ResourceDef):
 
+    def __init__(self, **kwargs):
+        self.realtime = kwargs.pop('realtime')
+        super(LBServiceUsageDef, self).__init__(**kwargs)
+
     @property
     def path_pattern(self):
+        if self.realtime:
+            return (LB_SERVICES_PATH_PATTERN +
+                    '%s/service-usage?source=realtime')
         return LB_SERVICES_PATH_PATTERN + '%s/service-usage/'
 
     @property

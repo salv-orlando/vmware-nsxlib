@@ -611,10 +611,10 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
                 tenant=tenant))
         return self.policy_api.get(lb_vs_status_def)
 
-    def get_usage(self, lb_service_id):
+    def get_usage(self, lb_service_id, realtime=False,
+                  tenant=constants.POLICY_INFRA_TENANT):
         lb_service_status_def = lb_defs.LBServiceUsageDef(
-            lb_service_id=lb_service_id,
-            tenant=constants.POLICY_INFRA_TENANT)
+            lb_service_id=lb_service_id, realtime=realtime, tenant=tenant)
         return self.policy_api.get(lb_service_status_def)
 
     def get_path(self, lb_service_id,

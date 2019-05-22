@@ -667,6 +667,19 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
+    def test_get_usage(self):
+        lbs_id = 'test_vs'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get_usage(
+                lbs_id, realtime=True, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServiceUsageDef(
+                lb_service_id=lbs_id,
+                realtime=True,
+                tenant=TEST_TENANT)
+            expected_path = '%s/lb-services/%s/service-usage?source=realtime'
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(expected_def.path_pattern, expected_path)
+
 
 class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
