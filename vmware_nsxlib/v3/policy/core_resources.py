@@ -991,10 +991,11 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                         tenant=tenant,
                         current_body=tier1_dict)
 
-    def _locale_service_id(self, tier1_id):
+    @staticmethod
+    def _locale_service_id(tier1_id):
         # Supporting only a single locale-service per router for now
         # with the same id as the router id with a constant suffix
-        return tier1_id + self.LOCALE_SERVICE_SUFF
+        return tier1_id + NsxPolicyTier1Api.LOCALE_SERVICE_SUFF
 
     def create_locale_service(self, tier1_id,
                               tenant=constants.POLICY_INFRA_TENANT):

@@ -21,6 +21,9 @@ LOG = logging.getLogger(__name__)
 VPN_IPSEC_PATH = 'vpn/ipsec/'
 
 
+# The following classes define IPSEC NSX constants that are alo relevant to the
+# policy implementation:
+
 class IkeVersionTypes(object):
     """Supported IKE versions (NSX default is V2)"""
     IKE_VERSION_V1 = 'IKE_V1'
@@ -29,15 +32,20 @@ class IkeVersionTypes(object):
 
 
 class EncryptionAlgorithmTypes(object):
-    """Supported encryption algorithms (NSX default is GCM)"""
+    """Supported encryption algorithms (NSX default is AES_128)"""
     ENCRYPTION_ALGORITHM_128 = 'AES_128'
     ENCRYPTION_ALGORITHM_256 = 'AES_256'
+    ENCRYPTION_ALGORITHM_GCM_128 = 'AES_GCM_128'  # only with IKE_V2
+    ENCRYPTION_ALGORITHM_GCM_192 = 'AES_GCM_192'  # only with IKE_V2
+    ENCRYPTION_ALGORITHM_GCM_256 = 'AES_GCM_256'  # only with IKE_V2
 
 
 class DigestAlgorithmTypes(object):
     """Supported digest (auth) algorithms (NSX default is SHA2_256)"""
     DIGEST_ALGORITHM_SHA1 = 'SHA1'
     DIGEST_ALGORITHM_SHA256 = 'SHA2_256'
+    DIGEST_ALGORITHM_SHA2_384 = 'SHA2_384'
+    DIGEST_ALGORITHM_SHA2_512 = 'SHA2_512'
     DIGEST_ALGORITHM_GMAC_128 = 'GMAC_128'  # only for tunnel profile
     DIGEST_ALGORITHM_GMAC_192 = 'GMAC_192'  # only for tunnel profile
     DIGEST_ALGORITHM_GMAC_256 = 'GMAC_256'  # only for tunnel profile
@@ -45,9 +53,14 @@ class DigestAlgorithmTypes(object):
 
 class DHGroupTypes(object):
     """Supported DH groups for Perfect Forward Secrecy"""
+    DH_GROUP_2 = 'GROUP2'
+    DH_GROUP_5 = 'GROUP5'
     DH_GROUP_14 = 'GROUP14'
     DH_GROUP_15 = 'GROUP15'
     DH_GROUP_16 = 'GROUP16'
+    DH_GROUP_19 = 'GROUP19'
+    DH_GROUP_20 = 'GROUP20'
+    DH_GROUP_21 = 'GROUP21'
 
 
 class EncapsulationModeTypes(object):
