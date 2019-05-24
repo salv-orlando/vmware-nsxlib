@@ -814,3 +814,18 @@ class Inventory(utils.NsxLibApiBase):
             msg = "backend resource %s is not supported" % resource_type
             raise exceptions.ResourceNotFound(details=msg)
         return path
+
+
+class SystemHealth(utils.NsxLibApiBase):
+    @property
+    def uri_segment(self):
+        return 'systemhealth'
+
+    @property
+    def resource_type(self):
+        return 'SystemHealth'
+
+    def create_ncp_status(self, cluster_id, status):
+        url = '/container-cluster/ncp/status'
+        body = {'cluster_id': cluster_id, 'status': status}
+        return self.client.create(self.get_path(url), body=body)
