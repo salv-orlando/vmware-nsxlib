@@ -1046,16 +1046,17 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
     def add_segment_interface(self, tier1_id, interface_id, segment_id,
                               subnets, ipv6_ndra_profile_id=IGNORE,
                               tenant=constants.POLICY_INFRA_TENANT):
-        self.create_locale_service(tier1_id, tenant)
+        args = {'tier1_id': tier1_id,
+                'service_id': self._locale_service_id(tier1_id),
+                'interface_id': interface_id,
+                'segment_id': segment_id,
+                'subnets': subnets,
+                'tenant': tenant}
 
-        t1interface_def = core_defs.Tier1InterfaceDef(
-            tier1_id=tier1_id,
-            service_id=self._locale_service_id(tier1_id),
-            interface_id=interface_id,
-            segment_id=segment_id,
-            subnets=subnets,
-            ipv6_ndra_profile_id=ipv6_ndra_profile_id,
-            tenant=tenant)
+        if ipv6_ndra_profile_id != IGNORE:
+            args['ipv6_ndra_profile_id'] = ipv6_ndra_profile_id
+
+        t1interface_def = core_defs.Tier1InterfaceDef(**args)
         self.policy_api.create_or_update(t1interface_def)
 
     def remove_segment_interface(self, tier1_id, interface_id,
