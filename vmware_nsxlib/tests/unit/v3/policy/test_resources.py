@@ -2558,6 +2558,39 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             self.assert_called_with_def(
                 update_call, expected_def)
 
+    def test_update_route_advand_tier0(self):
+        obj_id = '111'
+        rtr_name = 'rtr111'
+        tier0 = 'tier0-id'
+        get_result = {'id': obj_id,
+                      'display_name': rtr_name,
+                      'route_advertisement_types': ['TIER1_NAT',
+                                                    'TIER1_LB_VIP']}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=get_result),\
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.update_route_advertisement(
+                obj_id,
+                static_routes=True,
+                lb_vip=False,
+                lb_snat=True,
+                tier0=tier0,
+                tenant=TEST_TENANT)
+
+            new_adv = self.resourceApi.build_route_advertisement(
+                nat=True, static_routes=True, lb_snat=True)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=obj_id,
+                name=rtr_name,
+                route_advertisement=new_adv,
+                tier0=tier0,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(
+                update_call, expected_def)
+
     def test_set_enable_standby_relocation(self):
         obj_id = '111'
         name = 'new name'
