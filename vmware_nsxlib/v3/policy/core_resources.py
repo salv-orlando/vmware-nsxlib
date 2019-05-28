@@ -947,6 +947,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         nat=None,
         lb_vip=None,
         lb_snat=None,
+        tier0=IGNORE,
         tenant=constants.POLICY_INFRA_TENANT):
 
         tier1_dict = self.get(tier1_id, tenant)
@@ -959,6 +960,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
 
         self.update(tier1_id,
                     route_advertisement=route_adv,
+                    tier0=tier0,
                     tenant=tenant,
                     current_body=tier1_dict)
 
