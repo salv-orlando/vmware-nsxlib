@@ -1001,11 +1001,17 @@ class NsxLibIpBlockSubnet(utils.NsxLibApiBase):
     def resource_type(self):
         return 'IpBlockSubnet'
 
-    def create(self, ip_block_id, subnet_size):
+    def create(self, ip_block_id, subnet_size, allow_overwrite=False):
         """Create a IP block subnet on the backend."""
         body = {'size': subnet_size,
                 'block_id': ip_block_id}
-        return self.client.create(self.get_path(), body)
+        headers = None
+        if allow_overwrite:
+            # In case of manager to policy API resources imports,
+            # a Policy owned Manager IpBlock resource might be needed
+            # to allocate subnet using Manager APIs.
+            headers = {'X-Allow-Overwrite': 'true'}
+        return self.client.create(self.get_path(), body, headers=headers)
 
     def delete(self, subnet_id):
         """Delete a IP block subnet on the backend."""
