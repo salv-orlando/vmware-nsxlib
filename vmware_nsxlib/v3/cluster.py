@@ -282,7 +282,7 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
             else:
                 for header_name in resp.headers:
                     if self.SET_COOKIE_FIELD.lower() == header_name.lower():
-                        m = re.match('%s=.*?\;' % self.JSESSIONID,
+                        m = re.match('%s=.*?\;' % self.JSESSIONID,  # noqa
                                      resp.headers[header_name])
                         if m:
                             session.default_headers[self.COOKIE_FIELD] = (

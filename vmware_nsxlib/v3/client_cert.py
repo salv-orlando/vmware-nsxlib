@@ -181,7 +181,7 @@ class ClientCertificateManager(object):
 
         try:
             self._storage_driver.delete_cert(self._identity)
-        except Exception:
+        except Exception as e:
             LOG.error("Failed to clear certificate in storage: %s", e)
             ok = False
 

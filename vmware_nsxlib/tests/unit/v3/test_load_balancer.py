@@ -161,11 +161,10 @@ class TestClientSslProfile(nsxlib_testcase.NsxClientTestCase):
             'tags': consts.FAKE_TAGS
         }
         with mock.patch.object(self.nsxlib.client, 'create') as create:
-                self.nsxlib.load_balancer.client_ssl_profile.create(
-                    body['display_name'], body['description'],
-                    consts.FAKE_TAGS)
-                create.assert_called_with('loadbalancer/client-ssl-profiles',
-                                          body)
+            self.nsxlib.load_balancer.client_ssl_profile.create(
+                body['display_name'], body['description'],
+                consts.FAKE_TAGS)
+            create.assert_called_with('loadbalancer/client-ssl-profiles', body)
 
     def test_list_client_ssl_profiles(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
@@ -200,11 +199,10 @@ class TestServerSslProfile(nsxlib_testcase.NsxClientTestCase):
             'tags': consts.FAKE_TAGS
         }
         with mock.patch.object(self.nsxlib.client, 'create') as create:
-                self.nsxlib.load_balancer.server_ssl_profile.create(
-                    body['display_name'], body['description'],
-                    consts.FAKE_TAGS)
-                create.assert_called_with('loadbalancer/server-ssl-profiles',
-                                          body)
+            self.nsxlib.load_balancer.server_ssl_profile.create(
+                body['display_name'], body['description'],
+                consts.FAKE_TAGS)
+            create.assert_called_with('loadbalancer/server-ssl-profiles', body)
 
     def test_list_server_ssl_profiles(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
@@ -278,11 +276,11 @@ class TestPool(nsxlib_testcase.NsxClientTestCase):
             'tags': consts.FAKE_TAGS
         }
         with mock.patch.object(self.nsxlib.client, 'create') as create:
-                self.nsxlib.load_balancer.pool.create(
-                    body['display_name'], body['description'],
-                    consts.FAKE_TAGS, algorithm=body['algorithm'])
-                create.assert_called_with('loadbalancer/pools',
-                                          body)
+            self.nsxlib.load_balancer.pool.create(
+                body['display_name'], body['description'],
+                consts.FAKE_TAGS, algorithm=body['algorithm'])
+            create.assert_called_with('loadbalancer/pools',
+                                      body)
 
     def test_list_pools(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
@@ -359,12 +357,12 @@ class TestVirtualServer(nsxlib_testcase.NsxClientTestCase):
             'tags': consts.FAKE_TAGS
         }
         with mock.patch.object(self.nsxlib.client, 'create') as create:
-                self.nsxlib.load_balancer.virtual_server.create(
-                    body['display_name'], body['description'],
-                    consts.FAKE_TAGS, ip_protocol=body['ip_protocol'],
-                    port=body['port'], enabled=body['enabled'])
-                create.assert_called_with('loadbalancer/virtual-servers',
-                                          body)
+            self.nsxlib.load_balancer.virtual_server.create(
+                body['display_name'], body['description'],
+                consts.FAKE_TAGS, ip_protocol=body['ip_protocol'],
+                port=body['port'], enabled=body['enabled'])
+            create.assert_called_with('loadbalancer/virtual-servers',
+                                      body)
 
     def test_list_virtual_servers(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
@@ -503,12 +501,12 @@ class TestService(nsxlib_testcase.NsxClientTestCase):
             'tags': consts.FAKE_TAGS
         }
         with mock.patch.object(self.nsxlib.client, 'create') as create:
-                self.nsxlib.load_balancer.service.create(
-                    body['display_name'], body['description'],
-                    consts.FAKE_TAGS, enabled=body['enabled'],
-                    attachment=body['attachment'])
-                create.assert_called_with('loadbalancer/services',
-                                          body)
+            self.nsxlib.load_balancer.service.create(
+                body['display_name'], body['description'],
+                consts.FAKE_TAGS, enabled=body['enabled'],
+                attachment=body['attachment'])
+            create.assert_called_with('loadbalancer/services',
+                                      body)
 
     def test_list_services(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
