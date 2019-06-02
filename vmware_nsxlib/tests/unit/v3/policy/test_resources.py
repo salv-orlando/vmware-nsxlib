@@ -1495,6 +1495,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
         dest_group = 'g2'
         service1_id = 'c1'
         service2_id = 'c2'
+        tag = 'abc1234'
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             result = self.resourceApi.create_entry(
@@ -1508,6 +1509,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 sequence_number=1,
                 direction=nsx_constants.IN,
                 ip_protocol=nsx_constants.IPV4,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             expected_entry_def = self.entryDef(
@@ -1525,6 +1527,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 ip_protocol=nsx_constants.IPV4,
                 scope=None,
                 logged=False,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             self.assert_called_with_def(api_call, expected_entry_def)
@@ -1537,6 +1540,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
         description = 'desc'
         source_group = 'g1'
         dest_group = 'g2'
+        tag = 'abc1234'
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             result = self.resourceApi.create_entry(
@@ -1545,6 +1549,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 source_groups=[source_group],
                 dest_groups=[dest_group],
                 sequence_number=1,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             expected_entry_def = self.entryDef(
@@ -1562,6 +1567,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 dest_groups=[dest_group],
                 scope=None,
                 logged=False,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             self.assert_called_with_def(api_call, expected_entry_def)
@@ -1578,6 +1584,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
         service2_id = 'c2'
         seq_num = 1
         ret_comm = {'rules': [{'sequence_number': seq_num}]}
+        tag = 'abc1234'
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call,\
             mock.patch.object(self.policy_api,
@@ -1589,6 +1596,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 source_groups=[source_group],
                 dest_groups=[dest_group],
                 logged=False,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             expected_entry_def = self.entryDef(
@@ -1606,6 +1614,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
                 sequence_number=seq_num + 1,
                 scope=None,
                 logged=False,
+                tag=tag,
                 tenant=TEST_TENANT)
 
             self.assert_called_with_def(api_call, expected_entry_def)
