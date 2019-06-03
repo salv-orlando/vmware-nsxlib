@@ -672,6 +672,84 @@ class LogicalPortTestCase(BaseTestResource):
             data=jsonutils.dumps(fake_port, sort_keys=True),
             headers=self.default_headers())
 
+    def test_update_port_tags_update_add(self):
+        """Test adding / removing tags using tags_update attribute"""
+        fake_port = copy.deepcopy(test_constants.FAKE_PORT)
+        orig_tags = [{'scope': 'a1', 'tag': 'b1'},
+                     {'scope': 'a2', 'tag': 'b2'}]
+        fake_port['tags'] = orig_tags
+        # Add a new tag
+        tags_update = [{'scope': 'a3', 'tag': 'b3'}]
+        mocked_resource = self.get_mocked_resource()
+
+        def get_fake_port(*args, **kwargs):
+            return copy.copy(fake_port)
+
+        mocked_resource.client.get = get_fake_port
+        mocked_resource.update(
+            fake_port['id'],
+            fake_port['attachment']['id'],
+            tags_update=tags_update)
+        # update expected result:
+        fake_port['tags'] = orig_tags + tags_update
+        test_client.assert_json_call(
+            'put', mocked_resource,
+            'https://1.2.3.4/api/v1/logical-ports/%s' % fake_port['id'],
+            data=jsonutils.dumps(fake_port, sort_keys=True),
+            headers=self.default_headers())
+
+    def test_update_port_tags_update_remove(self):
+        """Test adding / removing tags using tags_update attribute"""
+        fake_port = copy.deepcopy(test_constants.FAKE_PORT)
+        orig_tags = [{'scope': 'a1', 'tag': 'b1'},
+                     {'scope': 'a2', 'tag': 'b2'}]
+        fake_port['tags'] = orig_tags
+        # Add a new tag
+        tags_update = [{'scope': 'a1', 'tag': None}]
+        mocked_resource = self.get_mocked_resource()
+
+        def get_fake_port(*args, **kwargs):
+            return copy.copy(fake_port)
+
+        mocked_resource.client.get = get_fake_port
+        mocked_resource.update(
+            fake_port['id'],
+            fake_port['attachment']['id'],
+            tags_update=tags_update)
+        # update expected result:
+        fake_port['tags'] = [{'scope': 'a2', 'tag': 'b2'}]
+        test_client.assert_json_call(
+            'put', mocked_resource,
+            'https://1.2.3.4/api/v1/logical-ports/%s' % fake_port['id'],
+            data=jsonutils.dumps(fake_port, sort_keys=True),
+            headers=self.default_headers())
+
+    def test_update_port_tags(self):
+        """Test modifying tags using tags attribute"""
+        fake_port = copy.deepcopy(test_constants.FAKE_PORT)
+        orig_tags = [{'scope': 'a1', 'tag': 'b1'},
+                     {'scope': 'a2', 'tag': 'b2'}]
+        fake_port['tags'] = orig_tags
+        # Add a new tag
+        new_tags = [{'scope': 'a3', 'tag': 'b3'}]
+        mocked_resource = self.get_mocked_resource()
+
+        def get_fake_port(*args, **kwargs):
+            return copy.copy(fake_port)
+
+        mocked_resource.client.get = get_fake_port
+        mocked_resource.update(
+            fake_port['id'],
+            fake_port['attachment']['id'],
+            tags=new_tags)
+        # update expected result:
+        fake_port['tags'] = new_tags
+        test_client.assert_json_call(
+            'put', mocked_resource,
+            'https://1.2.3.4/api/v1/logical-ports/%s' % fake_port['id'],
+            data=jsonutils.dumps(fake_port, sort_keys=True),
+            headers=self.default_headers())
+
 
 class LogicalRouterTestCase(BaseTestResource):
 
