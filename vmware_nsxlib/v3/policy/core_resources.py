@@ -2764,7 +2764,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      scope=None,
                      ip_protocol=nsx_constants.IPV4_IPV6,
                      direction=nsx_constants.IN_OUT,
-                     logged=False,
+                     logged=False, tag=None,
                      tenant=constants.POLICY_INFRA_TENANT):
         """Create CommunicationMap Entry.
 
@@ -2793,6 +2793,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                    ip_protocol=ip_protocol,
                                    direction=direction,
                                    logged=logged,
+                                   tag=tag,
                                    tenant=tenant)
 
         self._create_or_store(entry_def)
@@ -2892,7 +2893,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      sequence_number=IGNORE, service_ids=IGNORE,
                      action=IGNORE, source_groups=IGNORE, dest_groups=IGNORE,
                      scope=IGNORE, ip_protocol=IGNORE,
-                     direction=IGNORE, logged=IGNORE, tags=IGNORE,
+                     direction=IGNORE, logged=IGNORE, tags=IGNORE, tag=IGNORE,
                      tenant=constants.POLICY_INFRA_TENANT):
         if self._any_arg_set(name, description, sequence_number, service_ids,
                              action, source_groups, dest_groups, scope,
@@ -2913,6 +2914,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                 direction=direction,
                 logged=logged,
                 tags=tags,
+                tag=tag,
                 tenant=tenant)
             self.policy_api.create_or_update(entry_def)
 

@@ -1327,7 +1327,7 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
 
         self._set_attrs_if_specified(body, ['sequence_number', 'scope',
                                             'action', 'direction', 'logged',
-                                            'ip_protocol'])
+                                            'ip_protocol', 'tag'])
 
         if self.has_attr('service_ids'):
             service_ids = self.get_attr('service_ids')
