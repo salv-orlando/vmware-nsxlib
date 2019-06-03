@@ -189,13 +189,19 @@ class LogicalPort(utils.NsxLibApiBase):
     def update(self, lport_id, vif_uuid,
                name=None, admin_state=None,
                address_bindings=None, switch_profile_ids=None,
-               tags_update=None,
+               tags_update=None, tags=None,
                attachment_type=nsx_constants.ATTACHMENT_VIF,
                parent_vif_id=None, traffic_tag=None,
                vif_type=None, app_id=None,
                allocate_addresses=nsx_constants.ALLOCATE_ADDRESS_NONE,
                description=None, tn_uuid=None,
                extra_configs=None):
+        # Do not allow tags & tags_update at the same call
+        if tags_update and tags:
+            raise exceptions.ManagerError(
+                details=_("Can't support updating logical port %s both with "
+                          "tags and tags_update attributes") % lport_id)
+
         attachment = self._prepare_attachment(attachment_type, vif_uuid,
                                               allocate_addresses, vif_type,
                                               parent_vif_id, traffic_tag,
@@ -210,7 +216,8 @@ class LogicalPort(utils.NsxLibApiBase):
             switch_profile_ids=switch_profile_ids,
             attachment=attachment,
             description=description,
-            extra_configs=extra_configs))
+            extra_configs=extra_configs,
+            tags=tags))
 
         return self._update_resource(
             self.get_path(lport_id), lport, retry=True)
