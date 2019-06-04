@@ -993,6 +993,41 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                         tenant=tenant,
                         current_body=tier1_dict)
 
+    def build_advertisement_rule(self, name, action=None, prefix_operator=None,
+                                 route_advertisement_types=None, subnets=None):
+        return core_defs.RouteAdvertisementRule(
+            name=name, action=action, prefix_operator=prefix_operator,
+            route_advertisement_types=route_advertisement_types,
+            subnets=subnets)
+
+    def update_advertisement_rules(self, tier1_id, rules, name_prefix=None,
+                                   tenant=constants.POLICY_INFRA_TENANT):
+        """Update the router advertisement rules
+
+        If name_prefix is None, replace the entire list of NSX rules with the
+        new given 'rules'.
+        Else - delete the NSX rules with this name prefix, and add 'rules' to
+        the rest.
+        """
+        tier1_dict = self.get(tier1_id, tenant)
+        current_rules = tier1_dict.get('route_advertisement_rules', [])
+        if name_prefix:
+            # delete rules with this prefix:
+            new_rules = []
+            for rule in current_rules:
+                if (not rule.get('name') or
+                    not rule['name'].startswith(name_prefix)):
+                    new_rules.append(rule)
+            # add new rules
+            new_rules.extend(rules)
+        else:
+            new_rules = rules
+
+        self.update(tier1_id,
+                    route_advertisement_rules=new_rules,
+                    tenant=tenant,
+                    current_body=tier1_dict)
+
     @staticmethod
     def _locale_service_id(tier1_id):
         # Supporting only a single locale-service per router for now

@@ -2860,8 +2860,8 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                                "get",
                                return_value={'id': tier1_id,
                                              'resource_type': 'Tier1'}),\
-                mock.patch.object(self.policy_api,
-                                  'create_or_update') as api_call:
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
             self.resourceApi.add_advertisement_rule(
                 tier1_id, rule_name, action=rule_action,
                 prefix_operator=rule_pfx_operator,
@@ -2890,8 +2890,8 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         with mock.patch.object(self.policy_api,
                                "get",
                                return_value=get_retval),\
-                mock.patch.object(self.policy_api,
-                                  'create_or_update') as api_call:
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
             self.resourceApi.remove_advertisement_rule(
                 tier1_id, rule_name, tenant=TEST_TENANT)
 
@@ -2900,6 +2900,55 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 route_advertisement_rules=[],
                 tenant=TEST_TENANT)
 
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update_advertisement_rules(self):
+        tier1_id = '111'
+        old_rule = 'old'
+        new_rule = 'new'
+        get_retval = {
+            'id': tier1_id,
+            'route_advertisement_rules': [{'name': old_rule}]}
+        rules = [{'name': new_rule}]
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=get_retval),\
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
+            self.resourceApi.update_advertisement_rules(
+                tier1_id, rules, name_prefix=None, tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=tier1_id,
+                route_advertisement_rules=rules,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update_advertisement_rules_with_replace(self):
+        tier1_id = '111'
+        old_rule1 = 'old1'
+        old_rule2 = 'old2'
+        new_rule = 'new'
+        get_retval = {
+            'id': tier1_id,
+            'route_advertisement_rules': [
+                {'name': old_rule1},
+                {'name': old_rule2}]}
+        rules = [{'name': new_rule}]
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=get_retval),\
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
+            self.resourceApi.update_advertisement_rules(
+                tier1_id, rules, name_prefix='old1', tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=tier1_id,
+                route_advertisement_rules=[
+                    {'name': old_rule2},
+                    {'name': new_rule}],
+                tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
 
