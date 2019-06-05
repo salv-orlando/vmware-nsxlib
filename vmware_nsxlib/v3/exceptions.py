@@ -55,6 +55,10 @@ class ObjectAlreadyExists(NsxLibException):
     message = _("%(object_type)s already exists")
 
 
+class NotImplemented(NsxLibException):
+    message = _("%(operation)s is not supported")
+
+
 class ObjectNotGenerated(NsxLibException):
     message = _("%(object_type)s was not generated")
 

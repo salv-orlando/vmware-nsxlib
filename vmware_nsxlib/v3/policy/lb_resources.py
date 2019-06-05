@@ -154,7 +154,7 @@ class NsxPolicyLBAppProfileFastUdpApi(
         return lb_defs.LBFastUdpProfile
 
 
-class NsxPolicyLoadBalancerLBClientSSLProfileApi(NsxPolicyResourceBase):
+class NsxPolicyLoadBalancerClientSSLProfileApi(NsxPolicyResourceBase):
     """NSX Policy LB client ssl profile"""
 
     @property
@@ -219,9 +219,67 @@ class NsxPolicyLoadBalancerLBClientSSLProfileApi(NsxPolicyResourceBase):
         return profile_def.get_resource_full_path()
 
 
-class NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(
+class NsxPolicyLoadBalancerPersistenceProfileApi(
     NsxPolicyResourceBase):
-    """NSX Policy LB client ssl profile"""
+    """LB generic api for all types of session persistence profiles"""
+
+    @property
+    def entry_def(self):
+        return lb_defs.LBPersistenceProfileBase
+
+    def create_or_overwrite(self, name,
+                            persistence_profile_id=None,
+                            description=IGNORE,
+                            tags=IGNORE,
+                            ha_persistence_mirroring_enabled=IGNORE,
+                            persistence_shared=IGNORE,
+                            purge=IGNORE,
+                            timeout=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        raise nsxlib_exc.NotImplemented(
+            "Creating generic persistence profile")
+
+    def delete(self, persistence_profile_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        persistence_profile_def = self.entry_def(
+            persistence_profile_id=persistence_profile_id,
+            tenant=tenant)
+        self.policy_api.delete(persistence_profile_def)
+
+    def get(self, persistence_profile_id,
+            tenant=constants.POLICY_INFRA_TENANT):
+        persistence_profile_def = self.entry_def(
+            persistence_profile_id=persistence_profile_id,
+            tenant=tenant)
+        return self.policy_api.get(persistence_profile_def)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        persistence_profile_def = self.entry_def(tenant=tenant)
+        return self._list(persistence_profile_def)
+
+    def update(self, persistence_profile_id,
+               name=IGNORE,
+               description=IGNORE,
+               tags=IGNORE,
+               ha_persistence_mirroring_enabled=IGNORE,
+               persistence_shared=IGNORE,
+               purge=IGNORE,
+               timeout=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        raise nsxlib_exc.NotImplemented(
+            "Updating generic persistence profile")
+
+    def get_path(self, profile_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        profile_def = self.entry_def(
+            persistence_profile_id=profile_id,
+            tenant=tenant)
+        return profile_def.get_resource_full_path()
+
+
+class NsxPolicyLoadBalancerCookiePersistenceProfileApi(
+    NsxPolicyLoadBalancerPersistenceProfileApi):
+    """NSX Policy LB cookie persistence profile"""
 
     @property
     def entry_def(self):
@@ -255,23 +313,12 @@ class NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(
         self._create_or_store(lb_cookie_persistence_profile_def)
         return persistence_profile_id
 
-    def delete(self, persistence_profile_id,
-               tenant=constants.POLICY_INFRA_TENANT):
-        lb_cookie_persistence_profile_def = self.entry_def(
-            persistence_profile_id=persistence_profile_id,
-            tenant=tenant)
-        self.policy_api.delete(lb_cookie_persistence_profile_def)
-
-    def get(self, persistence_profile_id,
-            tenant=constants.POLICY_INFRA_TENANT):
-        lb_cookie_persistence_profile_def = self.entry_def(
-            persistence_profile_id=persistence_profile_id,
-            tenant=tenant)
-        return self.policy_api.get(lb_cookie_persistence_profile_def)
-
     def list(self, tenant=constants.POLICY_INFRA_TENANT):
         lb_cookie_persistence_profile_def = self.entry_def(tenant=tenant)
-        return self._list(lb_cookie_persistence_profile_def)
+        results = self._list(lb_cookie_persistence_profile_def)
+        # filter the results by resource type
+        return [res for res in results
+                if res.get('resource_type') == self.entry_def.resource_type]
 
     def update(self, persistence_profile_id,
                name=IGNORE,
@@ -297,17 +344,10 @@ class NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(
             persistence_shared=persistence_shared,
             tenant=tenant)
 
-    def get_path(self, profile_id,
-                 tenant=constants.POLICY_INFRA_TENANT):
-        profile_def = self.entry_def(
-            persistence_profile_id=profile_id,
-            tenant=tenant)
-        return profile_def.get_resource_full_path()
 
-
-class NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(
-    NsxPolicyResourceBase):
-    """NSX Policy LB client ssl profile"""
+class NsxPolicyLoadBalancerSourceIpPersistenceProfileApi(
+    NsxPolicyLoadBalancerPersistenceProfileApi):
+    """NSX Policy LB source ip persistence profile"""
 
     @property
     def entry_def(self):
@@ -337,23 +377,12 @@ class NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(
         self._create_or_store(lb_source_ip_persistence_profile_def)
         return persistence_profile_id
 
-    def delete(self, persistence_profile_id,
-               tenant=constants.POLICY_INFRA_TENANT):
-        lb_source_ip_persistence_profile_def = self.entry_def(
-            persistence_profile_id=persistence_profile_id,
-            tenant=tenant)
-        self.policy_api.delete(lb_source_ip_persistence_profile_def)
-
-    def get(self, persistence_profile_id,
-            tenant=constants.POLICY_INFRA_TENANT):
-        lb_source_ip_persistence_profile_def = self.entry_def(
-            persistence_profile_id=persistence_profile_id,
-            tenant=tenant)
-        return self.policy_api.get(lb_source_ip_persistence_profile_def)
-
     def list(self, tenant=constants.POLICY_INFRA_TENANT):
         lb_source_ip_persistence_profile_def = self.entry_def(tenant=tenant)
-        return self._list(lb_source_ip_persistence_profile_def)
+        results = self._list(lb_source_ip_persistence_profile_def)
+        # filter the results by resource type
+        return [res for res in results
+                if res.get('resource_type') == self.entry_def.resource_type]
 
     def update(self, persistence_profile_id,
                name=IGNORE,
@@ -374,13 +403,6 @@ class NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(
             purge=purge,
             timeout=timeout,
             tenant=tenant)
-
-    def get_path(self, profile_id,
-                 tenant=constants.POLICY_INFRA_TENANT):
-        profile_def = self.entry_def(
-            persistence_profile_id=profile_id,
-            tenant=tenant)
-        return profile_def.get_resource_full_path()
 
 
 class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
@@ -1159,11 +1181,13 @@ class NsxPolicyLoadBalancerApi(object):
         self.lb_fast_tcp_profile = NsxPolicyLBAppProfileFastTcpApi(*args)
         self.lb_fast_udp_profile = NsxPolicyLBAppProfileFastUdpApi(*args)
         self.client_ssl_profile = (
-            NsxPolicyLoadBalancerLBClientSSLProfileApi(*args))
+            NsxPolicyLoadBalancerClientSSLProfileApi(*args))
+        self.lb_persistence_profile = (
+            NsxPolicyLoadBalancerPersistenceProfileApi(*args))
         self.lb_cookie_persistence_profile = (
-            NsxPolicyLoadBalancerLBCookiePersistenceProfileApi(*args))
+            NsxPolicyLoadBalancerCookiePersistenceProfileApi(*args))
         self.lb_source_ip_persistence_profile = (
-            NsxPolicyLoadBalancerLBSourceIpPersistenceProfileApi(*args))
+            NsxPolicyLoadBalancerSourceIpPersistenceProfileApi(*args))
         self.lb_service = NsxPolicyLoadBalancerServiceApi(*args)
         self.virtual_server = NsxPolicyLoadBalancerVirtualServerAPI(*args)
         self.lb_pool = NsxPolicyLoadBalancerPoolApi(*args)

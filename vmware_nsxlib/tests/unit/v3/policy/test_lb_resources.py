@@ -124,6 +124,59 @@ class TestPolicyLBClientSSLProfileApi(test_resources.NsxPolicyLibTestCase):
             self.assert_called_with_def(update_call, expected_def)
 
 
+class TestPolicyLBPersistenceProfile(
+    test_resources.NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyLBPersistenceProfile, self).setUp()
+        self.resourceApi = (
+            self.policy_lib.load_balancer.lb_persistence_profile)
+
+    def test_delete(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(obj_id, tenant=TEST_TENANT)
+            expected_def = (
+                self.resourceApi.entry_def(
+                    persistence_profile_id=obj_id,
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}) as api_call:
+            result = self.resourceApi.get(obj_id, tenant=TEST_TENANT)
+            expected_def = (
+                self.resourceApi.entry_def(
+                    persistence_profile_id=obj_id,
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(obj_id, result['id'])
+
+    def test_get_by_name(self):
+        name = 'd1'
+        with mock.patch.object(
+            self.policy_api, "list",
+            return_value={'results': [{'display_name': name}]}) as api_call:
+            obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
+            self.assertIsNotNone(obj)
+            expected_def = (
+                self.resourceApi.entry_def(
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_list(self):
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = (
+                self.resourceApi.entry_def(
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+
 class TestPolicyLBCookiePersistenceProfile(
     test_resources.NsxPolicyLibTestCase):
 
@@ -211,7 +264,9 @@ class TestPolicyLBCookiePersistenceProfile(
         name = 'd1'
         with mock.patch.object(
             self.policy_api, "list",
-            return_value={'results': [{'display_name': name}]}) as api_call:
+            return_value={'results': [
+                {'resource_type': self.resourceApi.entry_def.resource_type,
+                 'display_name': name}]}) as api_call:
             obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
             self.assertIsNotNone(obj)
             expected_def = (
@@ -220,14 +275,19 @@ class TestPolicyLBCookiePersistenceProfile(
             self.assert_called_with_def(api_call, expected_def)
 
     def test_list(self):
-        with mock.patch.object(self.policy_api, "list",
-                               return_value={'results': []}) as api_call:
+        with mock.patch.object(
+            self.policy_api, "list",
+            return_value={'results': [
+                {'resource_type': self.resourceApi.entry_def.resource_type,
+                 'display_name': 'profile1'},
+                {'resource_type': 'wrong_type',
+                 'display_name': 'profile2'}]}) as api_call:
             result = self.resourceApi.list(tenant=TEST_TENANT)
             expected_def = (
                 lb_defs.LBCookiePersistenceProfileDef(
                     tenant=TEST_TENANT))
             self.assert_called_with_def(api_call, expected_def)
-            self.assertEqual([], result)
+            self.assertEqual(1, len(result))
 
     def test_update(self):
         obj_id = '111'
@@ -348,7 +408,9 @@ class TestPolicyLBSourceIpProfileApi(test_resources.NsxPolicyLibTestCase):
         name = 'd1'
         with mock.patch.object(
             self.policy_api, "list",
-            return_value={'results': [{'display_name': name}]}) as api_call:
+            return_value={'results': [
+                {'resource_type': self.resourceApi.entry_def.resource_type,
+                 'display_name': name}]}) as api_call:
             obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
             self.assertIsNotNone(obj)
             expected_def = (
