@@ -470,6 +470,7 @@ class Tier1InterfaceDef(ResourceDef):
             # subnets expected to be of type InterfaceSubnet
             if self.get_attr('subnets'):
                 subnets = [subnet.get_obj_dict()
+                           if isinstance(subnet, InterfaceSubnet) else subnet
                            for subnet in self.get_attr('subnets')]
                 self._set_attr_if_specified(body, 'subnets',
                                             value=subnets)
