@@ -172,6 +172,8 @@ class NsxLib(lib.NsxLibBase):
                 return True
             if (feature == nsx_constants.FEATURE_IPV6):
                 return True
+            if (feature == nsx_constants.FEATURE_ENS_WITH_QOS):
+                return True
 
         if (version.LooseVersion(self.get_version()) >=
                 version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
