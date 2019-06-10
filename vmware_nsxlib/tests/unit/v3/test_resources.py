@@ -2310,6 +2310,13 @@ class TestNsxlibClusterNodesConfigTestCase(BaseTestResource):
                               test_constants.FAKE_MANAGER_IP2], result)
 
 
+class NsxlibHostSwitchProfilesTestCase(BaseTestResource):
+
+    def setUp(self):
+        super(NsxlibHostSwitchProfilesTestCase, self).setUp(
+            resources.NsxlibHostSwitchProfiles)
+
+
 class InventoryTestCase(BaseTestResource):
     CONTAINER_CLUSTER = "k8s-cluster-1"
 
