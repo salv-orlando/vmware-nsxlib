@@ -3838,6 +3838,17 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
+    def test_get_realization_info(self):
+        ip_pool_id = '111'
+        with mock.patch.object(
+            self.resourceApi, "_get_realization_info") as api_call:
+            self.resourceApi.get_realization_info(
+                ip_pool_id, tenant=TEST_TENANT)
+            expected_def = core_defs.IpPoolDef(
+                ip_pool_id=ip_pool_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def_and_dict(api_call, expected_def, {})
+
     def test_get_static_subnet_realization_info(self):
         ip_pool_id = 'ip-pool-id'
         ip_subnet_id = 'static-subnet-id'
@@ -3861,6 +3872,29 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
                 ip_pool_id, ip_subnet_id, tenant=TEST_TENANT,
                 wait=True, subnet_type=constants.IPPOOL_STATIC_SUBNET)
             api_get.assert_called_once()
+
+    def test_wait_until_realized_fail(self):
+        ip_pool_id = 'p1'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': ip_pool_id,
+                'entity_type': 'IpPool'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              ip_pool_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        ip_pool_id = 'p1'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': ip_pool_id,
+                'entity_type': 'IpPool'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                ip_pool_id, max_attempts=5, sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicySegmentPort(NsxPolicyLibTestCase):

@@ -2588,6 +2588,11 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             tenant=tenant)
         return self.policy_api.get(ip_subnet_def)
 
+    def get_realization_info(self, ip_pool_id, entity_type=None,
+                             tenant=constants.POLICY_INFRA_TENANT):
+        ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id, tenant=tenant)
+        return self._get_realization_info(ip_pool_def, entity_type=entity_type)
+
     def get_ip_subnet_realization_info(
             self, ip_pool_id, ip_subnet_id,
             entity_type=None,
@@ -2644,6 +2649,14 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
                     'values')[0]
             except IndexError:
                 return
+
+    def wait_until_realized(self, ip_pool_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id, tenant=tenant)
+        return self._wait_until_realized(ip_pool_def, entity_type=entity_type,
+                                         sleep=sleep,
+                                         max_attempts=max_attempts)
 
 
 class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
