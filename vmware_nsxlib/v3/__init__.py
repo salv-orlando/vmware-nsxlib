@@ -108,6 +108,8 @@ class NsxLib(lib.NsxLibBase):
             self.client, self.nsxlib_config, nsxlib=self)
         self.global_routing = core_resources.NsxLibGlobalRoutingConfig(
             self.client, self.nsxlib_config, nsxlib=self)
+        self.host_switch_profiles = resources.NsxlibHostSwitchProfiles(
+            self.client, self.nsxlib_config, nsxlib=self)
 
         # Update tag limits
         self.tag_limits = self.get_tag_limits()

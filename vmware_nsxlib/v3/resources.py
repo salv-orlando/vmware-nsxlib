@@ -714,6 +714,16 @@ class NsxlibClusterNodesConfig(utils.NsxLibApiBase):
         return manager_ips
 
 
+class NsxlibHostSwitchProfiles(utils.NsxLibApiBase):
+    @property
+    def uri_segment(self):
+        return 'host-switch-profiles'
+
+    @property
+    def resource_type(self):
+        return 'UplinkHostSwitchProfile'
+
+
 class Inventory(utils.NsxLibApiBase):
     """REST APIs to support inventory service."""
 
