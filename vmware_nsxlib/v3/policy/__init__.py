@@ -147,9 +147,15 @@ class NsxPolicyLib(lib.NsxLibBase):
 
     def feature_supported(self, feature):
         if (version.LooseVersion(self.get_version()) >=
-                version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
             if (feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING):
+                return True
+
+        if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_5_0)):
+            # Features available since 2.5
+            if (feature == nsx_constants.FEATURE_ENS_WITH_QOS):
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
