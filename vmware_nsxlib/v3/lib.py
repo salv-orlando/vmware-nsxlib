@@ -270,8 +270,10 @@ class NsxLibBase(object):
     def get_tag_limits(self):
         try:
             result = self.client.url_get('spec/vmware/types/Tag')
-            scope_length = result['properties']['scope']['maxLength']
-            tag_length = result['properties']['tag']['maxLength']
+            scope_length = result['properties']['scope'].get(
+                'maxLength', utils.MAX_RESOURCE_TYPE_LEN)
+            tag_length = result['properties']['tag'].get(
+                'maxLength', utils.MAX_TAG_LEN)
         except Exception as e:
             LOG.error("Unable to read tag limits. Reason: %s", e)
             scope_length = utils.MAX_RESOURCE_TYPE_LEN
