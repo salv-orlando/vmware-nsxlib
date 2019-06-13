@@ -261,12 +261,13 @@ class DomainDef(ResourceDef):
 
 class RouteAdvertisement(object):
 
-    types = {'static_routes': 'TIER1_STATIC_ROUTES',
-             'subnets': 'TIER1_CONNECTED',
-             'nat': 'TIER1_NAT',
-             'lb_vip': 'TIER1_LB_VIP',
-             'lb_snat': 'TIER1_LB_SNAT',
-             'dns_forwarder_ip': 'TIER1_DNS_FORWARDER_IP'}
+    types = {'static_routes': constants.ADV_RULE_TYPE_TIER1_STATIC_ROUTES,
+             'subnets': constants.ADV_RULE_TIER1_CONNECTED,
+             'nat': constants.ADV_RULE_TIER1_NAT,
+             'lb_vip': constants.ADV_RULE_TIER1_LB_VIP,
+             'lb_snat': constants.ADV_RULE_TIER1_LB_SNAT,
+             'dns_forwarder_ip': constants.ADV_RULE_TIER1_DNS_FORWARDER_IP,
+             'ipsec_endpoints': constants.ADV_RULE_TIER1_IPSEC_LOCAL_ENDPOINT}
 
     def __init__(self, **kwargs):
         self.attrs = kwargs

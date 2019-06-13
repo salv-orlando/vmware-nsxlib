@@ -2553,10 +2553,12 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 static_routes=True,
                 lb_vip=False,
                 lb_snat=True,
+                ipsec_endpoints=True,
                 tenant=TEST_TENANT)
 
             new_adv = self.resourceApi.build_route_advertisement(
-                nat=True, static_routes=True, lb_snat=True)
+                nat=True, static_routes=True, lb_snat=True,
+                ipsec_endpoints=True)
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=obj_id,
@@ -2567,7 +2569,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             self.assert_called_with_def(
                 update_call, expected_def)
 
-    def test_update_route_advand_tier0(self):
+    def test_update_route_adv_and_tier0(self):
         obj_id = '111'
         rtr_name = 'rtr111'
         tier0 = 'tier0-id'

@@ -861,12 +861,14 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         return core_defs.Tier1Def
 
     def build_route_advertisement(self, static_routes=False, subnets=False,
-                                  nat=False, lb_vip=False, lb_snat=False):
+                                  nat=False, lb_vip=False, lb_snat=False,
+                                  ipsec_endpoints=False):
         return core_defs.RouteAdvertisement(static_routes=static_routes,
                                             subnets=subnets,
                                             nat=nat,
                                             lb_vip=lb_vip,
-                                            lb_snat=lb_snat)
+                                            lb_snat=lb_snat,
+                                            ipsec_endpoints=ipsec_endpoints)
 
     def create_or_overwrite(self, name, tier1_id=None,
                             description=IGNORE,
@@ -947,6 +949,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         nat=None,
         lb_vip=None,
         lb_snat=None,
+        ipsec_endpoints=None,
         tier0=IGNORE,
         tenant=constants.POLICY_INFRA_TENANT):
 
@@ -956,7 +959,8 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                          subnets=subnets,
                          nat=nat,
                          lb_vip=lb_vip,
-                         lb_snat=lb_snat)
+                         lb_snat=lb_snat,
+                         ipsec_endpoints=ipsec_endpoints)
 
         self.update(tier1_id,
                     route_advertisement=route_adv,
