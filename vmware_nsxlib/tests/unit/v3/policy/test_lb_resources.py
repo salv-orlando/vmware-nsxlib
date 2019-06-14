@@ -17,6 +17,8 @@
 import mock
 
 from vmware_nsxlib.tests.unit.v3.policy import test_resources
+from vmware_nsxlib.v3 import exceptions as nsxlib_exc
+from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import lb_defs
 
 TEST_TENANT = 'test'
@@ -680,6 +682,29 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(expected_def.path_pattern, expected_path)
 
+    def test_wait_until_realized_fail(self):
+        lbs_id = 'test_lbs'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              lbs_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        lbs_id = 'test_lbs'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                lbs_id, max_attempts=5, sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
+
 
 class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
@@ -972,6 +997,29 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 name=vs_name,
                 rules=[{'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
+
+    def test_wait_until_realized_fail(self):
+        vs_id = 'test_vs'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': vs_id}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              vs_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        vs_id = 'test_vs'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': vs_id,
+                'entity_type': 'LbVirtualServerDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                vs_id, entity_type='LbVirtualServerDto', max_attempts=5,
+                sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
