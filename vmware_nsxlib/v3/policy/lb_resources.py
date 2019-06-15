@@ -646,6 +646,15 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             tenant=tenant)
         return profile_def.get_resource_full_path()
 
+    def wait_until_realized(self, lb_service_id, entity_type='LbServiceDto',
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        lb_service_def = self.entry_def(
+            lb_service_id=lb_service_id, tenant=tenant)
+        return self._wait_until_realized(
+            lb_service_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
+
 
 class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
     """NSX Policy LoadBalancerVirtualServers"""
@@ -876,6 +885,15 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             virtual_server_id=virtual_server_id,
             tenant=tenant)
         return profile_def.get_resource_full_path()
+
+    def wait_until_realized(self, virtual_server_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        lbvs_def = self.entry_def(
+            virtual_server_id=virtual_server_id, tenant=tenant)
+        return self._wait_until_realized(
+            lbvs_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
 
 
 @six.add_metaclass(abc.ABCMeta)
