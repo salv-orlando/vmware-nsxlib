@@ -199,6 +199,10 @@ class NsxPendingDelete(NsxLibException):
                 "remove the deleted object")
 
 
+class NsxOverlapAddresses(NsxLibInvalidInput):
+    message = _("Overlapping addresses found: %(details)s")
+
+
 class APITransactionAborted(ServerBusy):
     message = _("API transaction aborted as MP cluster is reconfiguring")
 
