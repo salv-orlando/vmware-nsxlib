@@ -33,10 +33,10 @@ LOG = log.getLogger(__name__)
 TagLimits = collections.namedtuple('TagLimits',
                                    ['scope_length', 'tag_length', 'max_tags'])
 
-# The tag limits may change in the NSX. We set the default values to be those
-# in NSX 2.0. If the NSX returns different values we update these globals.
-MAX_RESOURCE_TYPE_LEN = 20
-MAX_TAG_LEN = 40
+# These defaults reflect latest tag & scope limits on the backend. As of 2.5,
+# backend no longer returns tag limit via API.
+MAX_RESOURCE_TYPE_LEN = 128
+MAX_TAG_LEN = 256
 MAX_TAGS = 15
 MAX_NSGROUPS_CRITERIA_TAGS = 10
 
