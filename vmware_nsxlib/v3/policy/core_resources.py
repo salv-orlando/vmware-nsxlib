@@ -1110,6 +1110,14 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             tenant=tenant)
         self.policy_api.delete(t1interface_def)
 
+    def list_segment_interface(self, tier1_id,
+                               tenant=constants.POLICY_INFRA_TENANT):
+        t1interface_def = core_defs.Tier1InterfaceDef(
+            tier1_id=tier1_id,
+            service_id=self._locale_service_id(tier1_id),
+            tenant=tenant)
+        return self._list(t1interface_def)
+
     def get_realized_state(self, tier1_id, entity_type=None,
                            tenant=constants.POLICY_INFRA_TENANT,
                            realization_info=None):
