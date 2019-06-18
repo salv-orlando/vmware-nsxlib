@@ -294,18 +294,18 @@ class NsxPolicyResourceBase(object):
                 transaction.store_def(child_def, self.policy_api.client)
         else:
             # No transaction - apply now
-            if child_def:
-                self.policy_api.create_with_parent(policy_def, child_def)
-            else:
-                # in case the same object was just deleted, create may need to
-                # be retried
-                @utils.retry_upon_exception(
-                    exceptions.NsxPendingDelete,
-                    max_attempts=self.policy_api.client.max_attempts)
-                def _do_create_with_retry():
+            # in case the same object was just deleted, create may need to
+            # be retried
+            @utils.retry_upon_exception(
+                exceptions.NsxPendingDelete,
+                max_attempts=self.policy_api.client.max_attempts)
+            def _do_create_with_retry():
+                if child_def:
+                    self.policy_api.create_with_parent(policy_def, child_def)
+                else:
                     self.policy_api.create_or_update(policy_def)
 
-                _do_create_with_retry()
+            _do_create_with_retry()
 
 
 class NsxPolicyDomainApi(NsxPolicyResourceBase):
@@ -2743,7 +2743,15 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             category=category, tags=tags,
             map_sequence_number=map_sequence_number)
 
-        self.policy_api.create_with_parent(map_def, entries)
+        # in case the same object was just deleted, create may need to
+        # be retried
+        @utils.retry_upon_exception(
+            exceptions.NsxPendingDelete,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _do_create_with_retry():
+            self.policy_api.create_with_parent(map_def, entries)
+
+        _do_create_with_retry()
         return map_id
 
     def create_entry(self, name, domain_id, map_id, entry_id=None,
