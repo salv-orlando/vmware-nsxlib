@@ -3777,6 +3777,15 @@ class NsxPolicyCertApi(NsxPolicyResourceBase):
         c_def = self.entry_def(certificate_id=certificate_id, tenant=tenant)
         return c_def.get_resource_full_path()
 
+    def wait_until_realized(self, certificate_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        cert_def = self.entry_def(
+            certificate_id=certificate_id, tenant=tenant)
+        return self._wait_until_realized(
+            cert_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
+
 
 class NsxPolicyExcludeListApi(NsxPolicyResourceBase):
     """NSX Policy Exclude list."""

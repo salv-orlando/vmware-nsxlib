@@ -276,6 +276,16 @@ class NsxPolicyLoadBalancerPersistenceProfileApi(
             tenant=tenant)
         return profile_def.get_resource_full_path()
 
+    def wait_until_realized(self, pers_id,
+                            entity_type='LbPersistenceProfileDto',
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        pers_def = self.entry_def(
+            persistence_profile_id=pers_id, tenant=tenant)
+        return self._wait_until_realized(
+            pers_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
+
 
 class NsxPolicyLoadBalancerCookiePersistenceProfileApi(
     NsxPolicyLoadBalancerPersistenceProfileApi):
@@ -554,6 +564,15 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
             lb_pool_id=lb_pool_id,
             tenant=tenant)
         return profile_def.get_resource_full_path()
+
+    def wait_until_realized(self, lb_pool_id, entity_type='LbPoolDto',
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        lb_pool_def = self.entry_def(
+            lb_pool_id=lb_pool_id, tenant=tenant)
+        return self._wait_until_realized(
+            lb_pool_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
 
 
 class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):

@@ -178,6 +178,29 @@ class TestPolicyLBPersistenceProfile(
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual([], result)
 
+    def test_wait_until_realized_fail(self):
+        pers_id = 'test_pers'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': pers_id}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              pers_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        pers_id = 'test_pers'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': pers_id,
+                'entity_type': 'LbPersistenceProfileDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                pers_id, entity_type='LbPersistenceProfileDto', max_attempts=5,
+                sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
+
 
 class TestPolicyLBCookiePersistenceProfile(
     test_resources.NsxPolicyLibTestCase):
@@ -1289,6 +1312,29 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 members=[member],
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
+
+    def test_wait_until_realized_fail(self):
+        pool_id = 'test_pool'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': pool_id}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              pool_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        pool_id = 'test_pool'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': pool_id,
+                'entity_type': 'LbPoolDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                pool_id, entity_type='LbPoolDto', max_attempts=5,
+                sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicyLBMonitorProfileHttpApi(test_resources.NsxPolicyLibTestCase):
