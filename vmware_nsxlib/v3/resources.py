@@ -195,7 +195,7 @@ class LogicalPort(utils.NsxLibApiBase):
                vif_type=None, app_id=None,
                allocate_addresses=nsx_constants.ALLOCATE_ADDRESS_NONE,
                description=None, tn_uuid=None,
-               extra_configs=None):
+               extra_configs=None, force=False):
         # Do not allow tags & tags_update at the same call
         if tags_update and tags:
             raise exceptions.ManagerError(
@@ -219,8 +219,12 @@ class LogicalPort(utils.NsxLibApiBase):
             extra_configs=extra_configs,
             tags=tags))
 
+        headers = None
+        if force:
+            headers = {'X-Allow-Overwrite': 'true'}
+
         return self._update_resource(
-            self.get_path(lport_id), lport, retry=True)
+            self.get_path(lport_id), lport, headers=headers, retry=True)
 
     def get_by_attachment(self, attachment_type, attachment_id):
         """Return all logical port matching the attachment type and Id"""
