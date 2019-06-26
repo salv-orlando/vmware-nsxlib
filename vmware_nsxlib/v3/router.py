@@ -117,6 +117,14 @@ class RouterLib(object):
         self._router_port_client.delete(tier1_link_port_id)
         self._router_port_client.delete(tier0_link_port_id)
 
+    def add_centralized_service_port(
+            self, logical_router_id, display_name=None, tags=None,
+            logical_port_id=None, address_groups=None):
+        return self._router_port_client.create(
+            logical_router_id, display_name=display_name, tags=tags,
+            logical_port_id=logical_port_id, address_groups=address_groups,
+            resource_type=nsx_constants.LROUTERPORT_CENTRALIZED)
+
     def update_advertisement(self, logical_router_id,
                              advertise_route_nat,
                              advertise_route_connected,

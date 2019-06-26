@@ -83,6 +83,25 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
             self.assertEqual(port_get.call_count, 1)
             self.assertEqual(port_delete.call_count, 2)
 
+    def test_add_centralized_service_port(self):
+        logical_router_id = uuidutils.generate_uuid()
+        logical_port_id = uuidutils.generate_uuid()
+        display_name = mock.Mock()
+        tags = mock.Mock()
+        address_groups = mock.Mock()
+        port = mock.Mock()
+        with mock.patch.object(
+                self.nsxlib.router._router_port_client, 'create',
+                return_value=port) as create_port:
+            csp = self.nsxlib.router.add_centralized_service_port(
+                logical_router_id, display_name=display_name, tags=tags,
+                logical_port_id=logical_port_id, address_groups=address_groups)
+            create_port.assert_called_once_with(
+                logical_router_id, display_name=display_name, tags=tags,
+                logical_port_id=logical_port_id, address_groups=address_groups,
+                resource_type=nsx_constants.LROUTERPORT_CENTRALIZED)
+            self.assertEqual(csp, port)
+
     def test_create_logical_router_intf_port_by_ls_id(self):
         logical_router_id = uuidutils.generate_uuid()
         display_name = 'dummy'
