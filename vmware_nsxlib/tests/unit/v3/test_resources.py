@@ -1082,6 +1082,23 @@ class LogicalRouterTestCase(BaseTestResource):
                 '?action=%s' % (router_id, nsx_constants.FW_DISABLE)),
             headers=self.default_headers())
 
+    def test_add_static_route(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        dest_cidr = '10.0.0.1/24'
+        next_hop = '1.1.1.1'
+        tags = [{'mock_tags'}]
+        expected_payload = {'network': dest_cidr,
+                            'next_hops': [{'ip_address': next_hop}],
+                            'tags': tags}
+        router.add_static_route(router_id, dest_cidr, next_hop, tags=tags)
+        test_client.assert_json_call(
+            'post', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+                'static-routes' % router_id),
+            data=jsonutils.dumps(expected_payload, sort_keys=True),
+            headers=self.default_headers())
+
     def test_update_advertisement(self):
         router = self.get_mocked_resource()
         router_id = test_constants.FAKE_ROUTER_UUID

@@ -636,7 +636,8 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             logical_router_id, action)
         return self.client.create(resource)
 
-    def add_static_route(self, logical_router_id, dest_cidr, nexthop):
+    def add_static_route(self, logical_router_id, dest_cidr, nexthop,
+                         tags=None):
         resource = ('logical-routers/%s/routing/static-routes' %
                     logical_router_id)
         body = {}
@@ -644,6 +645,8 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             body['network'] = dest_cidr
         if nexthop:
             body['next_hops'] = [{"ip_address": nexthop}]
+        if tags is not None:
+            body['tags'] = tags
         return self.client.create(resource, body)
 
     def delete_static_route(self, logical_router_id, static_route_id):
