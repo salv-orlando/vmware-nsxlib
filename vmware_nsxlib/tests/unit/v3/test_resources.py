@@ -2512,3 +2512,23 @@ class ResourceCache(BaseTestResource):
         mocked_resource.get(fake_uuid)
         self.assertEqual(6, test_client.mock_calls_count(
             'get', mocked_resource))
+
+
+class SystemHealthTestCase(BaseTestResource):
+
+    def setUp(self):
+        super(SystemHealthTestCase, self).setUp(resources.SystemHealth)
+
+    def test_create_ncp_status(self):
+        mocked_resource = self.get_mocked_resource()
+        cluster_id = "b8b089f-338c-5c65-98bd-a5642ae2aa00"
+        status = "HEALTHY"
+        mocked_resource.create_ncp_status(cluster_id, status)
+        body = {'cluster_id': cluster_id, 'status': status}
+        base_url = ('https://1.2.3.4/api/v1/systemhealth/container-cluster/'
+                    'ncp/status')
+        test_client.assert_json_call(
+            'post', mocked_resource,
+            base_url,
+            data=jsonutils.dumps(body, sort_keys=True),
+            headers=self.default_headers())
