@@ -2,4 +2,5 @@
     templates:
       - openstack-lower-constraints-jobs
       - openstack-python-jobs
+      - openstack-python36-jobs
       - check-requirements
