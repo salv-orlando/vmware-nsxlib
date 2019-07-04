@@ -1717,7 +1717,14 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def delete(self, segment_id,
                tenant=constants.POLICY_INFRA_TENANT):
         segment_def = self.entry_def(segment_id=segment_id, tenant=tenant)
-        self.policy_api.delete(segment_def)
+
+        @utils.retry_upon_exception(
+            exceptions.NsxSegemntWithVM,
+            max_attempts=self.policy_api.client.max_attempts)
+        def do_delete():
+            self.policy_api.delete(segment_def)
+
+        do_delete()
 
     def get(self, segment_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):

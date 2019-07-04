@@ -39,7 +39,8 @@ def http_error_to_exception(status_code, error_code):
              '60514': exceptions.NsxSearchTimeout,
              '500045': exceptions.NsxPendingDelete,
              '500030': exceptions.ResourceInUse,
-             '500105': exceptions.NsxOverlapAddresses},
+             '500105': exceptions.NsxOverlapAddresses,
+             '503040': exceptions.NsxSegemntWithVM},
         requests.codes.CONFLICT: exceptions.StaleRevision,
         requests.codes.PRECONDITION_FAILED: exceptions.StaleRevision,
         requests.codes.INTERNAL_SERVER_ERROR:
