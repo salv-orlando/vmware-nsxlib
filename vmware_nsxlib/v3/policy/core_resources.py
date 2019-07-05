@@ -1061,7 +1061,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             service_id=self._locale_service_id(tier1_id),
             edge_cluster_path=edge_cluster_path,
             tenant=tenant)
-        self.policy_api.create_or_update(t1service_def)
+        self._create_or_store(t1service_def)
 
     def remove_edge_cluster(self, tier1_id,
                             tenant=constants.POLICY_INFRA_TENANT):

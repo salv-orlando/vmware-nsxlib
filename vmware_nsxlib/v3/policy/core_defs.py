@@ -439,6 +439,9 @@ class Tier1LocaleServiceDef(RouterLocaleServiceDef):
     def path_ids(self):
         return ('tenant', 'tier1_id', 'service_id')
 
+    def path_defs(self):
+        return (TenantDef, Tier1Def)
+
 
 class Tier0InterfaceDef(ResourceDef):
 
