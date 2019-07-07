@@ -158,10 +158,11 @@ class NsxPolicyLib(lib.NsxLibBase):
             if (feature == nsx_constants.FEATURE_ENS_WITH_QOS):
                 return True
 
-        if (version.LooseVersion(self.get_version()) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_2_6_0)):
-            if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
-                return True
+        # TODO(asarfaty): Uncomment this once partial updates are supported
+        # if (version.LooseVersion(self.get_version()) >=
+        #     version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+        #     if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
+        #         return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
 
