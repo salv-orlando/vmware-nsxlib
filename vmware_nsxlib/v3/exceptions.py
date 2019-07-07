@@ -199,6 +199,10 @@ class NsxPendingDelete(NsxLibException):
                 "remove the deleted object")
 
 
+class NsxSegemntWithVM(ManagerError):
+    message = _("Cannot delete segment as it still has VMs or VIFs attached")
+
+
 class NsxOverlapAddresses(NsxLibInvalidInput):
     message = _("Overlapping addresses found: %(details)s")
 
