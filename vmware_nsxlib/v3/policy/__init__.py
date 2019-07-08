@@ -175,3 +175,10 @@ class NsxPolicyLib(lib.NsxLibBase):
     @property
     def client_url_prefix(self):
         return client.NSX3Client.NSX_POLICY_V1_API_PREFIX
+
+    def set_realization_interval(self, interval_min):
+        # Sets intent realization and purge cycles interval (in minutes)
+        realization_config = {"key": "populate_realized_state_cron_expression",
+                              "value": "0 */%d * * * *" % interval_min}
+        body = {"keyValuePairs": [realization_config]}
+        self.client.patch("system-config", body)
