@@ -2040,6 +2040,74 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
             admin_state=admin_state)
 
 
+class SegmentProfilesBindingMapBaseApi(NsxPolicyResourceBase):
+
+    def delete(self, segment_id, map_id=DEFAULT_MAP_ID,
+               tenant=constants.POLICY_INFRA_TENANT):
+        map_def = self.entry_def(segment_id=segment_id,
+                                 map_id=map_id,
+                                 tenant=tenant)
+        self.policy_api.delete(map_def)
+
+    def get(self, segment_id, map_id=DEFAULT_MAP_ID,
+            tenant=constants.POLICY_INFRA_TENANT):
+        map_def = self.entry_def(segment_id=segment_id,
+                                 map_id=map_id,
+                                 tenant=tenant)
+        return self.policy_api.get(map_def)
+
+    def list(self, segment_id,
+             tenant=constants.POLICY_INFRA_TENANT):
+        map_def = self.entry_def(segment_id=segment_id,
+                                 tenant=tenant)
+        return self._list(map_def)
+
+
+class SegmentSecurityProfilesBindingMapApi(SegmentProfilesBindingMapBaseApi):
+
+    @property
+    def entry_def(self):
+        return core_defs.SegmentSecProfilesBindingMapDef
+
+    def create_or_overwrite(self, name, segment_id,
+                            map_id=DEFAULT_MAP_ID,
+                            description=IGNORE,
+                            segment_security_profile_id=IGNORE,
+                            spoofguard_profile_id=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        map_id = self._init_obj_uuid(map_id)
+        map_def = self._init_def(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            segment_security_profile_id=segment_security_profile_id,
+            spoofguard_profile_id=spoofguard_profile_id,
+            tags=tags,
+            tenant=tenant)
+        self._create_or_store(map_def)
+        return map_id
+
+    def update(self, segment_id,
+               map_id=DEFAULT_MAP_ID,
+               name=IGNORE,
+               description=IGNORE,
+               segment_security_profile_id=IGNORE,
+               spoofguard_profile_id=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            segment_security_profile_id=segment_security_profile_id,
+            spoofguard_profile_id=spoofguard_profile_id,
+            tags=tags,
+            tenant=tenant)
+
+
 class SegmentPortProfilesBindingMapBaseApi(NsxPolicyResourceBase):
 
     def delete(self, segment_id, port_id, map_id=DEFAULT_MAP_ID,

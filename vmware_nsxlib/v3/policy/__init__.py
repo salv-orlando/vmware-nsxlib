@@ -103,6 +103,9 @@ class NsxPolicyLib(lib.NsxLibBase):
             core_resources.NsxMacDiscoveryProfileApi(*args))
         self.waf_profile = (
             core_resources.NsxWAFProfileApi(*args))
+        self.segment_security_profile_maps = (
+            core_resources.SegmentSecurityProfilesBindingMapApi(
+                *args))
         self.segment_port_security_profiles = (
             core_resources.SegmentPortSecurityProfilesBindingMapApi(
                 *args))
