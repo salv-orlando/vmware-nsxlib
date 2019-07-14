@@ -1989,21 +1989,25 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      tags=tags,
                      tenant=tenant)
 
-    def detach(self, segment_id, port_id,
+    def detach(self, segment_id, port_id, tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
         port_def = self.entry_def(segment_id=segment_id,
                                   port_id=port_id,
+                                  vif_id=None,
                                   attachment_type=None,
+                                  tags=tags,
                                   tenant=tenant)
         self.policy_api.create_or_update(port_def)
 
     def attach(self, segment_id, port_id,
                attachment_type,
                vif_id,
-               allocate_addresses,
+               allocate_addresses=None,
                app_id=None,
                context_id=None,
+               traffic_tag=None,
+               tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
         port_def = self.entry_def(segment_id=segment_id,
@@ -2013,6 +2017,8 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   vif_id=vif_id,
                                   app_id=app_id,
                                   context_id=context_id,
+                                  traffic_tag=traffic_tag,
+                                  tags=tags,
                                   tenant=tenant)
 
         self.policy_api.create_or_update(port_def)
