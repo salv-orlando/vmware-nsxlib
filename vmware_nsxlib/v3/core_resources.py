@@ -710,7 +710,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         return self._update_resource(resource, kwargs, retry=True)
 
     def update_advertisement_rules(self, logical_router_id, rules,
-                                   name_prefix=None):
+                                   name_prefix=None, force=False):
         """Update the router advertisement rules
 
         If name_prefix is None, replace the entire list of NSX rules with the
@@ -736,8 +736,13 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
 
         if name_prefix:
             callback = update_payload_cbk
-        return self._update_resource(resource, {'rules': rules}, retry=True,
-                                     update_payload_cbk=callback)
+
+        # In case of updating advertisement rule on the logical router
+        # owned by other Principal Entities, need to force the overwrite
+        headers = {'X-Allow-Overwrite': 'true'} if force else None
+        return self._update_resource(
+            resource, {'rules': rules}, retry=True,
+            update_payload_cbk=callback, headers=headers)
 
     def get_advertisement_rules(self, logical_router_id):
         resource = ('logical-routers/%s/routing/advertisement/rules' %
