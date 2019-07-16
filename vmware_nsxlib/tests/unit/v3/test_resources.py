@@ -1192,6 +1192,29 @@ class LogicalRouterTestCase(BaseTestResource):
                 data=jsonutils.dumps({'rules': rules}, sort_keys=True),
                 headers=self.default_headers())
 
+    def test_update_advertisement_rules_force(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        rules = [{"action": "ALLOW",
+                  "networks": ["44.0.0.0/20"],
+                  "display_name": "rule1"},
+                 {"action": "ALLOW",
+                  "networks": ["6.60.0.0/20"],
+                  "display_name": "rule2"}]
+
+        headers = self.default_headers()
+        expected_headers = headers.copy()
+        expected_headers['X-Allow-Overwrite'] = 'true'
+        with mock.patch.object(router.client, 'get',
+                               return_value={}):
+            router.update_advertisement_rules(router_id, rules, force=True)
+            test_client.assert_json_call(
+                'put', router,
+                ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+                 'advertisement/rules' % router_id),
+                data=jsonutils.dumps({'rules': rules}, sort_keys=True),
+                headers=expected_headers)
+
     def test_update_advertisement_rules_with_replace(self):
         router = self.get_mocked_resource()
         router_id = test_constants.FAKE_ROUTER_UUID
