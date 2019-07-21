@@ -1493,6 +1493,25 @@ class EdgeClusterDef(ResourceDef):
         return True
 
 
+class EdgeClusterNodeDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return (EDGE_CLUSTER_PATTERN + '%s/edge-nodes/')
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'ep_id', 'ec_id', 'node_id')
+
+    @staticmethod
+    def resource_type():
+        return 'PolicyEdgeNode'
+
+    @staticmethod
+    def resource_use_cache():
+        return True
+
+
 # Currently assumes one deployment point per id
 class DeploymentMapDef(ResourceDef):
 

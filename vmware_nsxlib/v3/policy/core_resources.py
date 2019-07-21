@@ -3394,6 +3394,14 @@ class NsxPolicyEdgeClusterApi(NsxPolicyResourceBase):
             ep_id=ep_id, ec_id=ec_id, tenant=tenant)
         return ec_def.get_resource_full_path()
 
+    def get_edge_node_ids(self, ec_id,
+                          ep_id=constants.DEFAULT_ENFORCEMENT_POINT,
+                          tenant=constants.POLICY_INFRA_TENANT):
+        nodes_def = core_defs.EdgeClusterNodeDef(
+            ep_id=ep_id, ec_id=ec_id, tenant=tenant)
+        nodes = self._list(nodes_def)
+        return [node['id'] for node in nodes]
+
 
 class NsxPolicyDeploymentMapApi(NsxPolicyResourceBase):
     """NSX Policy Deployment Map."""
