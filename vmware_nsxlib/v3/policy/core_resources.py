@@ -1168,7 +1168,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         If not found, wait until it has been realized
         """
         if sleep is None:
-            sleep = 0.5
+            sleep = self.nsxlib_config.realization_wait_sec
         if max_attempts is None:
             max_attempts = self.nsxlib_config.realization_max_attempts
 
@@ -1777,7 +1777,8 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
 
         @utils.retry_upon_exception(
             exceptions.NsxSegemntWithVM,
-            max_attempts=self.policy_api.client.max_attempts)
+            delay=self.nsxlib_config.realization_wait_sec,
+            max_attempts=self.nsxlib_config.realization_max_attempts)
         def do_delete():
             self.policy_api.delete(segment_def)
 
@@ -2893,7 +2894,8 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
         # be retried
         @utils.retry_upon_exception(
             exceptions.NsxPendingDelete,
-            max_attempts=self.policy_api.client.max_attempts)
+            delay=self.nsxlib_config.realization_wait_sec,
+            max_attempts=self.nsxlib_config.realization_max_attempts)
         def _do_create_with_retry():
             self.policy_api.create_with_parent(map_def, entries)
 
