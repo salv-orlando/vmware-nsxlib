@@ -25,7 +25,7 @@ six==1.10.0
 sphinx==1.6.5
 stestr==1.0.0
 tempest==17.1.0
-tenacity==4.9.0
+tenacity==5.0.1
 testresources==2.0.0
 testtools==2.2.0
 testscenarios==0.4

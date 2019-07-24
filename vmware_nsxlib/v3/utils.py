@@ -128,12 +128,14 @@ def update_v3_tags(current_tags, tags_update):
     return tags
 
 
-def _log_before_retry(func, trial_number):
+def _log_before_retry(retry_state):
     """Before call strategy that logs to some logger the attempt."""
-    if trial_number > 1:
+    if retry_state.attempt_number > 1:
         LOG.warning("Retrying call to '%(func)s' for the %(num)s time",
-                    {'func': tenacity_utils.get_callback_name(func),
-                     'num': tenacity_utils.to_ordinal(trial_number)})
+                    {'func': tenacity_utils.get_callback_name(
+                        retry_state.fn),
+                     'num': tenacity_utils.to_ordinal(
+                        retry_state.attempt_number)})
 
 
 def _get_args_from_frame(frames, frame_num):
@@ -145,7 +147,7 @@ def _get_args_from_frame(frames, frame_num):
         return formated_args
 
 
-def _log_after_retry(func, trial_number, trial_time_taken):
+def _log_after_retry(retry_state):
     """After call strategy that logs to some logger the finished attempt."""
     # Using inspect to get arguments of the relevant call
     frames = inspect.trace()
@@ -158,9 +160,9 @@ def _log_after_retry(func, trial_number, trial_time_taken):
 
     LOG.warning("Finished retry of %(func)s for the %(num)s time after "
                 "%(time)0.3f(s) with args: %(args)s",
-                {'func': tenacity_utils.get_callback_name(func),
-                 'num': tenacity_utils.to_ordinal(trial_number),
-                 'time': trial_time_taken,
+                {'func': tenacity_utils.get_callback_name(retry_state.fn),
+                 'num': tenacity_utils.to_ordinal(retry_state.attempt_number),
+                 'time': retry_state.seconds_since_start,
                  'args': formated_args})
 
 
