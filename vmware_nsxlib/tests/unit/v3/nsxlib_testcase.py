@@ -216,7 +216,8 @@ class NsxClientTestCase(NsxLibTestCase):
             http_timeout=None,
             http_read_timeout=None,
             conn_idle_timeout=None,
-            nsx_api_managers=None):
+            nsx_api_managers=None,
+            max_attempts=None):
 
             nsxlib_config = config.NsxLibConfig(
                 username=username or NSX_USER,
@@ -229,6 +230,7 @@ class NsxClientTestCase(NsxLibTestCase):
                 http_timeout=http_timeout or NSX_HTTP_TIMEOUT,
                 http_read_timeout=http_read_timeout or NSX_HTTP_READ_TIMEOUT,
                 conn_idle_timeout=conn_idle_timeout or NSX_CONN_IDLE_TIME,
+                max_attempts=max_attempts or NSX_MAX_ATTEMPTS,
                 http_provider=NsxClientTestCase.MockHTTPProvider(
                     session_response=session_response),
                 nsx_api_managers=nsx_api_managers or [NSX_MANAGER],
