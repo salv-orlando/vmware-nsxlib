@@ -3959,6 +3959,59 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
 
+    def test_attach(self):
+        segment_id = "segment"
+        port_id = "port"
+        attachment_type = "CHILD"
+        vif_id = "vif"
+        app_id = "app"
+        context_id = "context"
+        traffic_tag = 10
+        allocate_addresses = "BOTH"
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.attach(
+                segment_id, port_id,
+                attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
+                context_id=context_id, traffic_tag=traffic_tag,
+                allocate_addresses=allocate_addresses, tags=tags,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.SegmentPortDef(
+                segment_id=segment_id,
+                port_id=port_id,
+                attachment_type=attachment_type,
+                vif_id=vif_id,
+                app_id=app_id,
+                context_id=context_id,
+                traffic_tag=traffic_tag,
+                allocate_addresses=allocate_addresses,
+                tags=tags,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_detach(self):
+        segment_id = "segment"
+        port_id = "port"
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.detach(
+                segment_id, port_id, tags=tags,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.SegmentPortDef(
+                segment_id=segment_id,
+                port_id=port_id,
+                attachment_type=None,
+                vif_id=None,
+                tags=tags,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
 
 class TestPolicySegmentProfileBase(NsxPolicyLibTestCase):
 
