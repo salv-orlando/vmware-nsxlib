@@ -308,7 +308,9 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
 
     def test_cluster_select_endpoint(self):
         conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
-        api = self.mock_nsx_clustered_api(nsx_api_managers=conf_managers)
+        max_attempts = 3
+        api = self.mock_nsx_clustered_api(nsx_api_managers=conf_managers,
+                                          max_attempts=max_attempts)
         api._validate = mock.Mock()
         eps = list(api._endpoints.values())
 
@@ -336,7 +338,7 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
 
         # simulate the case where 1 endpoint finally goes up
         self.validate_count = 0
-        self.max_validate = 9
+        self.max_validate = max_attempts - 1
 
         def _mock_validate(ep):
             if self.validate_count >= self.max_validate:
