@@ -530,11 +530,13 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, domain_id, group_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         group_def = core_defs.GroupDef(domain_id=domain_id,
                                        group_id=group_id,
                                        tenant=tenant)
-        return self._get_realization_info(group_def, entity_type=entity_type)
+        return self._get_realization_info(group_def, entity_type=entity_type,
+                                          silent=silent)
 
     def get_path(self, domain_id, group_id,
                  tenant=constants.POLICY_INFRA_TENANT):
@@ -599,11 +601,13 @@ class NsxPolicyServiceBase(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, service_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         service_def = core_defs.ServiceDef(service_id=service_id,
                                            tenant=tenant)
         return self._get_realization_info(service_def,
-                                          entity_type=entity_type)
+                                          entity_type=entity_type,
+                                          silent=silent)
 
 
 class NsxPolicyL4ServiceApi(NsxPolicyServiceBase):
@@ -1133,9 +1137,10 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, tier1_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         tier1_def = self.entry_def(tier1_id=tier1_id, tenant=tenant)
-        return self._get_realization_info(tier1_def)
+        return self._get_realization_info(tier1_def, silent=silent)
 
     def wait_until_realized(self, tier1_id, entity_type=None,
                             tenant=constants.POLICY_INFRA_TENANT,
@@ -1347,9 +1352,11 @@ class NsxPolicyTier0Api(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, tier0_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         tier0_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
-        return self._get_realization_info(tier0_def, entity_type=entity_type)
+        return self._get_realization_info(tier0_def, entity_type=entity_type,
+                                          silent=silent)
 
     def wait_until_realized(self, tier0_id, entity_type=None,
                             tenant=constants.POLICY_INFRA_TENANT,
@@ -1852,10 +1859,12 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, segment_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         segment_def = self.entry_def(segment_id=segment_id, tenant=tenant)
         return self._get_realization_info(segment_def,
-                                          entity_type=entity_type)
+                                          entity_type=entity_type,
+                                          silent=silent)
 
     def wait_until_realized(self, segment_id, entity_type=None,
                             tenant=constants.POLICY_INFRA_TENANT,
@@ -2016,11 +2025,13 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, segment_id, port_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         port_def = self.entry_def(segment_id=segment_id,
                                   port_id=port_id,
                                   tenant=tenant)
-        return self._get_realization_info(port_def, entity_type=entity_type)
+        return self._get_realization_info(port_def, entity_type=entity_type,
+                                          silent=silent)
 
     def wait_until_realized(self, segment_id, port_id, entity_type=None,
                             tenant=constants.POLICY_INFRA_TENANT,
@@ -2419,13 +2430,14 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, tier1_id, segment_id, port_id,
-                             entity_type=None,
+                             entity_type=None, silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         port_def = self.entry_def(segment_id=segment_id,
                                   tier1_id=tier1_id,
                                   port_id=port_id,
                                   tenant=tenant)
-        return self._get_realization_info(port_def, entity_type=entity_type)
+        return self._get_realization_info(port_def, entity_type=entity_type,
+                                          silent=silent)
 
     def wait_until_realized(self, tier1_id, segment_id, port_id,
                             entity_type=None,
@@ -2683,9 +2695,11 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
         return self.policy_api.get(ip_subnet_def)
 
     def get_realization_info(self, ip_pool_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id, tenant=tenant)
-        return self._get_realization_info(ip_pool_def, entity_type=entity_type)
+        return self._get_realization_info(ip_pool_def, entity_type=entity_type,
+                                          silent=silent)
 
     def get_ip_subnet_realization_info(
             self, ip_pool_id, ip_subnet_id,
@@ -3161,11 +3175,13 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                      realization_info=realization_info)
 
     def get_realization_info(self, domain_id, map_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         map_def = self.parent_entry_def(map_id=map_id,
                                         domain_id=domain_id,
                                         tenant=tenant)
-        return self._get_realization_info(map_def, entity_type=entity_type)
+        return self._get_realization_info(map_def, entity_type=entity_type,
+                                          silent=silent)
 
 
 class NsxPolicyCommunicationMapApi(NsxPolicySecurityPolicyBaseApi):
@@ -3274,10 +3290,12 @@ class NsxPolicyEnforcementPointApi(NsxPolicyResourceBase):
                                         realization_info=realization_info)
 
     def get_realization_info(self, ep_id, entity_type=None,
+                             silent=False,
                              tenant=constants.POLICY_INFRA_TENANT,
                              realization_info=None):
         ep_def = core_defs.EnforcementPointDef(ep_id=ep_id, tenant=tenant)
         return self._get_realization_info(ep_def, entity_type=entity_type,
+                                          silent=silent,
                                           realization_info=realization_info)
 
 
