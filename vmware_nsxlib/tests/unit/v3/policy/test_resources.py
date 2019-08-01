@@ -18,6 +18,7 @@ import mock
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3.policy import policy_testcase
+from vmware_nsxlib.tests.unit.v3 import test_client
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import policy
@@ -39,7 +40,7 @@ class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
         # Mock the nsx-lib for the passthrough api
         # TODO(annak): move version forward with backend releases
         with mock.patch("vmware_nsxlib.v3.NsxLib") as mock_lib:
-            mock_lib.return_value.get_version.return_value = "2.5.0"
+            mock_lib.return_value.get_version.return_value = "3.0.0"
             self.policy_lib = policy.NsxPolicyLib(nsxlib_config)
 
         self.policy_api = self.policy_lib.policy_api
@@ -216,7 +217,8 @@ class TestPolicyDomain(NsxPolicyLibTestCase):
 
             self.assert_json_call('PATCH', self.client,
                                   '%s/domains/%s' % (TEST_TENANT, domain_id),
-                                  data=expected_body)
+                                  data=expected_body,
+                                  headers=test_client.PARTIAL_UPDATE_HEADERS)
 
 
 class TestPolicyGroup(NsxPolicyLibTestCase):
@@ -595,7 +597,8 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
                                   '%s/domains/%s/groups/%s' % (TEST_TENANT,
                                                                domain_id,
                                                                group_id),
-                                  data=expected_body)
+                                  data=expected_body,
+                                  headers=test_client.PARTIAL_UPDATE_HEADERS)
 
     def test_get_realized(self):
         domain_id = 'd1'
@@ -2385,6 +2388,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
     def setUp(self, *args, **kwargs):
         super(TestPolicyTier1, self).setUp(*args, **kwargs)
         self.resourceApi = self.policy_lib.tier1
+        self.partial_updates = True
 
     def test_create(self):
         name = 'test'
@@ -2551,9 +2555,10 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=obj_id,
-                name=rtr_name,
                 route_advertisement=new_adv,
                 tenant=TEST_TENANT)
+            if not self.partial_updates:
+                expected_def.attrs['name'] = rtr_name
 
             self.assert_called_with_def(
                 update_call, expected_def)
@@ -2583,10 +2588,11 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
 
             expected_def = core_defs.Tier1Def(
                 tier1_id=obj_id,
-                name=rtr_name,
                 route_advertisement=new_adv,
                 tier0=tier0,
                 tenant=TEST_TENANT)
+            if not self.partial_updates:
+                expected_def.attrs['name'] = rtr_name
 
             self.assert_called_with_def(
                 update_call, expected_def)
@@ -2902,6 +2908,8 @@ class TestPolicyTier1NoPassthrough(TestPolicyTier1):
     def setUp(self, *args, **kwargs):
         super(TestPolicyTier1NoPassthrough, self).setUp(
             allow_passthrough=False)
+        # No passthrough also means no partial updates
+        self.partial_updates = False
 
     def test_update_transport_zone(self):
         # Will not work without passthrough api

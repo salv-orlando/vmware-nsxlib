@@ -1764,7 +1764,7 @@ class NsxPolicyApi(object):
     def partial_updates_supported(self):
         return self.partial_updates
 
-    def create_or_update(self, resource_def):
+    def create_or_update(self, resource_def, partial_updates=False):
         """Create or update a policy object.
 
         This api will update an existing object, or create a new one if it
@@ -1776,7 +1776,10 @@ class NsxPolicyApi(object):
             self.cache.remove(path)
         body = resource_def.get_obj_dict()
 
-        self.client.patch(path, body)
+        headers = None
+        if partial_updates:
+            headers = {'nsx-enable-partial-patch': 'true'}
+        self.client.patch(path, body, headers=headers)
 
     def create_with_parent(self, parent_def, resource_def):
         path = parent_def.get_resource_path()

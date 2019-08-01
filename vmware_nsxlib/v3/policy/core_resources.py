@@ -147,14 +147,16 @@ class NsxPolicyResourceBase(object):
 
         if self.policy_api.partial_updates_supported():
             policy_def = self._init_def(**kwargs)
+            partial_updates = True
         else:
             policy_def = self._get_and_update_def(**kwargs)
+            partial_updates = False
 
         if policy_def.bodyless():
             # Nothing to update - only keys provided in kwargs
             return
-
-        self.policy_api.create_or_update(policy_def)
+        self.policy_api.create_or_update(
+            policy_def, partial_updates=partial_updates)
 
     @staticmethod
     def _init_obj_uuid(obj_uuid):
@@ -994,8 +996,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         self.update(tier1_id,
                     route_advertisement=route_adv,
                     tier0=tier0,
-                    tenant=tenant,
-                    current_body=tier1_dict)
+                    tenant=tenant)
 
     def add_advertisement_rule(
             self, tier1_id, name, action=None, prefix_operator=None,

@@ -852,7 +852,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
-                name=vs_name,
                 rules=[lb_rule])
             self.assert_called_with_def(update_call, expected_def)
 
@@ -880,7 +879,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
-                name=vs_name,
                 rules=[lb_rule,
                        {'display_name': 'xx'},
                        {'display_name': 'yy'}])
@@ -908,7 +906,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
-                name=vs_name,
                 rules=[{'display_name': 'xx'},
                        {'display_name': 'yy'},
                        lb_rule])
@@ -937,7 +934,7 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                virtual_server_id=vs_obj_id, name=vs_name,
+                virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'xx'},
                        {'display_name': 'yy'},
                        lb_rule])
@@ -965,7 +962,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 rule_match_strategy, rule_phase)
 
             expected_def = lb_defs.LBVirtualServerDef(
-                name=vs_name,
                 virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'xx'},
                        lb_rule,
@@ -983,7 +979,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
             self.resourceApi.update_lb_rule(vs_obj_id, 'xx', actions='22')
 
             expected_def = lb_defs.LBVirtualServerDef(
-                name=vs_name,
                 virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'xx', 'actions': '22'},
                        {'display_name': 'yy'}])
@@ -1002,7 +997,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
-                name=vs_name,
                 rules=[{'display_name': 'yy'},
                        {'display_name': 'xx', 'actions': '22'}])
             self.assert_called_with_def(update_call, expected_def)
@@ -1018,7 +1012,6 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
 
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
-                name=vs_name,
                 rules=[{'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
 
