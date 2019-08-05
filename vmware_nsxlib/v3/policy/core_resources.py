@@ -2873,7 +2873,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                     action=constants.ACTION_ALLOW,
                     scope=None,
                     source_groups=None, dest_groups=None,
-                    direction=nsx_constants.IN_OUT, logged=False,
+                    direction=nsx_constants.IN_OUT, logged=False, tag=None,
                     ip_protocol=nsx_constants.IPV4_IPV6,
                     tenant=constants.POLICY_INFRA_TENANT):
         """Get the definition of a single map entry"""
@@ -2892,6 +2892,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                               direction=direction,
                               ip_protocol=ip_protocol,
                               logged=logged,
+                              tag=tag,
                               tenant=tenant)
 
     def create_with_entries(
