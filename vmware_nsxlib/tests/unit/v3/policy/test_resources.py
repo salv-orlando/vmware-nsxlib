@@ -2646,7 +2646,10 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 'realization_specific_identifier': logical_router_id}
         passthrough_mock = self.resourceApi.nsx_api.logical_router.update
         with mock.patch.object(self.resourceApi, "_get_realization_info",
-                               return_value=info) as realization:
+                               return_value=info) as realization,\
+            mock.patch.object(self.resourceApi,
+                              "_get_realized_id_using_search",
+                              return_value=logical_router_id):
             self.resourceApi.update_transport_zone(tier1_id, tz_uuid,
                                                    tenant=TEST_TENANT)
             realization.assert_called_once()
