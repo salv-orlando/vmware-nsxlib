@@ -29,7 +29,7 @@ class TestPolicyApi(nsxlib_testcase.NsxClientTestCase):
 
         super(TestPolicyApi, self).setUp()
 
-    def assert_json_call(self, method, client, url, data=None):
+    def assert_json_call(self, method, client, url, data=None, headers=None):
         url = BASE_POLICY_URI + url
         return super(TestPolicyApi, self).assert_json_call(
-            method, client, url, data=data)
+            method, client, url, data=data, headers=headers)

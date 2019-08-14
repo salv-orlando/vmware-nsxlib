@@ -39,6 +39,13 @@ JSON_DFT_ACCEPT_HEADERS = {
     'Cookie': 'JSESSIONID=%s;' % nsxlib_testcase.JSESSIONID
 }
 
+PARTIAL_UPDATE_HEADERS = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'Cookie': 'JSESSIONID=%s;' % nsxlib_testcase.JSESSIONID,
+    'nsx-enable-partial-patch': 'true'
+}
+
 
 def _headers(**kwargs):
     headers = copy.copy(DFT_ACCEPT_HEADERS)
