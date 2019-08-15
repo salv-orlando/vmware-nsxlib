@@ -262,7 +262,7 @@ def escape_tag_data(data):
     # ElasticSearch query_string requires slashes and dashes to
     # be escaped. We assume no other reserved characters will be
     # used in tag scopes or values
-    return data.replace('/', '\\/').replace('-', '\\-')
+    return data.replace('/', '\\/').replace('-', '\\-').replace(':', '\\:')
 
 
 def escape_display_name(display_name):
