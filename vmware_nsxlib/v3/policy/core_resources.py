@@ -91,9 +91,9 @@ class NsxPolicyResourceBase(object):
         """Create new or overwrite existing resource
 
            Create would list keys and attributes, set defaults and
-           perform nesessary validations.
+           perform necessary validations.
            If object with same IDs exists on backend, it will
-           be overriden.
+           be overridden.
         """
         pass
 
@@ -3344,6 +3344,12 @@ class NsxPolicyEnforcementPointApi(NsxPolicyResourceBase):
         return self._get_realization_info(ep_def, entity_type=entity_type,
                                           silent=silent,
                                           realization_info=realization_info)
+
+    def reload(self, ep_id, tenant=constants.POLICY_INFRA_TENANT):
+        # Use post command to reload the enforcement point
+        ep_def = core_defs.EnforcementPointDef(ep_id=ep_id, tenant=tenant)
+        path = "%s?action=reload" % ep_def.get_resource_path()
+        self.policy_api.client.create(path)
 
 
 class NsxPolicyTransportZoneApi(NsxPolicyResourceBase):

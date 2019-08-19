@@ -2176,6 +2176,16 @@ class TestPolicyEnforcementPoint(NsxPolicyLibTestCase):
                 TEST_TENANT, ep_id)
             api_get.assert_called_once_with(path, silent=False)
 
+    def test_reload(self):
+        ef_id = '111'
+        with mock.patch.object(self.policy_api.client, "url_post") as api_post:
+            self.resourceApi.reload(ef_id, tenant=TEST_TENANT)
+            expected_def = core_defs.EnforcementPointDef(ep_id=ef_id,
+                                                         tenant=TEST_TENANT)
+            api_post.assert_called_once_with(
+                expected_def.get_resource_path() + '?action=reload',
+                None, expected_results=None, headers=None)
+
 
 class TestPolicyDeploymentMap(NsxPolicyLibTestCase):
 
