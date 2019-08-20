@@ -498,13 +498,17 @@ class TestService(nsxlib_testcase.NsxClientTestCase):
             'description': fake_service['description'],
             'enabled': fake_service['enabled'],
             'attachment': fake_service['attachment'],
+            'relax_scale_validation': fake_service['relax_scale_validation'],
             'tags': consts.FAKE_TAGS
         }
-        with mock.patch.object(self.nsxlib.client, 'create') as create:
+        with mock.patch.object(self.nsxlib.client, 'create') as create, \
+                mock.patch.object(self.nsxlib, 'feature_supported') as support:
+            support.return_value = True
             self.nsxlib.load_balancer.service.create(
                 body['display_name'], body['description'],
                 consts.FAKE_TAGS, enabled=body['enabled'],
-                attachment=body['attachment'])
+                attachment=body['attachment'],
+                relax_scale_validation=body['relax_scale_validation'])
             create.assert_called_with('loadbalancer/services',
                                       body)
 

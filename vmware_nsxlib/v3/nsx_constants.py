@@ -146,6 +146,7 @@ NSX_VERSION_2_2_0 = '2.2.0'
 NSX_VERSION_2_3_0 = '2.3.0'
 NSX_VERSION_2_4_0 = '2.4.0'
 NSX_VERSION_2_5_0 = '2.5.0'
+NSX_VERSION_2_5_1 = '2.5.1'
 NSX_VERSION_3_0_0 = '3.0.0'
 
 # Features available depending on the NSX Manager backend version
@@ -169,6 +170,7 @@ FEATURE_ICMP_STRICT = 'Strict list of supported ICMP types and codes'
 FEATURE_ROUTER_ALLOCATION_PROFILE = 'Router Allocation Profile'
 FEATURE_ENABLE_STANDBY_RELOCATION = 'Router Enable standby relocation'
 FEATURE_PARTIAL_UPDATES = 'Partial Update with PATCH'
+FEATURE_RELAX_SCALE_VALIDATION = 'Relax Scale Validation for LbService'
 
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'

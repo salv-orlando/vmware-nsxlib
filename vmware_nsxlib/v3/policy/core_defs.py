@@ -64,8 +64,12 @@ TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
 
 @six.add_metaclass(abc.ABCMeta)
 class ResourceDef(object):
-    def __init__(self, **kwargs):
+    def __init__(self, nsx_version=None, **kwargs):
         self.attrs = kwargs
+
+        # nsx_version should be passed in on init if the resource has
+        # version-dependant attributes. Otherwise this is ignored
+        self.nsx_version = nsx_version
 
         # init default tenant
         self.attrs['tenant'] = self.get_tenant()
@@ -190,6 +194,41 @@ class ResourceDef(object):
     def _set_attrs_if_specified(self, body, attr_list):
         for attr in attr_list:
             self._set_attr_if_specified(body, attr)
+
+    # Helper to set attr in body if user specified it
+    # and current nsx version supports it
+    # Body name must match attr name
+    def _set_attr_if_supported(self, body, attr, value=None):
+        if self.has_attr(attr) and self._version_dependant_attr_supported(
+                attr):
+            value = value if value is not None else self.get_attr(attr)
+            body[attr] = value
+
+    # Helper to set attrs in body if user specified them
+    # and current nsx version supports it
+    # Body name must match attr name
+    def _set_attrs_if_supported(self, body, attr_list):
+        for attr in attr_list:
+            self._set_attr_if_supported(body, attr)
+
+    def _version_dependant_attr_supported(self, attr):
+        """Check if a version dependent attr is supported on current NSX
+
+        For each resource def, there could be some attributes which only exist
+        on NSX after certain versions. This abstract method provides a skeleton
+        to define version requirements of version-dependent attributes.
+
+        By design, Devs should use _set_attr_if_supported() to add any attrs
+        that are only known to NSX after a certain version. This method works
+        as a registry for _set_attrs_if_supported() to know the baseline
+        version of each version dependent attr.
+
+        Non-version-dependent attributes should be added to the request body
+        by using _set_attr_if_specified(). This method defaults to false since
+        any version dependent attr unknown to this lib should be excluded
+        for security and safety reasons.
+        """
+        return False
 
     @classmethod
     def get_single_entry(cls, obj_body):

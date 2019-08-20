@@ -91,7 +91,7 @@ class NsxLib(lib.NsxLibBase):
         self.ip_pool = resources.IpPool(
             self.client, self.nsxlib_config, nsxlib=self)
         self.load_balancer = load_balancer.LoadBalancer(
-            self.client, self.nsxlib_config)
+            self.client, self.nsxlib_config, nsxlib=self)
         self.trust_management = trust_management.NsxLibTrustManagement(
             self.client, self.nsxlib_config)
         self.router = router.RouterLib(
@@ -168,7 +168,13 @@ class NsxLib(lib.NsxLibBase):
 
     def feature_supported(self, feature):
         if (version.LooseVersion(self.get_version()) >=
-                version.LooseVersion(nsx_constants.NSX_VERSION_2_5_0)):
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_5_1)):
+            # features available since 2.5.1
+            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
+                return True
+
+        if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_5_0)):
             # features available since 2.5
             if (feature == nsx_constants.FEATURE_CONTAINER_CLUSTER_INVENTORY):
                 return True
@@ -178,7 +184,7 @@ class NsxLib(lib.NsxLibBase):
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
-                version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
             if (feature == nsx_constants.FEATURE_ENS_WITH_SEC):
                 return True
@@ -188,7 +194,7 @@ class NsxLib(lib.NsxLibBase):
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
-                version.LooseVersion(nsx_constants.NSX_VERSION_2_3_0)):
+            version.LooseVersion(nsx_constants.NSX_VERSION_2_3_0)):
             # Features available since 2.3
             if (feature == nsx_constants.FEATURE_ROUTER_ALLOCATION_PROFILE):
                 return True

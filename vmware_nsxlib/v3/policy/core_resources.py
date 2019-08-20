@@ -125,7 +125,7 @@ class NsxPolicyResourceBase(object):
     def _init_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
         args = self._get_user_args(**kwargs)
-        return self.entry_def(**args)
+        return self.entry_def(nsx_version=self.version, **args)
 
     def _init_parent_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
@@ -135,7 +135,7 @@ class NsxPolicyResourceBase(object):
     def _get_and_update_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
         args = self._get_user_args(**kwargs)
-        resource_def = self.entry_def(**args)
+        resource_def = self.entry_def(nsx_version=self.version, **args)
         body = self.policy_api.get(resource_def)
         if body:
             resource_def.set_obj_dict(body)
