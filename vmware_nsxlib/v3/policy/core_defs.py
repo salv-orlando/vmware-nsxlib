@@ -31,6 +31,7 @@ PROVIDERS_PATH_PATTERN = TENANTS_PATH_PATTERN + "providers/"
 TIER0S_PATH_PATTERN = TENANTS_PATH_PATTERN + "tier-0s/"
 TIER1S_PATH_PATTERN = TENANTS_PATH_PATTERN + "tier-1s/"
 SERVICES_PATH_PATTERN = TENANTS_PATH_PATTERN + "services/"
+GLOBAL_CONFIG_PATH_PATTERN = TENANTS_PATH_PATTERN + "global-config/"
 ENFORCEMENT_POINT_PATTERN = (TENANTS_PATH_PATTERN +
                              "sites/default/enforcement-points/")
 TRANSPORT_ZONE_PATTERN = ENFORCEMENT_POINT_PATTERN + "%s/transport-zones/"
@@ -65,13 +66,20 @@ TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
 
 @six.add_metaclass(abc.ABCMeta)
 class ResourceDef(object):
-    def __init__(self, **kwargs):
+    def __init__(self, nsx_version=None, **kwargs):
         self.attrs = kwargs
+
+        # nsx_version should be passed in on init if the resource has
+        # version-dependant attributes. Otherwise this is ignored
+        self.nsx_version = nsx_version
 
         # init default tenant
         self.attrs['tenant'] = self.get_tenant()
 
         self.body = {}
+
+        # Whether this entry needs to be deleted
+        self.delete = False
 
         # As of now, for some defs (ex: services) child entry is required,
         # meaning parent creation will fail without the child.
@@ -81,6 +89,12 @@ class ResourceDef(object):
         # populate child entry inside parent clause in transactional API.
         # TODO(annak): remove this if/when policy solves this
         self.mandatory_child_def = None
+
+    def set_delete(self):
+        self.delete = True
+
+    def get_delete(self):
+        return self.delete
 
     def get_obj_dict(self):
         body = self.body if self.body else {}
@@ -191,6 +205,41 @@ class ResourceDef(object):
     def _set_attrs_if_specified(self, body, attr_list):
         for attr in attr_list:
             self._set_attr_if_specified(body, attr)
+
+    # Helper to set attr in body if user specified it
+    # and current nsx version supports it
+    # Body name must match attr name
+    def _set_attr_if_supported(self, body, attr, value=None):
+        if self.has_attr(attr) and self._version_dependant_attr_supported(
+                attr):
+            value = value if value is not None else self.get_attr(attr)
+            body[attr] = value
+
+    # Helper to set attrs in body if user specified them
+    # and current nsx version supports it
+    # Body name must match attr name
+    def _set_attrs_if_supported(self, body, attr_list):
+        for attr in attr_list:
+            self._set_attr_if_supported(body, attr)
+
+    def _version_dependant_attr_supported(self, attr):
+        """Check if a version dependent attr is supported on current NSX
+
+        For each resource def, there could be some attributes which only exist
+        on NSX after certain versions. This abstract method provides a skeleton
+        to define version requirements of version-dependent attributes.
+
+        By design, Devs should use _set_attr_if_supported() to add any attrs
+        that are only known to NSX after a certain version. This method works
+        as a registry for _set_attrs_if_supported() to know the baseline
+        version of each version dependent attr.
+
+        Non-version-dependent attributes should be added to the request body
+        by using _set_attr_if_specified(). This method defaults to false since
+        any version dependent attr unknown to this lib should be excluded
+        for security and safety reasons.
+        """
+        return False
 
     @classmethod
     def get_single_entry(cls, obj_body):
@@ -790,9 +839,11 @@ class SegmentPortDef(ResourceDef):
         if address_bindings:
             body['address_bindings'] = [binding.get_obj_dict()
                                         for binding in address_bindings]
-        if self.has_attr('attachment_type') or self.has_attr('vif_id'):
+        if (self.has_attr('attachment_type') or self.has_attr('vif_id') or
+            self.has_attr('hyperbus_mode')):
             if (not self.get_attr('attachment_type') and
-                not self.get_attr('vif_id')):
+                not self.get_attr('vif_id') and
+                not self.get_attr('hyperbus_mode')):
                 # detach operation
                 body['attachment'] = None
             else:
@@ -801,6 +852,8 @@ class SegmentPortDef(ResourceDef):
                     attachment['type'] = self.get_attr('attachment_type')
                 if self.get_attr('vif_id'):
                     attachment['id'] = self.get_attr('vif_id')
+                if self.get_attr('hyperbus_mode'):
+                    self._set_attr_if_supported(attachment, 'hyperbus_mode')
 
                 self._set_attrs_if_specified(attachment,
                                              ['context_id',
@@ -1347,6 +1400,17 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
             body['services'] = self.get_services_path(service_ids)
         return body
 
+    @classmethod
+    def adapt_from_rule_dict(cls, rule_dict, domain_id, map_id):
+        entry_id = rule_dict.pop('id', None)
+        name = rule_dict.pop('display_name', None)
+
+        rule_def = cls(tenant=constants.POLICY_INFRA_TENANT,
+                       domain_id=domain_id, map_id=map_id, entry_id=entry_id,
+                       name=name)
+        rule_def.set_obj_dict(rule_dict)
+        return rule_def
+
 
 class CommunicationMapEntryDef(SecurityPolicyRuleBaseDef):
 
@@ -1782,6 +1846,28 @@ class CertificateDef(ResourceDef):
         body = super(CertificateDef, self).get_obj_dict()
         self._set_attrs_if_specified(body, ['pem_encoded', 'key_algo',
                                             'private_key', 'passphrase'])
+        return body
+
+
+class GlobalConfigDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return GLOBAL_CONFIG_PATH_PATTERN
+
+    @property
+    def path_ids(self):
+        # Adding dummy 2nd key to satisfy get_section_path
+        # This resource has no keys, since it is a single object
+        return ('tenant', 'dummy')
+
+    @staticmethod
+    def resource_type():
+        return "GlobalConfig"
+
+    def get_obj_dict(self):
+        body = super(GlobalConfigDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['l3_forwarding_mode'])
         return body
 
 

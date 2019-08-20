@@ -1931,7 +1931,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             'display_name': 'map_name',
             'rules': [
                 {'id': entry1_id, 'resource_type': 'Rule',
-                 'dsiplay_name': 'name1', 'scope': ['scope1']},
+                 'display_name': 'name1', 'scope': ['scope1']},
                 {'id': entry2_id, 'resource_type': 'Rule',
                  'display_name': 'name2', 'scope': ['scope2']},
                 {'id': entry3_id, 'resource_type': 'Rule',
@@ -1943,7 +1943,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             'display_name': 'new_map_name',
             'rules': [
                 {'id': entry1_id, 'resource_type': 'Rule',
-                 'dsiplay_name': 'name1', 'scope': ['new_scope1']},
+                 'display_name': 'name1', 'scope': ['new_scope1']},
                 {'id': entry2_id, 'resource_type': 'Rule',
                  'display_name': 'name2', 'scope': ['scope2']}]}
         map_def = self.mapDef(
@@ -1957,6 +1957,51 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             self.resourceApi.update_with_entries(
                 domain_id, map_id, entries=[entry1, entry2],
                 name='new_map_name', tenant=TEST_TENANT)
+            update_call.assert_called_once_with(
+                map_def.get_resource_path(), updated_map)
+
+    def test_update_with_entries_for_IGNORE_entries(self):
+        domain_id = '111'
+        map_id = '222'
+        entry1_id = 'entry1'
+        entry2_id = 'entry2'
+        entry3_id = 'entry3'
+        original_map = {
+            'id': map_id,
+            'resource_type': self.resource_type,
+            'category': constants.CATEGORY_APPLICATION,
+            'display_name': 'map_name',
+            'rules': [
+                {'id': entry1_id, 'resource_type': 'Rule',
+                 'display_name': 'name1', 'scope': ['scope1'],
+                 '_created_time': 1},
+                {'id': entry2_id, 'resource_type': 'Rule',
+                 'display_name': 'name2', 'scope': ['scope2']},
+                {'id': entry3_id, 'resource_type': 'Rule',
+                 'display_name': 'name3', 'scope': ['scope3']}]}
+        updated_map = {
+            'id': map_id,
+            'resource_type': self.resource_type,
+            'category': constants.CATEGORY_APPLICATION,
+            'display_name': 'new_map_name',
+            'rules': [
+                {'id': entry1_id, 'resource_type': 'Rule',
+                 'display_name': 'name1', 'scope': ['scope1'],
+                 '_created_time': 1},
+                {'id': entry2_id, 'resource_type': 'Rule',
+                 'display_name': 'name2', 'scope': ['scope2']},
+                {'id': entry3_id, 'resource_type': 'Rule',
+                 'display_name': 'name3', 'scope': ['scope3']}]}
+        map_def = self.mapDef(
+            domain_id=domain_id,
+            map_id=map_id,
+            tenant=TEST_TENANT)
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=original_map),\
+            mock.patch.object(self.policy_api.client,
+                              "update") as update_call:
+            self.resourceApi.update_with_entries(
+                domain_id, map_id, name='new_map_name', tenant=TEST_TENANT)
             update_call.assert_called_once_with(
                 map_def.get_resource_path(), updated_map)
 
@@ -3050,6 +3095,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
         tier0_id = '111'
         nat_rule_id = 'rule1'
         action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
         cidr1 = '1.1.1.1/32'
         cidr2 = '2.2.2.0/24'
         enabled = True
@@ -3063,6 +3109,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
                 action=action,
                 translated_network=cidr1,
                 source_network=cidr2,
+                firewall_match=firewall_match,
                 tenant=TEST_TENANT,
                 enabled=enabled)
             expected_def = core_defs.Tier0NatRule(
@@ -3074,6 +3121,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
                 action=action,
                 translated_network=cidr1,
                 source_network=cidr2,
+                firewall_match=firewall_match,
                 tenant=TEST_TENANT,
                 enabled=enabled)
             self.assert_called_with_def(api_call, expected_def)
@@ -3109,6 +3157,44 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(mock_t0_nat_rule, result)
 
+    def test_update(self):
+        name = 'test'
+        description = 'desc'
+        tier0_id = '111'
+        nat_rule_id = 'rule1'
+        action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_EXTERNAL
+        cidr1 = '1.1.1.1/32'
+        cidr2 = '2.2.2.0/24'
+        enabled = True
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.update(
+                tier0_id, nat_rule_id,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+
+            expected_def = core_defs.Tier0NatRule(
+                tier0_id=tier0_id,
+                nat_rule_id=nat_rule_id,
+                nat_id=self.resourceApi.DEFAULT_NAT_ID,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+            self.assert_called_with_def(api_call, expected_def)
+
 
 class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
 
@@ -3122,6 +3208,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
         tier1_id = '111'
         nat_rule_id = 'rule1'
         action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
         cidr1 = '1.1.1.1/32'
         cidr2 = '2.2.2.0/24'
         enabled = True
@@ -3134,6 +3221,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 description=description,
                 action=action,
                 translated_network=cidr1,
+                firewall_match=firewall_match,
                 source_network=cidr2,
                 tenant=TEST_TENANT,
                 enabled=enabled)
@@ -3146,6 +3234,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 description=description,
                 action=action,
                 translated_network=cidr1,
+                firewall_match=firewall_match,
                 source_network=cidr2,
                 tenant=TEST_TENANT,
                 enabled=enabled)
@@ -3165,6 +3254,44 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 nat_rule_id=nat_rule_id,
                 nat_id=self.resourceApi.DEFAULT_NAT_ID,
                 tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update(self):
+        name = 'test'
+        description = 'desc'
+        tier1_id = '111'
+        nat_rule_id = 'rule1'
+        action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
+        cidr1 = '1.1.1.1/32'
+        cidr2 = '2.2.2.0/24'
+        enabled = True
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.update(
+                tier1_id, nat_rule_id,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+
+            expected_def = core_defs.Tier1NatRule(
+                tier1_id=tier1_id,
+                nat_rule_id=nat_rule_id,
+                nat_id=self.resourceApi.DEFAULT_NAT_ID,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
             self.assert_called_with_def(api_call, expected_def)
 
 
@@ -3846,6 +3973,17 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
+    def test_get_realization_info(self):
+        ip_pool_id = '111'
+        with mock.patch.object(
+            self.resourceApi, "_get_realization_info") as api_call:
+            self.resourceApi.get_realization_info(
+                ip_pool_id, tenant=TEST_TENANT)
+            expected_def = core_defs.IpPoolDef(
+                ip_pool_id=ip_pool_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def_and_dict(api_call, expected_def, {})
+
     def test_get_static_subnet_realization_info(self):
         ip_pool_id = 'ip-pool-id'
         ip_subnet_id = 'static-subnet-id'
@@ -3869,6 +4007,53 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
                 ip_pool_id, ip_subnet_id, tenant=TEST_TENANT,
                 wait=True, subnet_type=constants.IPPOOL_STATIC_SUBNET)
             api_get.assert_called_once()
+
+    def test_wait_until_realized_fail(self):
+        ip_pool_id = 'p1'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': ip_pool_id,
+                'entity_type': 'IpPool'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              ip_pool_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_error(self):
+        ip_alloc_id = 'ip_alloc_1'
+        error_code = 5109
+        error_msg = 'Insufficient free IP addresses.'
+        info = {'state': constants.STATE_ERROR,
+                'realization_specific_identifier': ip_alloc_id,
+                'entity_type': 'AllocationIpAddress',
+                'alarms': [{
+                    'message': error_msg,
+                    'error_details': {
+                        'error_code': error_code,
+                        'module_name': 'id-allocation service',
+                        'error_message': error_msg
+                    }
+                }]}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            with self.assertRaises(nsxlib_exc.RealizationErrorStateError) as e:
+                self.resourceApi.wait_until_realized(
+                    ip_alloc_id, tenant=TEST_TENANT)
+            self.assertTrue(e.exception.msg.endswith(error_msg))
+            self.assertEqual(e.exception.error_code, error_code)
+            self.assertEqual(e.exception.related_error_codes, [])
+
+    def test_wait_until_realized_succeed(self):
+        ip_pool_id = 'p1'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': ip_pool_id,
+                'entity_type': 'IpPool'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                ip_pool_id, max_attempts=5, sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicySegmentPort(NsxPolicyLibTestCase):
@@ -4747,3 +4932,88 @@ class TestPolicyExcludeList(NsxPolicyLibTestCase):
 
     def test_update(self):
         self.skipTest("The action is not supported by this resource")
+
+
+class TestNsxSearch(NsxPolicyLibTestCase):
+
+    def setUp(self):
+        super(TestNsxSearch, self).setUp()
+        self.search_path = 'search/query?query=%s'
+
+    def test_nsx_search_by_realization(self):
+        """Test search of resources with the specified tag."""
+        with mock.patch.object(self.policy_lib.client, 'url_get') as search:
+            realized_id = 'xxx'
+            realized_type = 'RealizedLogicalSwitch'
+            query = ('resource_type:GenericPolicyRealizedResource AND '
+                     'realization_specific_identifier:%s AND '
+                     'entity_type:%s' % (realized_id, realized_type))
+            self.policy_lib.search_resource_by_realized_id(
+                realized_id, realized_type)
+            search.assert_called_with(self.search_path % query)
+
+
+class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyGlobalConfig, self).setUp()
+        self.resourceApi = self.policy_lib.global_config
+
+    def test_create_or_overwrite(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_delete(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_get(self):
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get(tenant=TEST_TENANT)
+            expected_def = core_defs.GlobalConfigDef(
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_list(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_update(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_enable_ipv6(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_ONLY'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.enable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                "%s/global-config/" % TEST_TENANT,
+                {'l3_forwarding_mode': 'IPV4_AND_IPV6'})
+
+    def test_enable_ipv6_no_call(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_AND_IPV6'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.enable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_not_called()
+
+    def test_disable_ipv6(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_AND_IPV6'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                "%s/global-config/" % TEST_TENANT,
+                {'l3_forwarding_mode': 'IPV4_ONLY'})
+
+    def test_disable_ipv6_no_call(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_ONLY'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_not_called()

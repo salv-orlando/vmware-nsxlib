@@ -169,11 +169,13 @@ FEATURE_ICMP_STRICT = 'Strict list of supported ICMP types and codes'
 FEATURE_ROUTER_ALLOCATION_PROFILE = 'Router Allocation Profile'
 FEATURE_ENABLE_STANDBY_RELOCATION = 'Router Enable standby relocation'
 FEATURE_PARTIAL_UPDATES = 'Partial Update with PATCH'
+FEATURE_RELAX_SCALE_VALIDATION = 'Relax Scale Validation for LbService'
 
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'
 FEATURE_NSX_POLICY_NETWORKING = 'NSX Policy Networking'
 FEATURE_NSX_POLICY_MDPROXY = 'NSX Policy Metadata Proxy'
+FEATURE_NSX_POLICY_GLOBAL_CONFIG = 'NSX Policy Global Config'
 
 # FEATURE available depending on Inventory service backend version
 FEATURE_CONTAINER_CLUSTER_INVENTORY = 'Container Cluster Inventory'

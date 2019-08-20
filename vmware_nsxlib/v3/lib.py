@@ -14,6 +14,7 @@
 #    under the License.
 
 import abc
+from distutils import version
 
 from oslo_log import log
 import six
@@ -22,6 +23,7 @@ from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client
 from vmware_nsxlib.v3 import cluster
 from vmware_nsxlib.v3 import exceptions
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import utils
 
 LOG = log.getLogger(__name__)
@@ -80,6 +82,10 @@ class NsxLibBase(object):
     def feature_supported(self, feature):
         pass
 
+    @abc.abstractmethod
+    def get_version(self):
+        pass
+
     def build_v3_api_version_tag(self):
         return self.general_apis.build_v3_api_version_tag()
 
@@ -107,6 +113,12 @@ class NsxLibBase(object):
             url += "&page_size=%d" % page_size
         return url
 
+    def _get_search_url(self):
+        if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            return "search/query?query=%s"
+        return "search?query=%s"
+
     # TODO(abhiraut): Revisit this method to generate complex boolean
     #                 queries to search resources.
     def search_by_tags(self, tags, resource_type=None, cursor=None,
@@ -133,7 +145,7 @@ class NsxLibBase(object):
             query += " AND %s" % query_tags
         else:
             query = query_tags
-        url = self._add_pagination_parameters("search?query=%s" % query,
+        url = self._add_pagination_parameters(self._get_search_url() % query,
                                               cursor, page_size)
 
         # Retry the search in case of error
@@ -170,7 +182,7 @@ class NsxLibBase(object):
                                          in attributes.items()])
         query = 'resource_type:%s' % resource_type + (
             " AND %s" % attributes_query if attributes_query else "")
-        url = self._add_pagination_parameters("search?query=%s" % query,
+        url = self._add_pagination_parameters(self._get_search_url() % query,
                                               cursor, page_size)
 
         # Retry the search in case of error

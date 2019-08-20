@@ -14,6 +14,8 @@
 #    under the License.
 #
 
+import copy
+
 import mock
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
@@ -247,4 +249,190 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
                                       {'resource_type': 'ChildSegment',
                                        'Segment': seg2}]}
 
+        self.assert_infra_patch_call(expected_body)
+
+    def test_creating_security_policy_and_dfw_rules(self):
+        dfw_rule = {'id': 'rule_id1', 'action': 'ALLOW',
+                    'display_name': 'rule1', 'description': None,
+                    'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                    'logged': False, 'destination_groups': ['destination_url'],
+                    'source_groups': ['src_url'], 'resource_type': 'Rule',
+                    'scope': None, 'sequence_number': None, 'tag': None,
+                    'services': ['ANY']}
+        security_policy = {'id': 'security_policy_id1',
+                           'display_name': 'security_policy',
+                           'category': 'Application',
+                           'resource_type': 'SecurityPolicy'}
+        domain = {'resource_type': 'Domain', 'id': 'domain1'}
+        domain_id = domain['id']
+        map_id = security_policy['id']
+        dfw_rule_entries = [self.policy_lib.comm_map.build_entry(
+            name=dfw_rule['display_name'],
+            domain_id=domain_id,
+            map_id=map_id,
+            entry_id=dfw_rule['id'],
+            source_groups=dfw_rule['source_groups'],
+            dest_groups=dfw_rule['destination_groups']
+        )]
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.comm_map.create_with_entries(
+                name=security_policy['display_name'],
+                domain_id=domain_id,
+                map_id=map_id,
+                entries=dfw_rule_entries
+            )
+
+        def get_group_path(group_id, domain_id):
+            return '/infra/domains/' + domain_id + '/groups/' + group_id
+
+        dfw_rule['destination_groups'] = [get_group_path(group_id, domain_id)
+                                          for group_id in
+                                          dfw_rule['destination_groups']]
+        dfw_rule['source_groups'] = [get_group_path(group_id, domain_id) for
+                                     group_id in dfw_rule['source_groups']]
+        child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule}]
+        security_policy.update({'children': child_rules})
+        child_security_policies = [{
+            'resource_type': 'ChildSecurityPolicy',
+            'SecurityPolicy': security_policy
+        }]
+        domain.update({'children': child_security_policies})
+        child_domains = [{'resource_type': 'ChildDomain',
+                         'Domain': domain}]
+        expected_body = {'resource_type': 'Infra',
+                         'children': child_domains}
+        self.assert_infra_patch_call(expected_body)
+
+    @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
+    def test_updating_security_policy_and_dfw_rules(self, mock_get_api):
+        dfw_rule1 = {'id': 'rule_id1', 'action': 'ALLOW',
+                     'display_name': 'rule1', 'description': None,
+                     'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                     'logged': False,
+                     'destination_groups': ['destination_url'],
+                     'source_groups': ['src_url'], 'resource_type': 'Rule',
+                     'scope': None, 'sequence_number': None, 'tag': None,
+                     'services': ['ANY'], "_create_time": 1}
+        dfw_rule2 = {'id': 'rule_id2', 'action': 'DROP',
+                     'display_name': 'rule2', 'description': None,
+                     'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                     'logged': False,
+                     'destination_groups': ['destination_url'],
+                     'source_groups': ['src_url'], 'resource_type': 'Rule',
+                     'scope': None, 'sequence_number': None, 'tag': None,
+                     'services': ['ANY'], "_create_time": 1}
+        security_policy = {'id': 'security_policy_id1',
+                           'display_name': 'security_policy',
+                           'category': 'Application',
+                           'resource_type': 'SecurityPolicy'}
+        domain = {'resource_type': 'Domain', 'id': 'domain1'}
+        domain_id = domain['id']
+        map_id = security_policy['id']
+        new_rule_name = 'new_rule1'
+        new_direction = 'IN'
+        dfw_rule_entries = [self.policy_lib.comm_map.build_entry(
+            name=new_rule_name,
+            domain_id=domain_id,
+            map_id=map_id,
+            entry_id=dfw_rule1['id'],
+            source_groups=dfw_rule1['source_groups'],
+            dest_groups=dfw_rule1['destination_groups'],
+            direction=new_direction
+        )]
+
+        def get_group_path(group_id, domain_id):
+            return '/infra/domains/' + domain_id + '/groups/' + group_id
+
+        for dfw_rule in [dfw_rule1, dfw_rule2]:
+            dfw_rule['destination_groups'] = [get_group_path(group_id,
+                                                             domain_id)
+                                              for group_id in
+                                              dfw_rule['destination_groups']]
+            dfw_rule['source_groups'] = [get_group_path(group_id, domain_id)
+                                         for group_id in
+                                         dfw_rule['source_groups']]
+
+        security_policy_values = copy.deepcopy(security_policy)
+        security_policy_values.update({'rules':
+                                      copy.deepcopy([dfw_rule1, dfw_rule2])})
+        mock_get_api.return_value = security_policy_values
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.comm_map.update_with_entries(
+                name=security_policy['display_name'],
+                domain_id=domain_id,
+                map_id=map_id,
+                entries=dfw_rule_entries
+            )
+
+        dfw_rule1['display_name'] = new_rule_name
+        dfw_rule1['direction'] = new_direction
+        child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule1},
+                       {'resource_type': 'ChildRule', 'Rule': dfw_rule2,
+                        'marked_for_delete': True}]
+        security_policy.update({'children': child_rules})
+        child_security_policies = [{
+            'resource_type': 'ChildSecurityPolicy',
+            'SecurityPolicy': security_policy
+        }]
+        domain.update({'children': child_security_policies})
+        child_domains = [{
+            'resource_type': 'ChildDomain',
+            'Domain': domain
+        }]
+        expected_body = {'resource_type': 'Infra',
+                         'children': child_domains}
+        self.assert_infra_patch_call(expected_body)
+
+    @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
+    def test_updating_security_policy_with_no_entries_set(self, mock_get_api):
+        dfw_rule1 = {'id': 'rule_id1', 'action': 'ALLOW',
+                     'display_name': 'rule1', 'description': None,
+                     'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                     'logged': False,
+                     'destination_groups': ['destination_url'],
+                     'source_groups': ['src_url'], 'resource_type': 'Rule',
+                     'scope': None, 'sequence_number': None, 'tag': None,
+                     'services': ['ANY'], "_create_time": 1}
+        security_policy = {'id': 'security_policy_id1',
+                           'display_name': 'security_policy',
+                           'category': 'Application',
+                           'resource_type': 'SecurityPolicy'}
+        domain = {'resource_type': 'Domain', 'id': 'domain1'}
+        domain_id = domain['id']
+        map_id = security_policy['id']
+
+        def get_group_path(group_id, domain_id):
+            return '/infra/domains/' + domain_id + '/groups/' + group_id
+
+        for dfw_rule in [dfw_rule1]:
+            dfw_rule['destination_groups'] = [get_group_path(group_id,
+                                                             domain_id)
+                                              for group_id in
+                                              dfw_rule['destination_groups']]
+            dfw_rule['source_groups'] = [get_group_path(group_id, domain_id)
+                                         for group_id in
+                                         dfw_rule['source_groups']]
+
+        security_policy.update({'rules': [dfw_rule1]})
+        mock_get_api.return_value = security_policy
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.comm_map.update_with_entries(
+                name=security_policy['display_name'],
+                domain_id=domain_id,
+                map_id=map_id
+            )
+
+        child_security_policies = [{
+            'resource_type': 'ChildSecurityPolicy',
+            'SecurityPolicy': security_policy
+        }]
+        domain.update({'children': child_security_policies})
+        child_domains = [{
+            'resource_type': 'ChildDomain',
+            'Domain': domain
+        }]
+        expected_body = {'resource_type': 'Infra',
+                         'children': child_domains}
         self.assert_infra_patch_call(expected_body)

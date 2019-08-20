@@ -558,6 +558,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
 
 class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
     """NSX Policy LBService."""
+
     @property
     def entry_def(self):
         return lb_defs.LBServiceDef
@@ -567,6 +568,7 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
                             tags=IGNORE,
                             size=IGNORE,
                             connectivity_path=IGNORE,
+                            relax_scale_validation=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
         lb_service_id = self._init_obj_uuid(lb_service_id)
         lb_service_def = self._init_def(
@@ -576,6 +578,7 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             tags=tags,
             size=size,
             connectivity_path=connectivity_path,
+            relax_scale_validation=relax_scale_validation,
             tenant=tenant)
 
         self._create_or_store(lb_service_def)
@@ -599,14 +602,18 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
     def update(self, lb_service_id, name=IGNORE,
                description=IGNORE, tags=IGNORE,
                size=IGNORE, connectivity_path=IGNORE,
+               relax_scale_validation=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
-        self._update(lb_service_id=lb_service_id,
-                     name=name,
-                     description=description,
-                     tags=tags,
-                     size=size,
-                     connectivity_path=connectivity_path,
-                     tenant=tenant)
+
+        self._update(
+            lb_service_id=lb_service_id,
+            name=name,
+            description=description,
+            tags=tags,
+            size=size,
+            connectivity_path=connectivity_path,
+            relax_scale_validation=relax_scale_validation,
+            tenant=tenant)
 
     def get_statistics(self, lb_service_id,
                        tenant=constants.POLICY_INFRA_TENANT):
@@ -645,6 +652,15 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             lb_service_id=lb_service_id,
             tenant=tenant)
         return profile_def.get_resource_full_path()
+
+    def wait_until_realized(self, lb_service_id, entity_type='LbServiceDto',
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        lb_service_def = self.entry_def(
+            lb_service_id=lb_service_id, tenant=tenant)
+        return self._wait_until_realized(
+            lb_service_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
 
 
 class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
@@ -883,6 +899,15 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             virtual_server_id=virtual_server_id,
             tenant=tenant)
         return profile_def.get_resource_full_path()
+
+    def wait_until_realized(self, virtual_server_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        lbvs_def = self.entry_def(
+            virtual_server_id=virtual_server_id, tenant=tenant)
+        return self._wait_until_realized(
+            lbvs_def, entity_type=entity_type,
+            sleep=sleep, max_attempts=max_attempts)
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -16,6 +16,7 @@
 from oslo_log import log as logging
 
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import utils
 
 LOG = logging.getLogger(__name__)
@@ -411,6 +412,27 @@ class VirtualServer(LoadBalancerBase):
 class Service(LoadBalancerBase):
     resource = 'loadbalancer/services'
 
+    def _build_args(self, body, display_name=None, description=None,
+                    tags=None, resource_type=None, **kwargs):
+        if display_name:
+            body['display_name'] = display_name
+        if description:
+            body['description'] = description
+        if tags:
+            body['tags'] = tags
+        if resource_type:
+            body['resource_type'] = resource_type
+
+        if ('relax_scale_validation' in kwargs and
+            not self.nsxlib.feature_supported(
+                nsx_constants.FEATURE_RELAX_SCALE_VALIDATION)):
+            kwargs.pop('relax_scale_validation')
+            LOG.warning("Ignoring relax_scale_validation for new "
+                        "lb service %s: this feature is not supported.",
+                        display_name)
+        body.update(kwargs)
+        return body
+
     def update_service_with_virtual_servers(self, service_id,
                                             virtual_server_ids):
         # Using internal method so we can access max_attempts in the decorator
@@ -475,8 +497,8 @@ class Service(LoadBalancerBase):
 class LoadBalancer(object):
     """This is the class that have all load balancer resource clients"""
 
-    def __init__(self, client, nsxlib_config=None):
-        self.service = Service(client, nsxlib_config)
+    def __init__(self, client, nsxlib_config=None, nsxlib=None):
+        self.service = Service(client, nsxlib_config, nsxlib)
         self.virtual_server = VirtualServer(client, nsxlib_config)
         self.pool = Pool(client, nsxlib_config)
         self.monitor = Monitor(client, nsxlib_config)

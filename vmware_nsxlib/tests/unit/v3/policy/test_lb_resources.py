@@ -17,6 +17,8 @@
 import mock
 
 from vmware_nsxlib.tests.unit.v3.policy import test_resources
+from vmware_nsxlib.v3 import exceptions as nsxlib_exc
+from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import lb_defs
 
 TEST_TENANT = 'test'
@@ -603,6 +605,7 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         size = 'SMALL'
         connectivity_path = 'path'
+        relax_scale_validation = True
         with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
@@ -610,14 +613,17 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 description=description,
                 size=size,
                 connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation,
                 tenant=TEST_TENANT)
             expected_def = (
                 lb_defs.LBServiceDef(
+                    nsx_version=self.policy_lib.get_version(),
                     lb_service_id=obj_id,
                     name=name,
                     description=description,
                     size=size,
                     connectivity_path=connectivity_path,
+                    relax_scale_validation=relax_scale_validation,
                     tenant=TEST_TENANT))
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(obj_id, result)
@@ -628,6 +634,25 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
+                tenant=TEST_TENANT)
+            expected_def = (
+                lb_defs.LBServiceDef(lb_service_id=mock.ANY,
+                                     name=name,
+                                     description=description,
+                                     tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_create_with_unsupported_attribute(self):
+        name = 'd1'
+        description = 'desc'
+        relax_scale_validation = True
+
+        with self.mock_create_update() as api_call, \
+                mock.patch.object(self.resourceApi, 'version', '0.0.0'):
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                relax_scale_validation=relax_scale_validation,
                 tenant=TEST_TENANT)
             expected_def = (
                 lb_defs.LBServiceDef(lb_service_id=mock.ANY,
@@ -683,21 +708,26 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         description = 'new desc'
         size = 'SMALL'
         connectivity_path = 'path'
+        relax_scale_validation = True
         with self.mock_get(obj_id, name), \
             self.mock_create_update() as update_call:
-            self.resourceApi.update(obj_id,
-                                    name=name,
-                                    description=description,
-                                    tenant=TEST_TENANT,
-                                    size=size,
-                                    connectivity_path=connectivity_path)
+            self.resourceApi.update(
+                obj_id,
+                name=name,
+                description=description,
+                tenant=TEST_TENANT,
+                size=size,
+                connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation)
             expected_def = lb_defs.LBServiceDef(
+                nsx_version=self.policy_lib.get_version(),
                 lb_service_id=obj_id,
                 name=name,
                 description=description,
                 tenant=TEST_TENANT,
                 size=size,
-                connectivity_path=connectivity_path)
+                connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_get_status(self):
@@ -728,6 +758,62 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 lb_service_id=obj_id,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
+
+    def test_wait_until_realized_fail(self):
+        lbs_id = 'test_lbs'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              lbs_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_error(self):
+        lbs_id = 'test_lbs'
+        error_code = 23500
+        related_error_code = 23707
+        error_msg = 'Found errors in the request.'
+        related_error_msg = 'Exceed maximum number of load balancer.'
+        info = {'state': constants.STATE_ERROR,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto',
+                'alarms': [{
+                    'message': error_msg,
+                    'error_details': {
+                        'related_errors': [{
+                            'error_code': related_error_code,
+                            'module_name': 'LOAD-BALANCER',
+                            'error_message': related_error_msg
+                        }],
+                        'error_code': error_code,
+                        'module_name': 'LOAD-BALANCER',
+                        'error_message': error_msg
+                    }
+                }]}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            with self.assertRaises(nsxlib_exc.RealizationErrorStateError) as e:
+                self.resourceApi.wait_until_realized(
+                    lbs_id, tenant=TEST_TENANT)
+            error_msg_tail = "%s: %s" % (error_msg, related_error_msg)
+            self.assertTrue(e.exception.msg.endswith(error_msg_tail))
+            self.assertEqual(e.exception.error_code, error_code)
+            self.assertEqual(e.exception.related_error_codes,
+                             [related_error_code])
+
+    def test_wait_until_realized_succeed(self):
+        lbs_id = 'test_lbs'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                lbs_id, max_attempts=5, sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
@@ -1014,6 +1100,29 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
+
+    def test_wait_until_realized_fail(self):
+        vs_id = 'test_vs'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': vs_id}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              vs_id, max_attempts=5, sleep=0.1,
+                              tenant=TEST_TENANT)
+
+    def test_wait_until_realized_succeed(self):
+        vs_id = 'test_vs'
+        info = {'state': constants.STATE_REALIZED,
+                'realization_specific_identifier': vs_id,
+                'entity_type': 'LbVirtualServerDto'}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            actual_info = self.resourceApi.wait_until_realized(
+                vs_id, entity_type='LbVirtualServerDto', max_attempts=5,
+                sleep=0.1, tenant=TEST_TENANT)
+            self.assertEqual(info, actual_info)
 
 
 class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):

@@ -20,8 +20,10 @@ from oslo_log import log
 
 from vmware_nsxlib import v3
 from vmware_nsxlib.v3 import client
+from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import lib
 from vmware_nsxlib.v3 import nsx_constants
+from vmware_nsxlib.v3 import utils as lib_utils
 
 from vmware_nsxlib.v3.policy import core_defs
 from vmware_nsxlib.v3.policy import core_resources
@@ -120,6 +122,7 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.exclude_list = core_resources.NsxPolicyExcludeListApi(*args)
         self.load_balancer = lb_resources.NsxPolicyLoadBalancerApi(*args)
         self.ipsec_vpn = ipsec_vpn_resources.NsxPolicyIpsecVpnApi(*args)
+        self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
 
     @property
     def keepalive_section(self):
@@ -161,9 +164,14 @@ class NsxPolicyLib(lib.NsxLibBase):
 
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            # features available since 3.0.0
             if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_MDPROXY:
+                return True
+            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
+                return True
+            if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
@@ -185,3 +193,28 @@ class NsxPolicyLib(lib.NsxLibBase):
                               "value": "0 */%d * * * *" % interval_min}
         body = {"keyValuePairs": [realization_config]}
         self.client.patch("system-config", body)
+
+    def search_resource_by_realized_id(self, realized_id, realized_type):
+        """Search resources by a realized id & type
+
+        :returns: a list of resource pathes matching the realized id and type.
+        """
+        if not realized_type or not realized_id:
+            raise exceptions.NsxSearchInvalidQuery(
+                reason=_("Resource type or id was not specified"))
+        query = ('resource_type:GenericPolicyRealizedResource AND '
+                 'realization_specific_identifier:%s AND '
+                 'entity_type:%s' % (realized_id, realized_type))
+        url = self._get_search_url() % query
+
+        # Retry the search on case of error
+        @lib_utils.retry_upon_exception(exceptions.NsxSearchError,
+                                        max_attempts=self.client.max_attempts)
+        def do_search(url):
+            return self.client.url_get(url)
+
+        results = do_search(url)
+        pathes = []
+        for resource in results['results']:
+            pathes.extend(resource.get('intent_paths', []))
+        return pathes

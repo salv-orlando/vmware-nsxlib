@@ -126,7 +126,7 @@ class NsxPolicyResourceBase(object):
     def _init_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
         args = self._get_user_args(**kwargs)
-        return self.entry_def(**args)
+        return self.entry_def(nsx_version=self.version, **args)
 
     def _init_parent_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
@@ -136,7 +136,7 @@ class NsxPolicyResourceBase(object):
     def _get_and_update_def(self, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
         args = self._get_user_args(**kwargs)
-        resource_def = self.entry_def(**args)
+        resource_def = self.entry_def(nsx_version=self.version, **args)
         body = self.policy_api.get(resource_def)
         if body:
             resource_def.set_obj_dict(body)
@@ -224,17 +224,23 @@ class NsxPolicyResourceBase(object):
             realization_info.get('realization_specific_identifier')):
             return realization_info['realization_specific_identifier']
 
-    def _get_realization_error_message(self, info):
+    def _get_realization_error_message_and_code(self, info):
         error_msg = 'unknown'
+        error_code = None
+        related_error_codes = []
         if info.get('alarms'):
             alarm = info['alarms'][0]
             error_msg = alarm.get('message')
-            if (alarm.get('error_details') and
-                alarm['error_details'].get('related_errors')):
-                related = alarm['error_details']['related_errors'][0]
-                error_msg = '%s: %s' % (error_msg,
-                                        related.get('error_message'))
-        return error_msg
+            if alarm.get('error_details'):
+                error_code = alarm['error_details'].get('error_code')
+                if alarm['error_details'].get('related_errors'):
+                    related = alarm['error_details']['related_errors']
+                    for err_obj in related:
+                        error_msg = '%s: %s' % (error_msg,
+                                                err_obj.get('error_message'))
+                        if err_obj.get('error_code'):
+                            related_error_codes.append(err_obj['error_code'])
+        return error_msg, error_code, related_error_codes
 
     def _wait_until_realized(self, resource_def, entity_type=None,
                              sleep=None, max_attempts=None):
@@ -255,11 +261,13 @@ class NsxPolicyResourceBase(object):
                 if info['state'] == constants.STATE_REALIZED:
                     return info
                 if info['state'] == constants.STATE_ERROR:
-                    error_msg = self._get_realization_error_message(info)
+                    error_msg, error_code, related_error_codes = \
+                        self._get_realization_error_message_and_code(info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
-                        error=error_msg)
+                        error=error_msg, error_code=error_code,
+                        related_error_codes=related_error_codes)
 
         try:
             return get_info()
@@ -303,11 +311,13 @@ class NsxPolicyResourceBase(object):
             if resource_def and test_num % check_status == (check_status - 1):
                 info = self._get_realization_info(resource_def)
                 if info and info['state'] == constants.STATE_ERROR:
-                    error_msg = self._get_realization_error_message(info)
+                    error_msg, error_code, related_error_codes = \
+                        self._get_realization_error_message_and_code(info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
-                        error=error_msg)
+                        error=error_msg, error_code=error_code,
+                        related_error_codes=related_error_codes)
                 if (info and info['state'] == constants.STATE_REALIZED and
                     info.get('realization_specific_identifier')):
                     LOG.warning("Realization ID for %s was not found via "
@@ -1527,6 +1537,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                source_network=IGNORE,
                destination_network=IGNORE,
                translated_network=IGNORE,
+               firewall_match=IGNORE,
                action=IGNORE,
                sequence_number=IGNORE,
                log=IGNORE,
@@ -1541,6 +1552,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                      source_network=source_network,
                      destination_network=destination_network,
                      translated_network=translated_network,
+                     firewall_match=firewall_match,
                      action=action,
                      sequence_number=sequence_number,
                      log=log,
@@ -1615,6 +1627,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                source_network=IGNORE,
                destination_network=IGNORE,
                translated_network=IGNORE,
+               firewall_match=IGNORE,
                action=IGNORE,
                sequence_number=IGNORE,
                log=IGNORE,
@@ -1629,6 +1642,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                      source_network=source_network,
                      destination_network=destination_network,
                      translated_network=translated_network,
+                     firewall_match=firewall_match,
                      action=action,
                      sequence_number=sequence_number,
                      log=log,
@@ -2680,6 +2694,11 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             tenant=tenant)
         return self.policy_api.get(ip_subnet_def)
 
+    def get_realization_info(self, ip_pool_id, entity_type=None,
+                             tenant=constants.POLICY_INFRA_TENANT):
+        ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id, tenant=tenant)
+        return self._get_realization_info(ip_pool_def, entity_type=entity_type)
+
     def get_ip_subnet_realization_info(
             self, ip_pool_id, ip_subnet_id,
             entity_type=None,
@@ -2736,6 +2755,14 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
                     'values')[0]
             except IndexError:
                 return
+
+    def wait_until_realized(self, ip_pool_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id, tenant=tenant)
+        return self._wait_until_realized(ip_pool_def, entity_type=entity_type,
+                                         sleep=sleep,
+                                         max_attempts=max_attempts)
 
 
 class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
@@ -2889,7 +2916,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             delay=self.nsxlib_config.realization_wait_sec,
             max_attempts=self.nsxlib_config.realization_max_attempts)
         def _do_create_with_retry():
-            self.policy_api.create_with_parent(map_def, entries)
+            self._create_or_store(map_def, entries)
 
         _do_create_with_retry()
         return map_id
@@ -3077,34 +3104,63 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             map_sequence_number=map_sequence_number)
         map_path = map_def.get_resource_path()
 
-        def _overwrite_entries(old_entries, new_entries):
+        def _overwrite_entries(old_entries, new_entries, transaction):
             # Replace old entries with new entries, but copy additional
-            # attributes from old entries for those kept in new entries.
+            # attributes from old entries for those kept in new entries
+            # and marked the unwanted ones in the old entries as deleted
+            # if it is in the transaction call.
             old_rules = {entry["id"]: entry for entry in old_entries}
-            new_rules = []
+            replaced_entries = []
             for entry in new_entries:
                 rule_id = entry.get_id()
                 new_rule = entry.get_obj_dict()
                 old_rule = old_rules.get(rule_id)
                 if old_rule:
+                    old_rules.pop(rule_id)
                     for key, value in old_rule.items():
                         if key not in new_rule:
                             new_rule[key] = value
-                new_rules.append(new_rule)
-            return new_rules
+                replaced_entries.append(
+                    self.entry_def.adapt_from_rule_dict(
+                        new_rule, domain_id, map_id))
+
+            if transaction:
+                replaced_entries.extend(
+                    _mark_delete_entries(old_rules.values()))
+            return replaced_entries
+
+        def _mark_delete_entries(delete_rule_dicts):
+            delete_entries = []
+            for delete_rule_dict in delete_rule_dicts:
+                delete_entry = self.entry_def.adapt_from_rule_dict(
+                    delete_rule_dict, domain_id, map_id)
+                delete_entry.set_delete()
+                delete_entries.append(delete_entry)
+            return delete_entries
 
         @utils.retry_upon_exception(
             exceptions.StaleRevision,
             max_attempts=self.policy_api.client.max_attempts)
         def _update():
+            transaction = trans.NsxPolicyTransaction.get_current()
             # Get the current data of communication map & its entries
             comm_map = self.policy_api.get(map_def)
+            replaced_entries = None
+            ignore_entries = (entries == IGNORE)
+            if not ignore_entries:
+                replaced_entries = _overwrite_entries(comm_map['rules'],
+                                                      entries, transaction)
+                comm_map.pop('rules')
             map_def.set_obj_dict(comm_map)
-            body = map_def.get_obj_dict()
-            if entries != IGNORE:
-                body['rules'] = _overwrite_entries(comm_map['rules'], entries)
             # Update the entire map at the NSX
-            self.policy_api.client.update(map_path, body)
+            if transaction:
+                self._create_or_store(map_def, replaced_entries)
+            else:
+                body = map_def.get_obj_dict()
+                if not ignore_entries:
+                    body['rules'] = [rule.get_obj_dict() for rule in
+                                     replaced_entries]
+                self.policy_api.client.update(map_path, body)
 
         _update()
 
@@ -3926,3 +3982,46 @@ class NsxPolicyExcludeListApi(NsxPolicyResourceBase):
         raise exceptions.ManagerError(details=err_msg)
 
     # TODO(asarfaty): Add support for add/remove member
+
+
+class NsxPolicyGlobalConfig(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.GlobalConfigDef
+
+    def create_or_overwrite(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def delete(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def get(self, tenant=constants.POLICY_INFRA_TENANT, silent=False):
+        global_config_def = self.entry_def(tenant=tenant)
+        return self.policy_api.get(global_config_def, silent=silent)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def update(self, members=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def _set_l3_forwarding_mode(self, mode, tenant):
+        # Using PUT as PATCH is not supported for this API
+        config = self.get()
+        if config['l3_forwarding_mode'] != mode:
+            config['l3_forwarding_mode'] = mode
+            config_def = self.entry_def(tenant=tenant)
+            path = config_def.get_resource_path()
+            self.policy_api.client.update(path, config)
+
+    def enable_ipv6(self, tenant=constants.POLICY_INFRA_TENANT):
+        return self._set_l3_forwarding_mode('IPV4_AND_IPV6', tenant)
+
+    def disable_ipv6(self, tenant=constants.POLICY_INFRA_TENANT):
+        return self._set_l3_forwarding_mode('IPV4_ONLY', tenant)

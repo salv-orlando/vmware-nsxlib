@@ -14,8 +14,14 @@
 #    under the License.
 #
 
+from distutils import version
+
+from oslo_log import log as logging
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy.core_defs import ResourceDef
+
+LOG = logging.getLogger(__name__)
 
 TENANTS_PATH_PATTERN = "%s/"
 LB_VIRTUAL_SERVERS_PATH_PATTERN = TENANTS_PATH_PATTERN + "lb-virtual-servers/"
@@ -379,7 +385,23 @@ class LBServiceDef(ResourceDef):
     def get_obj_dict(self):
         body = super(LBServiceDef, self).get_obj_dict()
         self._set_attrs_if_specified(body, ['size', 'connectivity_path'])
+        self._set_attrs_if_supported(body, ['relax_scale_validation'])
         return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'relax_scale_validation':
+                return True
+        else:
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+            return False
+
+        return False
 
 
 class LBServiceStatisticsDef(ResourceDef):
