@@ -2739,6 +2739,26 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
             nsx_lrp_update.assert_called_once_with(
                 lrp_id, relay_service_uuid=relay_id)
 
+    def test_get_locale_tier1_services(self):
+        tier1_id = '111'
+        path = 'dummy/path'
+        mock_result = [{'edge_cluster_path': path}, {'test': 'test'}]
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': mock_result}):
+            self.assertEqual(
+                self.resourceApi.get_locale_tier1_services(tier1_id),
+                mock_result)
+
+    def test_get_edge_cluster_by_searching(self):
+        tier1_id = '111'
+        path = 'dummy/path'
+        with mock.patch.object(self.resourceApi, "get_locale_tier1_services",
+                               return_value=[{'edge_cluster_path': path},
+                                             {'test': 'test'}]):
+            result = self.resourceApi.get_edge_cluster_path_by_searching(
+                tier1_id, tenant=TEST_TENANT)
+            self.assertEqual(path, result)
+
     def test_get_edge_cluster(self):
         tier1_id = '111'
         path = 'dummy/path'

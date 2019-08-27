@@ -1123,6 +1123,21 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
         except exceptions.ResourceNotFound:
             return
 
+    def get_edge_cluster_path_by_searching(
+            self, tier1_id, tenant=constants.POLICY_INFRA_TENANT):
+        """Get the edge_cluster path of a Tier1 router"""
+        services = self.get_locale_tier1_services(tier1_id, tenant=tenant)
+        for srv in services:
+            if 'edge_cluster_path' in srv:
+                return srv['edge_cluster_path']
+
+    def get_locale_tier1_services(self, tier1_id,
+                                  tenant=constants.POLICY_INFRA_TENANT):
+        t1service_def = core_defs.Tier1LocaleServiceDef(
+            tier1_id=tier1_id,
+            tenant=constants.POLICY_INFRA_TENANT)
+        return self.policy_api.list(t1service_def)['results']
+
     def add_segment_interface(self, tier1_id, interface_id, segment_id,
                               subnets, ipv6_ndra_profile_id=IGNORE,
                               tenant=constants.POLICY_INFRA_TENANT):
