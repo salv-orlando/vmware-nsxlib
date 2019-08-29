@@ -648,7 +648,16 @@ class NsxLibIPSet(utils.NsxLibApiBase):
         return self.client.create(self.get_path(), body)
 
     def update(self, ip_set_id, display_name=None, description=None,
-               ip_addresses=None, tags_update=None):
+               ip_addresses=None, tags_update=None, update_payload_cbk=None):
+        # The update_payload_cbk function takes two arguments.
+        # The first one is the result from the internal GET request.
+        # The second one is a dict of user-provided attributes,
+        # which can be changed inside the callback function and
+        # used as the new payload for the following PUT request.
+        # For example, users want to combine the new ip_addresses
+        # passed to update() with the original ip_addresses retrieved
+        # from the internal GET request instead of overriding the
+        # original ip_addresses.
         ip_set = {}
         if tags_update:
             ip_set['tags_update'] = tags_update
@@ -659,7 +668,8 @@ class NsxLibIPSet(utils.NsxLibApiBase):
         if ip_addresses is not None:
             ip_set['ip_addresses'] = ip_addresses
         return self._update_resource(self.get_path(ip_set_id),
-                                     ip_set, retry=True)
+                                     ip_set, retry=True,
+                                     update_payload_cbk=update_payload_cbk)
 
     def read(self, ip_set_id):
         return self.client.get('ip-sets/%s' % ip_set_id)

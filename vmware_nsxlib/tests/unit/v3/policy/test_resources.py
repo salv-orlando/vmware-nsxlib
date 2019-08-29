@@ -576,6 +576,57 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
             update_call.assert_called_once_with(
                 group_def.get_resource_path(), updated_group)
 
+    def test_update_with_conditions_callback(self):
+
+        def update_payload_cbk(revised_payload, payload):
+            revised_ips = revised_payload["expression"][0]["ip_addresses"]
+            new_ips = payload["conditions"][0].ip_addresses
+            updated_ips = revised_ips + new_ips
+            payload["conditions"] = [core_defs.IPAddressExpression(
+                updated_ips)]
+
+        domain_id = '111'
+        group_id = '222'
+        name = 'name'
+        new_name = 'new name'
+        description = 'desc'
+        new_description = 'new desc'
+
+        ips1 = ["1.1.1.1"]
+        ips2 = ["2.2.2.2"]
+        cond1_def = core_defs.IPAddressExpression(ips1)
+        cond2_def = core_defs.IPAddressExpression(ips2)
+        updated_cond_def = core_defs.IPAddressExpression(ips1 + ips2)
+
+        original_group = {
+            'id': group_id,
+            'resource_type': 'Group',
+            'display_name': name,
+            'description': description,
+            'expression': [cond1_def.get_obj_dict()]}
+        updated_group = {
+            'id': group_id,
+            'resource_type': 'Group',
+            'display_name': new_name,
+            'description': new_description,
+            'expression': [updated_cond_def.get_obj_dict()]}
+        group_def = core_defs.GroupDef(
+            domain_id=domain_id,
+            group_id=group_id,
+            conditions=[cond2_def],
+            tenant=TEST_TENANT)
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=original_group),\
+            mock.patch.object(self.policy_api.client,
+                              "update") as update_call:
+            self.resourceApi.update_with_conditions(
+                domain_id, group_id, name=new_name,
+                description=new_description,
+                conditions=[cond2_def], tenant=TEST_TENANT,
+                update_payload_cbk=update_payload_cbk)
+            update_call.assert_called_once_with(
+                group_def.get_resource_path(), updated_group)
+
     def test_unset(self):
         domain_id = '111'
         group_id = '222'

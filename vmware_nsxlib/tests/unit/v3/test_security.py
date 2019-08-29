@@ -368,6 +368,30 @@ class TestNsxLibIPSet(nsxlib_testcase.NsxClientTestCase):
                 resource = 'ip-sets/%s' % fake_ip_set['id']
                 update.assert_called_with(resource, data, headers=None)
 
+    def test_update_ip_set_callback(self):
+
+        def update_payload_cbk(revised_payload, payload):
+            payload['ip_addresses'] = (revised_payload['ip_addresses'] +
+                                       payload['ip_addresses'])
+
+        fake_ip_set = test_constants.FAKE_IP_SET.copy()
+        new_ip_addresses = ['10.0.0.0']
+        updated_ip_addresses = fake_ip_set['ip_addresses'] + new_ip_addresses
+        data = {
+            'id': fake_ip_set['id'],
+            'display_name': fake_ip_set['display_name'],
+            'ip_addresses': updated_ip_addresses,
+            'resource_type': 'IPSet'
+        }
+        with mock.patch.object(self.nsxlib.client, 'get',
+                               return_value=fake_ip_set):
+            with mock.patch.object(self.nsxlib.client, 'update') as update:
+                self.nsxlib.ip_set.update(
+                    fake_ip_set['id'], ip_addresses=new_ip_addresses,
+                    update_payload_cbk=update_payload_cbk)
+                resource = 'ip-sets/%s' % fake_ip_set['id']
+                update.assert_called_with(resource, data, headers=None)
+
 
 class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
     """Tests for vmware_nsxlib.v3.security.NsxLibNSGroup"""
