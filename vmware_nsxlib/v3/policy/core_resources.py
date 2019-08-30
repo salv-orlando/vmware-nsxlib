@@ -523,7 +523,8 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
     def update_with_conditions(
         self, domain_id, group_id,
         name=IGNORE, description=IGNORE, conditions=IGNORE,
-        tags=IGNORE, tenant=constants.POLICY_INFRA_TENANT):
+        tags=IGNORE, tenant=constants.POLICY_INFRA_TENANT,
+        update_payload_cbk=None):
         group_def = self._init_def(domain_id=domain_id,
                                    group_id=group_id,
                                    name=name,
@@ -539,6 +540,17 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
         def _update():
             # Get the current data of group
             group = self.policy_api.get(group_def)
+            if update_payload_cbk:
+                # The update_payload_cbk function takes two arguments.
+                # The first one is the result from the internal GET request.
+                # The second one is a dict of user-provided attributes,
+                # which can be changed inside the callback function and
+                # used as the new payload for the following PUT request.
+                # For example, users want to combine the new conditions
+                # passed to update_with_conditions() with the original
+                # conditions retrieved from the internal GET request
+                # instead of overriding the original conditions.
+                update_payload_cbk(group, group_def.attrs)
             group_def.set_obj_dict(group)
             body = group_def.get_obj_dict()
             # Update the entire group at the NSX
