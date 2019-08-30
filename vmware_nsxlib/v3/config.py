@@ -42,6 +42,9 @@ class NsxLibConfig(object):
                     "insecure" is set to True. If "insecure" is set to
                     False and ca_file is unset, the system root CAs will
                     be used to verify the server certificate.
+    :param token_provider: None, or instance of implemented AbstractJWTProvider
+                           which will return the JSON Web Token used in the
+                           requests in NSX for authorization.
 
     :param concurrent_connections: Maximum concurrent connections to each NSX
                                    manager.
@@ -95,6 +98,7 @@ class NsxLibConfig(object):
                  client_cert_provider=None,
                  insecure=True,
                  ca_file=None,
+                 token_provider=None,
                  concurrent_connections=10,
                  retries=3,
                  http_timeout=10,
@@ -127,6 +131,7 @@ class NsxLibConfig(object):
         self.conn_idle_timeout = conn_idle_timeout
         self.http_provider = http_provider
         self.client_cert_provider = client_cert_provider
+        self.token_provider = token_provider
         self.max_attempts = max_attempts
         self.plugin_scope = plugin_scope
         self.plugin_tag = plugin_tag

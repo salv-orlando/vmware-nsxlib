@@ -213,7 +213,9 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                                  config.http_read_timeout)
         if config.client_cert_provider:
             session.cert_provider = config.client_cert_provider
-        else:
+        # Set the headers with Auth info when token provider is set,
+        # otherwise set the username and password
+        elif not config.token_provider:
             session.auth = (provider.username, provider.password)
 
         # NSX v3 doesn't use redirects
@@ -233,7 +235,8 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         session.mount('https://', adapter)
 
         self.get_default_headers(session, provider,
-                                 config.allow_overwrite_header)
+                                 config.allow_overwrite_header,
+                                 config.token_provider)
 
         return session
 
@@ -246,22 +249,38 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
     def is_conn_open_exception(self, exception):
         return isinstance(exception, requests_exceptions.ConnectTimeout)
 
-    def get_default_headers(self, session, provider, allow_overwrite_header):
+    def get_default_headers(self, session, provider, allow_overwrite_header,
+                            token_provider=None):
         """Get the default headers that should be added to future requests"""
         session.default_headers = {}
 
+        # Add allow-overwrite if configured
+        if allow_overwrite_header:
+            session.default_headers['X-Allow-Overwrite'] = 'true'
         # Perform the initial session create and get the relevant jsessionid &
         # X-XSRF-TOKEN for future requests
         req_data = ''
-        if not session.cert_provider:
+        req_headers = {'Accept': 'application/json',
+                       'Content-Type': 'application/x-www-form-urlencoded'}
+        # Insert the JWT in Auth header if using tokens for auth
+        if token_provider:
+            try:
+                token_value = token_provider.get_token()
+                bearer_token = token_provider.get_header_value(token_value)
+                token_header = {"Authorization": bearer_token}
+                session.default_headers.update(token_header)
+                req_headers.update(token_header)
+            except exceptions.BadJSONWebTokenProviderRequest as e:
+                LOG.error("Session create failed for endpoint %s due to "
+                          "error in retrieving JSON Web Token: %s",
+                          provider.url, e)
+        elif not session.cert_provider:
             # With client certificate authentication, username and password
             # may not be provided.
             # If provided, backend treats these credentials as authentication
             # and ignores client cert as principal identity indication.
             req_data = 'j_username=%s&j_password=%s' % (provider.username,
                                                         provider.password)
-        req_headers = {'Accept': 'application/json',
-                       'Content-Type': 'application/x-www-form-urlencoded'}
         # Cannot use the certificate at this stage, because it is used for
         # the certificate generation
         try:
@@ -293,10 +312,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                 LOG.info("Session create succeeded for endpoint %(url)s with "
                          "headers %(hdr)s",
                          {'url': provider.url, 'hdr': session.default_headers})
-
-        # Add allow-overwrite if configured
-        if allow_overwrite_header:
-            session.default_headers['X-Allow-Overwrite'] = 'true'
 
 
 class ClusterHealth(object):

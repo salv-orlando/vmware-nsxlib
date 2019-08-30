@@ -115,6 +115,7 @@ def get_default_nsxlib_config(allow_passthrough=True):
         password=NSX_PASSWORD,
         retries=NSX_HTTP_RETRIES,
         insecure=NSX_INSECURE,
+        token_provider=None,
         ca_file=NSX_CERT,
         concurrent_connections=NSX_CONCURENT_CONN,
         http_timeout=NSX_HTTP_TIMEOUT,
@@ -137,6 +138,7 @@ def get_nsxlib_config_with_client_cert():
         retries=NSX_HTTP_RETRIES,
         insecure=NSX_INSECURE,
         ca_file=NSX_CERT,
+        token_provider=None,
         concurrent_connections=NSX_CONCURENT_CONN,
         http_timeout=NSX_HTTP_TIMEOUT,
         http_read_timeout=NSX_HTTP_READ_TIMEOUT,
@@ -224,6 +226,7 @@ class NsxClientTestCase(NsxLibTestCase):
                 password=password or NSX_PASSWORD,
                 retries=retries or NSX_HTTP_RETRIES,
                 insecure=insecure if insecure is not None else NSX_INSECURE,
+                token_provider=None,
                 ca_file=ca_file or NSX_CERT,
                 concurrent_connections=(concurrent_connections or
                                         NSX_CONCURENT_CONN),

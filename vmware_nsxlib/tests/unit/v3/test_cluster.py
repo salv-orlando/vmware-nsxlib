@@ -53,6 +53,7 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         mock_api.nsxlib_config.password = 'nsxpassword'
         mock_api.nsxlib_config.retries = 100
         mock_api.nsxlib_config.insecure = True
+        mock_api.nsxlib_config.token_provider = None
         mock_api.nsxlib_config.ca_file = None
         mock_api.nsxlib_config.http_timeout = 99
         mock_api.nsxlib_config.conn_idle_timeout = 39
@@ -93,6 +94,36 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             self.assertFalse(session.verify)
             self.assertEqual(cert_provider_inst, session.cert_provider)
             self.assertEqual(99, session.timeout)
+
+    @mock.patch("vmware_nsxlib.v3.cluster.NSXRequestsHTTPProvider."
+                "get_default_headers")
+    def test_new_connection_with_token_provider(self, mock_get_def_headers):
+        mock_api = mock.Mock()
+        mock_api.nsxlib_config = mock.Mock()
+        mock_api.nsxlib_config.retries = 100
+        mock_api.nsxlib_config.insecure = True
+        mock_api.nsxlib_config.ca_file = None
+        mock_api.nsxlib_config.http_timeout = 99
+        mock_api.nsxlib_config.conn_idle_timeout = 39
+        mock_api.nsxlib_config.client_cert_provider = None
+        token_provider_inst = mock.Mock()
+        mock_api.nsxlib_config.token_provider = token_provider_inst
+        mock_api.nsxlib_config.allow_overwrite_header = False
+        provider = cluster.NSXRequestsHTTPProvider()
+        cluster_provider = cluster.Provider('9.8.7.6', 'https://9.8.7.6',
+                                            'nsxuser', 'nsxpassword', None)
+        with mock.patch.object(cluster.TimeoutSession, 'request',
+                               return_value=get_sess_create_resp()):
+            session = provider.new_connection(mock_api, cluster_provider)
+
+            self.assertIsNone(session.auth)
+            self.assertFalse(session.verify)
+            self.assertIsNone(session.cert)
+            self.assertEqual(100,
+                             session.adapters['https://'].max_retries.total)
+            self.assertEqual(99, session.timeout)
+            mock_get_def_headers.assert_called_once_with(
+                mock.ANY, cluster_provider, False, token_provider_inst)
 
     def test_validate_connection_keep_alive(self):
         mock_conn = mocks.MockRequestSessionApi()

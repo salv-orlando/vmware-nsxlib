@@ -150,6 +150,10 @@ class BadXSRFToken(ManagerError):
     message = _("Bad or expired XSRF token")
 
 
+class BadJSONWebTokenProviderRequest(NsxLibException):
+    message = _("Bad or expired JSON web token request from provider: %(msg)s")
+
+
 class ServiceClusterUnavailable(ManagerError):
     message = _("Service cluster: '%(cluster_id)s' is unavailable. Please, "
                 "check NSX setup and/or configuration")

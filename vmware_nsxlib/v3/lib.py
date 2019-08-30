@@ -33,7 +33,9 @@ class NsxLibBase(object):
 
         self.nsx_version = None
         self.nsx_api = None
+        self.default_headers = None
         self.set_config(nsxlib_config)
+        self.set_default_headers(nsxlib_config)
 
         # create the Cluster
         self.cluster = cluster.NSXClusteredAPI(self.nsxlib_config)
@@ -44,7 +46,8 @@ class NsxLibBase(object):
             nsx_api_managers=self.nsxlib_config.nsx_api_managers,
             max_attempts=self.nsxlib_config.max_attempts,
             url_path_base=self.client_url_prefix,
-            rate_limit_retry=self.nsxlib_config.rate_limit_retry)
+            rate_limit_retry=self.nsxlib_config.rate_limit_retry,
+            default_headers=self.default_headers)
 
         self.general_apis = utils.NsxLibApiBase(
             self.client, self.nsxlib_config)
@@ -60,6 +63,18 @@ class NsxLibBase(object):
             keepalive_section=self.keepalive_section,
             validate_connection_method=self.validate_connection_method,
             url_base=self.client_url_prefix)
+
+    def set_default_headers(self, nsxlib_config):
+        """Set the default headers with token information"""
+        if nsxlib_config.token_provider:
+            try:
+                token_value = nsxlib_config.token_provider.get_token()
+            except exceptions.BadJSONWebTokenProviderRequest as e:
+                LOG.error("Error in retrieving JSON Web Token: %s", e)
+                return
+            bearer_token = "Bearer %s" % token_value
+            self.default_headers = self.default_headers or {}
+            self.default_headers["Authorization"] = bearer_token
 
     @abc.abstractproperty
     def client_url_prefix(self):
