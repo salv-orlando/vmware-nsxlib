@@ -300,7 +300,7 @@ class RouterDef(ResourceDef):
         # Add dhcp relay config
         # TODO(asarfaty): this can be either dhcp or dhcp relay config
         if self.has_attr('dhcp_config'):
-            paths = None
+            paths = ""
             if self.get_attr('dhcp_config'):
                 dhcp_conf = DhcpRelayConfigDef(
                     config_id=self.get_attr('dhcp_config'),
@@ -311,7 +311,7 @@ class RouterDef(ResourceDef):
                                         value=paths)
 
         if self.has_attr('ipv6_ndra_profile_id'):
-            paths = None
+            paths = ""
             if self.get_attr('ipv6_ndra_profile_id'):
                 ndra_profile = Ipv6NdraProfileDef(
                     profile_id=self.get_attr('ipv6_ndra_profile_id'),
@@ -480,7 +480,7 @@ class Tier1InterfaceDef(ResourceDef):
                                         value=path)
 
         if self.has_attr('ipv6_ndra_profile_id'):
-            paths = None
+            paths = ""
             if self.get_attr('ipv6_ndra_profile_id'):
                 ndra_profile = Ipv6NdraProfileDef(
                     profile_id=self.get_attr('ipv6_ndra_profile_id'),
@@ -809,7 +809,7 @@ class SegmentPortSecProfilesBindingMapDef(SegmentPortBindingMapDefBase):
         body = super(SegmentPortSecProfilesBindingMapDef, self).get_obj_dict()
 
         if self.has_attr('segment_security_profile_id'):
-            path = None
+            path = ""
             if self.get_attr('segment_security_profile_id'):
                 profile = SegmentSecurityProfileDef(
                     profile_id=self.get_attr('segment_security_profile_id'),
@@ -821,7 +821,7 @@ class SegmentPortSecProfilesBindingMapDef(SegmentPortBindingMapDefBase):
                 value=path)
 
         if self.has_attr('spoofguard_profile_id'):
-            path = None
+            path = ""
             if self.get_attr('spoofguard_profile_id'):
                 profile = SpoofguardProfileDef(
                     profile_id=self.get_attr('spoofguard_profile_id'),
@@ -850,7 +850,7 @@ class SegmentPortDiscoveryProfilesBindingMapDef(SegmentPortBindingMapDefBase):
                      self).get_obj_dict()
 
         if self.has_attr('mac_discovery_profile_id'):
-            path = None
+            path = ""
             if self.get_attr('mac_discovery_profile_id'):
                 profile = MacDiscoveryProfileDef(
                     profile_id=self.get_attr('mac_discovery_profile_id'),
@@ -862,7 +862,7 @@ class SegmentPortDiscoveryProfilesBindingMapDef(SegmentPortBindingMapDefBase):
                 value=path)
 
         if self.has_attr('ip_discovery_profile_id'):
-            path = None
+            path = ""
             if self.get_attr('ip_discovery_profile_id'):
                 profile = IpDiscoveryProfileDef(
                     profile_id=self.get_attr('ip_discovery_profile_id'),
@@ -891,7 +891,7 @@ class SegmentPortQoSProfilesBindingMapDef(SegmentPortBindingMapDefBase):
                      self).get_obj_dict()
 
         if self.has_attr('qos_profile_id'):
-            path = None
+            path = ""
             if self.get_attr('qos_profile_id'):
                 profile = QosProfileDef(
                     profile_id=self.get_attr('qos_profile_id'),
