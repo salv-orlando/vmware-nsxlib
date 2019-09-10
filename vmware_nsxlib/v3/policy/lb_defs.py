@@ -393,13 +393,13 @@ class LBServiceDef(ResourceDef):
             version.LooseVersion(nsx_constants.NSX_VERSION_2_5_1)):
             if attr == 'relax_scale_validation':
                 return True
-            else:
-                LOG.warning(
-                    "Ignoring %s for %s %s: this feature is not supported."
-                    "Current NSX version: %s. Minimum supported version: %s",
-                    attr, self.resource_type, self.attrs.get('name', ''),
-                    self.nsx_version, nsx_constants.NSX_VERSION_2_5_1)
-                return False
+        else:
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_2_5_1)
+            return False
 
         return False
 

@@ -172,6 +172,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             # features available since 3.0.0
             if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
                 return True
+            if feature == nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE:
+                return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
 

@@ -4010,6 +4010,18 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         super(TestPolicySegmentPort, self).setUp()
         self.resourceApi = self.policy_lib.segment_port
 
+    def test_feature_supported(self):
+        with mock.patch.object(self.policy_lib, "get_version",
+                               return_value='2.5.0'):
+            self.assertFalse(
+                self.policy_lib.feature_supported(
+                    nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE))
+        with mock.patch.object(self.policy_lib, "get_version",
+                               return_value='3.0.0'):
+            self.assertTrue(
+                self.policy_lib.feature_supported(
+                    nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE))
+
     def test_create(self):
         name = 'test'
         description = 'desc'
@@ -4022,18 +4034,67 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         traffic_tag = 10
         allocate_addresses = "BOTH"
         tags = [{'scope': 'a', 'tag': 'b'}]
+        hyperbus_mode = 'DISABLE'
 
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call, \
+            mock.patch.object(self.resourceApi, 'version', '3.0.0'):
+            result = self.resourceApi.create_or_overwrite(
+                name, segment_id, description=description,
+                address_bindings=address_bindings,
+                attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
+                context_id=context_id, traffic_tag=traffic_tag,
+                allocate_addresses=allocate_addresses,
+                hyperbus_mode=hyperbus_mode,
+                tags=tags,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.SegmentPortDef(
+                nsx_version='3.0.0',
+                segment_id=segment_id,
+                port_id=mock.ANY,
+                name=name,
+                description=description,
+                address_bindings=address_bindings,
+                attachment_type=attachment_type,
+                vif_id=vif_id,
+                app_id=app_id,
+                context_id=context_id,
+                traffic_tag=traffic_tag,
+                allocate_addresses=allocate_addresses,
+                tags=tags,
+                tenant=TEST_TENANT,
+                hyperbus_mode=hyperbus_mode)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_create_with_unsupported_attribute(self):
+        name = 'test'
+        description = 'desc'
+        segment_id = "segment"
+        address_bindings = []
+        attachment_type = "CHILD"
+        vif_id = "vif"
+        app_id = "app"
+        context_id = "context"
+        traffic_tag = 10
+        allocate_addresses = "BOTH"
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        hyperbus_mode = 'DISABLE'
+
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call, \
+            mock.patch.object(self.resourceApi, 'version', '0.0.0'):
             result = self.resourceApi.create_or_overwrite(
                 name, segment_id, description=description,
                 address_bindings=address_bindings,
                 attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
                 context_id=context_id, traffic_tag=traffic_tag,
                 allocate_addresses=allocate_addresses, tags=tags,
-                tenant=TEST_TENANT)
-
+                tenant=TEST_TENANT, hyperbus_mode=hyperbus_mode)
             expected_def = core_defs.SegmentPortDef(
+                nsx_version=self.policy_lib.get_version(),
                 segment_id=segment_id,
                 port_id=mock.ANY,
                 name=name,
@@ -4061,16 +4122,20 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         traffic_tag = 10
         allocate_addresses = "BOTH"
         tags = [{'scope': 'a', 'tag': 'b'}]
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        hyperbus_mode = 'DISABLE'
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call, \
+            mock.patch.object(self.resourceApi, 'version', '3.0.0'):
             self.resourceApi.attach(
                 segment_id, port_id,
                 attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
                 context_id=context_id, traffic_tag=traffic_tag,
-                allocate_addresses=allocate_addresses, tags=tags,
+                allocate_addresses=allocate_addresses,
+                hyperbus_mode=hyperbus_mode, tags=tags,
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.SegmentPortDef(
+                nsx_version='3.0.0',
                 segment_id=segment_id,
                 port_id=port_id,
                 attachment_type=attachment_type,
@@ -4079,6 +4144,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 context_id=context_id,
                 traffic_tag=traffic_tag,
                 allocate_addresses=allocate_addresses,
+                hyperbus_mode=hyperbus_mode,
                 tags=tags,
                 tenant=TEST_TENANT)
 
