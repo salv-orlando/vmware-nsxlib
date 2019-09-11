@@ -263,7 +263,7 @@ class LBVirtualServerDef(ResourceDef):
                 app_profile_def.get_resource_full_path())
 
         if self.has_attr('lb_persistence_profile_id'):
-            path = None
+            path = ""
             lb_persistence_profile_id = self.get_attr(
                 'lb_persistence_profile_id')
             if lb_persistence_profile_id:
@@ -273,7 +273,7 @@ class LBVirtualServerDef(ResourceDef):
                 path = lb_persistence_profile_def.get_resource_full_path()
             body['lb_persistence_profile_path'] = path
         if self.has_attr('lb_service_id'):
-            path = None
+            path = ""
             lb_service_id = self.get_attr('lb_service_id')
             if lb_service_id:
                 lb_service_def = LBServiceDef(
@@ -281,7 +281,7 @@ class LBVirtualServerDef(ResourceDef):
                 path = lb_service_def.get_resource_full_path()
             body['lb_service_path'] = path
         if self.has_attr('pool_id'):
-            path = None
+            path = ""
             lb_pool_id = self.get_attr('pool_id')
             if lb_pool_id:
                 lb_pool_def = LBPoolDef(
