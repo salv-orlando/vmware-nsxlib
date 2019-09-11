@@ -628,6 +628,7 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         obj_id = '111'
         size = 'SMALL'
         connectivity_path = 'path'
+        relax_scale_validation = True
         with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name,
@@ -635,14 +636,17 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 description=description,
                 size=size,
                 connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation,
                 tenant=TEST_TENANT)
             expected_def = (
                 lb_defs.LBServiceDef(
+                    nsx_version=self.policy_lib.get_version(),
                     lb_service_id=obj_id,
                     name=name,
                     description=description,
                     size=size,
                     connectivity_path=connectivity_path,
+                    relax_scale_validation=relax_scale_validation,
                     tenant=TEST_TENANT))
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(obj_id, result)
@@ -653,6 +657,25 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         with self.mock_create_update() as api_call:
             result = self.resourceApi.create_or_overwrite(
                 name, description=description,
+                tenant=TEST_TENANT)
+            expected_def = (
+                lb_defs.LBServiceDef(lb_service_id=mock.ANY,
+                                     name=name,
+                                     description=description,
+                                     tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_create_with_unsupported_attribute(self):
+        name = 'd1'
+        description = 'desc'
+        relax_scale_validation = True
+
+        with self.mock_create_update() as api_call, \
+                mock.patch.object(self.resourceApi, 'version', '0.0.0'):
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                relax_scale_validation=relax_scale_validation,
                 tenant=TEST_TENANT)
             expected_def = (
                 lb_defs.LBServiceDef(lb_service_id=mock.ANY,
@@ -708,21 +731,26 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
         description = 'new desc'
         size = 'SMALL'
         connectivity_path = 'path'
+        relax_scale_validation = True
         with self.mock_get(obj_id, name), \
             self.mock_create_update() as update_call:
-            self.resourceApi.update(obj_id,
-                                    name=name,
-                                    description=description,
-                                    tenant=TEST_TENANT,
-                                    size=size,
-                                    connectivity_path=connectivity_path)
+            self.resourceApi.update(
+                obj_id,
+                name=name,
+                description=description,
+                tenant=TEST_TENANT,
+                size=size,
+                connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation)
             expected_def = lb_defs.LBServiceDef(
+                nsx_version=self.policy_lib.get_version(),
                 lb_service_id=obj_id,
                 name=name,
                 description=description,
                 tenant=TEST_TENANT,
                 size=size,
-                connectivity_path=connectivity_path)
+                connectivity_path=connectivity_path,
+                relax_scale_validation=relax_scale_validation)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_get_status(self):

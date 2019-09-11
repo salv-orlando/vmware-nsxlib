@@ -348,7 +348,8 @@ FAKE_SERVICE = {
     "attachment": {
         "target_id": FAKE_ROUTER_UUID,
         "target_type": "LogicalRouter"
-    }
+    },
+    "relax_scale_validation": False
 }
 
 FAKE_TZ_UUID = uuidutils.generate_uuid()
