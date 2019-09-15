@@ -2466,6 +2466,41 @@ class TestPolicyEdgeCluster(NsxPolicyLibTestCase):
             self.assertEqual([node_id], result)
 
 
+class TestPolicyMetadataProxy(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyMetadataProxy, self).setUp()
+        self.resourceApi = self.policy_lib.md_proxy
+
+    def test_get(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}) as api_call:
+            result = self.resourceApi.get(obj_id, tenant=TEST_TENANT)
+            expected_def = core_defs.MetadataProxyDef(mdproxy_id=obj_id,
+                                                      tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(obj_id, result['id'])
+
+    def test_get_by_name(self):
+        name = 'tz1'
+        with mock.patch.object(
+            self.policy_api, "list",
+            return_value={'results': [{'display_name': name}]}) as api_call:
+            obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
+            self.assertIsNotNone(obj)
+            expected_def = core_defs.MetadataProxyDef(tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_list(self):
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = core_defs.MetadataProxyDef(tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+
 class TestPolicyTier1(NsxPolicyLibTestCase):
 
     def setUp(self, *args, **kwargs):
@@ -3573,7 +3608,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         super(TestPolicySegment, self).setUp()
         self.resourceApi = self.policy_lib.segment
 
-    def _test_create(self, tier1_id=None, tier0_id=None):
+    def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -3587,11 +3622,15 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         if tier0_id:
             kwargs['tier0_id'] = tier0_id
 
+        if mdproxy:
+            kwargs['metadata_proxy_id'] = mdproxy
+
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             result = self.resourceApi.create_or_overwrite(name, **kwargs)
 
             expected_def = core_defs.SegmentDef(
+                nsx_version='3.0.0',
                 segment_id=mock.ANY,
                 name=name,
                 **kwargs)
@@ -3609,6 +3648,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         self.assertRaises(nsxlib_exc.InvalidInput,
                           self.resourceApi.create_or_overwrite,
                           'seg-name', tier1_id='111', tier0_id='000')
+
+    def test_create_with_mdproxy(self):
+        self._test_create(mdproxy='md1')
 
     def test_delete(self):
         segment_id = '111'

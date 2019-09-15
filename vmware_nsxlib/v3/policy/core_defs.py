@@ -15,16 +15,16 @@
 #
 
 import abc
-
 from distutils import version
 
 from oslo_log import log as logging
 import six
 
 from vmware_nsxlib.v3 import nsx_constants
+from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3 import utils
 
-from vmware_nsxlib.v3.policy import constants
+LOG = logging.getLogger(__name__)
 
 LOG = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ EXCLUDE_LIST_PATH_PATTERN = (TENANTS_PATH_PATTERN +
 
 REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
+MDPROXY_PATTERN = TENANTS_PATH_PATTERN + "metadata-proxies/"
 
 TIER0_LOCALE_SERVICES_PATH_PATTERN = (TIER0S_PATH_PATTERN +
                                       "%s/locale-services/")
@@ -754,6 +755,21 @@ class SegmentDef(BaseSegmentDef):
     def path_defs(self):
         return (TenantDef,)
 
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'metadata_proxy_id':
+                return True
+        else:
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+            return False
+
+        return False
+
     def get_obj_dict(self):
         body = super(SegmentDef, self).get_obj_dict()
         if self.has_attr('tier1_id'):
@@ -787,6 +803,18 @@ class SegmentDef(BaseSegmentDef):
             self._set_attr_if_specified(body, 'transport_zone_id',
                                         body_attr='transport_zone_path',
                                         value=path)
+
+        if (self.has_attr('metadata_proxy_id') and
+            self._version_dependant_attr_supported('metadata_proxy_id')):
+            paths = ""
+            if self.get_attr('metadata_proxy_id'):
+                mdproxy = MetadataProxyDef(
+                    mdproxy_id=self.get_attr('metadata_proxy_id'),
+                    tenant=self.get_tenant())
+                paths = [mdproxy.get_resource_full_path()]
+            self._set_attr_if_specified(body, 'metadata_proxy_id',
+                                        body_attr='metadata_proxy_paths',
+                                        value=paths)
 
         return body
 
@@ -854,14 +882,12 @@ class SegmentPortDef(ResourceDef):
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
             if attr == 'hyperbus_mode':
                 return True
-        else:
-            LOG.warning(
-                "Ignoring %s for %s %s: this feature is not supported."
-                "Current NSX version: %s. Minimum supported version: %s",
-                attr, self.resource_type, self.attrs.get('name', ''),
-                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-            return False
 
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
         return False
 
 
@@ -1854,6 +1880,31 @@ class WAFProfileDef(ResourceDef):
         body = super(WAFProfileDef, self).get_obj_dict()
         # TODO(asarfaty): add all attributes here.
         # Currently used for read only
+        return body
+
+
+class MetadataProxyDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return MDPROXY_PATTERN
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'mdproxy_id')
+
+    @staticmethod
+    def resource_type():
+        return 'MetadataProxyConfig'
+
+    def path_defs(self):
+        return (TenantDef,)
+
+    def get_obj_dict(self):
+        body = super(MetadataProxyDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['edge_cluster_path',
+                                            'enable_standby_relocation',
+                                            'secret', 'server_address'])
         return body
 
 
