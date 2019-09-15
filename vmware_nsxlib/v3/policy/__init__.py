@@ -53,7 +53,7 @@ class NsxPolicyLib(lib.NsxLibBase):
             self.policy_api.disable_partial_updates()
 
         args = (self.policy_api, self.nsx_api, self.nsx_version,
-                self.nsxlib_config)
+                self.nsxlib_config, self)
 
         # Initialize all the different resources
         self.domain = core_resources.NsxPolicyDomainApi(*args)
@@ -114,6 +114,7 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.ipv6_ndra_profile = (
             core_resources.NsxIpv6NdraProfileApi(*args))
         self.dhcp_relay_config = core_resources.NsxDhcpRelayConfigApi(*args)
+        self.md_proxy = core_resources.NsxPolicyMetadataProxyApi(*args)
         self.certificate = core_resources.NsxPolicyCertApi(*args)
         self.exclude_list = core_resources.NsxPolicyExcludeListApi(*args)
         self.load_balancer = lb_resources.NsxPolicyLoadBalancerApi(*args)
@@ -159,6 +160,8 @@ class NsxPolicyLib(lib.NsxLibBase):
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
             if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
+                return True
+            if feature == nsx_constants.FEATURE_NSX_POLICY_MDPROXY:
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)

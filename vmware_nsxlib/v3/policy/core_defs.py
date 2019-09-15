@@ -55,6 +55,7 @@ EXCLUDE_LIST_PATH_PATTERN = (TENANTS_PATH_PATTERN +
 
 REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
+MDPROXY_PATTERN = TENANTS_PATH_PATTERN + "metadata-proxies/"
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -724,6 +725,18 @@ class SegmentDef(BaseSegmentDef):
                                         value=path)
 
         # TODO(annak): support also tier0
+
+        if self.has_attr('metadata_proxy_id'):
+            paths = ""
+            if self.get_attr('metadata_proxy_id'):
+                mdproxy = MetadataProxyDef(
+                    mdproxy_id=self.get_attr('metadata_proxy_id'),
+                    tenant=self.get_tenant())
+                paths = [mdproxy.get_resource_full_path()]
+            self._set_attr_if_specified(body, 'metadata_proxy_id',
+                                        body_attr='metadata_proxy_paths',
+                                        value=paths)
+
         return body
 
 
@@ -1705,6 +1718,31 @@ class WAFProfileDef(ResourceDef):
         body = super(WAFProfileDef, self).get_obj_dict()
         # TODO(asarfaty): add all attributes here.
         # Currently used for read only
+        return body
+
+
+class MetadataProxyDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return MDPROXY_PATTERN
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'mdproxy_id')
+
+    @staticmethod
+    def resource_type():
+        return 'MetadataProxyConfig'
+
+    def path_defs(self):
+        return (TenantDef,)
+
+    def get_obj_dict(self):
+        body = super(MetadataProxyDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['edge_cluster_path',
+                                            'enable_standby_relocation',
+                                            'secret', 'server_address'])
         return body
 
 
