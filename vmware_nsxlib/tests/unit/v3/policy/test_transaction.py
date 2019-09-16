@@ -39,7 +39,7 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
 
     def assert_infra_patch_call(self, body):
         self.assert_json_call('PATCH', self.client, 'infra',
-                              data=body)
+                              data=body, headers=mock.ANY)
 
     def test_domains_only(self):
 
