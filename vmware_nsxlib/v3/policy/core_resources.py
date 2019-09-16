@@ -1051,7 +1051,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             tier1_id=tier1_id,
             service_id=self._locale_service_id(tier1_id),
             tenant=tenant)
-        self.policy_api.create_or_update(t1service_def)
+        self._create_or_store(t1service_def)
 
     def delete_locale_service(self, tier1_id,
                               tenant=constants.POLICY_INFRA_TENANT):
@@ -2881,6 +2881,10 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
 
         self._create_or_store(entry_def)
         return entry_id
+
+    def create_entry_from_def(self, entry_def):
+        """Create CommunicationMap Entry from a predefined entry def"""
+        self._create_or_store(entry_def)
 
     def delete(self, domain_id, map_id,
                tenant=constants.POLICY_INFRA_TENANT):

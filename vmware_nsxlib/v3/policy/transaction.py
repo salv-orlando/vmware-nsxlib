@@ -102,12 +102,13 @@ class NsxPolicyTransaction(object):
 
     def _find_parent_in_dict(self, d, resource_def, level=1):
 
-        if len(resource_def.path_defs()) <= level:
+        res_path_defs = resource_def.path_defs()
+        if not res_path_defs or len(res_path_defs) <= level:
             return
 
         parent_type = resource_def.path_defs()[level]
 
-        is_leaf = (level + 1 == len(resource_def.path_defs()))
+        is_leaf = (level + 1 == len(res_path_defs))
         resource_type = parent_type.resource_type()
         resource_class = parent_type.resource_class()
         parent_id = resource_def.get_attr(resource_def.path_ids[level])
@@ -144,8 +145,8 @@ class NsxPolicyTransaction(object):
     def apply_defs(self):
         # TODO(annak): find longest common URL, for now always
         # applying on tenant level
-
-        if not self.defs:
+        if not self.defs or not self.client:
+            # Empty transaction
             return
 
         self._sort_defs()
@@ -178,11 +179,11 @@ class NsxPolicyTransaction(object):
                 child_dict_key = child_def.get_last_section_dict_key
                 node[child_dict_key] = [child_def.get_obj_dict()]
             parent_dict['children'].append(
-                self._build_wrapper_dict(resource_class,
-                                         resource_def.get_obj_dict()))
+                self._build_wrapper_dict(resource_class, node))
 
         if body:
-            self.client.patch(url, body)
+            headers = {'nsx-enable-partial-patch': 'true'}
+            self.client.patch(url, body, headers=headers)
 
     @staticmethod
     def get_current():
