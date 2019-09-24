@@ -171,6 +171,7 @@ FEATURE_ROUTER_ALLOCATION_PROFILE = 'Router Allocation Profile'
 FEATURE_ENABLE_STANDBY_RELOCATION = 'Router Enable standby relocation'
 FEATURE_PARTIAL_UPDATES = 'Partial Update with PATCH'
 FEATURE_RELAX_SCALE_VALIDATION = 'Relax Scale Validation for LbService'
+FEATURE_SWITCH_HYPERBUS_MODE = 'Switch hyperbus mode with policy API'
 
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'

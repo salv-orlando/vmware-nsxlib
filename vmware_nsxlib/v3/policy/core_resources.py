@@ -2005,6 +2005,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                             context_id=IGNORE,
                             traffic_tag=IGNORE,
                             allocate_addresses=IGNORE,
+                            hyperbus_mode=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2020,6 +2021,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   context_id=context_id,
                                   traffic_tag=traffic_tag,
                                   allocate_addresses=allocate_addresses,
+                                  hyperbus_mode=hyperbus_mode,
                                   tags=tags,
                                   tenant=tenant)
         self._create_or_store(port_def)
@@ -2048,6 +2050,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                name=IGNORE,
                description=IGNORE,
                address_bindings=IGNORE,
+               hyperbus_mode=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2056,6 +2059,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      name=name,
                      description=description,
                      address_bindings=address_bindings,
+                     hyperbus_mode=hyperbus_mode,
                      tags=tags,
                      tenant=tenant)
 
@@ -2077,10 +2081,11 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                app_id=None,
                context_id=None,
                traffic_tag=None,
+               hyperbus_mode=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
-        port_def = self.entry_def(segment_id=segment_id,
+        port_def = self._init_def(segment_id=segment_id,
                                   port_id=port_id,
                                   attachment_type=attachment_type,
                                   allocate_addresses=allocate_addresses,
@@ -2088,6 +2093,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   app_id=app_id,
                                   context_id=context_id,
                                   traffic_tag=traffic_tag,
+                                  hyperbus_mode=hyperbus_mode,
                                   tags=tags,
                                   tenant=tenant)
 

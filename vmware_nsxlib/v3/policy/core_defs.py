@@ -16,11 +16,17 @@
 
 import abc
 
+from distutils import version
+
+from oslo_log import log as logging
 import six
 
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import utils
 
 from vmware_nsxlib.v3.policy import constants
+
+LOG = logging.getLogger(__name__)
 
 TENANTS_PATH_PATTERN = "%s/"
 DOMAINS_PATH_PATTERN = TENANTS_PATH_PATTERN + "domains/"
@@ -838,9 +844,25 @@ class SegmentPortDef(ResourceDef):
                                               'app_id',
                                               'traffic_tag',
                                               'allocate_addresses'])
+                self._set_attr_if_supported(body, 'hyperbus_mode')
                 body['attachment'] = attachment
 
         return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'hyperbus_mode':
+                return True
+        else:
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+            return False
+
+        return False
 
 
 class SegmentBindingMapDefBase(ResourceDef):
