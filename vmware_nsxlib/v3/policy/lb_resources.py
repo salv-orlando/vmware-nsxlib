@@ -22,10 +22,10 @@ import six
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3.policy import constants
-
 from vmware_nsxlib.v3.policy.core_resources import IGNORE
 from vmware_nsxlib.v3.policy.core_resources import NsxPolicyResourceBase
 from vmware_nsxlib.v3.policy import lb_defs
+from vmware_nsxlib.v3 import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -717,23 +717,30 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                max_concurrent_connections=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
-        self._update(
-            virtual_server_id=virtual_server_id,
-            name=name,
-            description=description,
-            tenant=tenant,
-            rules=rules,
-            application_profile_id=application_profile_id,
-            ip_address=ip_address,
-            lb_service_id=lb_service_id,
-            client_ssl_profile_binding=client_ssl_profile_binding,
-            pool_id=pool_id,
-            lb_persistence_profile_id=lb_persistence_profile_id,
-            ports=ports,
-            server_ssl_profile_binding=server_ssl_profile_binding,
-            waf_profile_binding=waf_profile_binding,
-            max_concurrent_connections=max_concurrent_connections,
-            tags=tags)
+
+        @utils.retry_upon_exception(
+            nsxlib_exc.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _update():
+            self._update(
+                virtual_server_id=virtual_server_id,
+                name=name,
+                description=description,
+                tenant=tenant,
+                rules=rules,
+                application_profile_id=application_profile_id,
+                ip_address=ip_address,
+                lb_service_id=lb_service_id,
+                client_ssl_profile_binding=client_ssl_profile_binding,
+                pool_id=pool_id,
+                lb_persistence_profile_id=lb_persistence_profile_id,
+                ports=ports,
+                server_ssl_profile_binding=server_ssl_profile_binding,
+                waf_profile_binding=waf_profile_binding,
+                max_concurrent_connections=max_concurrent_connections,
+                tags=tags)
+
+        _update()
 
     def update_virtual_server_with_pool(
             self, virtual_server_id, pool_id=IGNORE,
