@@ -207,6 +207,11 @@ class NsxOverlapAddresses(NsxLibInvalidInput):
     message = _("Overlapping addresses found: %(details)s")
 
 
+class NsxOverlapVlan(NsxLibInvalidInput):
+    message = _("Duplicate logical-switch vlan-ids sharing same underlying "
+                "physical devices resulting in a conflict")
+
+
 class APITransactionAborted(ServerBusy):
     message = _("API transaction aborted as MP cluster is reconfiguring")
 
