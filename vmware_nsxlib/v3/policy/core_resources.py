@@ -1833,6 +1833,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             vlan_ids=IGNORE,
                             transport_zone_id=IGNORE,
                             ip_pool_id=IGNORE,
+                            metadata_proxy_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1852,6 +1853,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                                      vlan_ids=vlan_ids,
                                      transport_zone_id=transport_zone_id,
                                      ip_pool_id=ip_pool_id,
+                                     metadata_proxy_id=metadata_proxy_id,
                                      tags=tags,
                                      tenant=tenant)
         self._create_or_store(segment_def)
@@ -1882,8 +1884,9 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def update(self, segment_id, name=IGNORE, description=IGNORE,
                tier1_id=IGNORE, tier0_id=IGNORE, subnets=IGNORE,
                dns_domain_name=IGNORE,
-               vlan_ids=IGNORE, tags=IGNORE,
+               vlan_ids=IGNORE, tags=IGNORE, metadata_proxy_id=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
+
         self._update(segment_id=segment_id,
                      name=name,
                      description=description,
@@ -1892,6 +1895,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                      subnets=subnets,
                      dns_domain_name=dns_domain_name,
                      vlan_ids=vlan_ids,
+                     metadata_proxy_id=metadata_proxy_id,
                      tags=tags,
                      tenant=tenant)
 
@@ -3527,6 +3531,49 @@ class NsxPolicyEdgeClusterApi(NsxPolicyResourceBase):
             ep_id=ep_id, ec_id=ec_id, tenant=tenant)
         nodes = self._list(nodes_def)
         return [node['id'] for node in nodes]
+
+
+class NsxPolicyMetadataProxyApi(NsxPolicyResourceBase):
+    # Currently this is used as a ready only Api
+    @property
+    def entry_def(self):
+        return core_defs.MetadataProxyDef
+
+    def get(self, mdproxy_id,
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
+        md_def = core_defs.MetadataProxyDef(
+            mdproxy_id=mdproxy_id, tenant=tenant)
+        return self.policy_api.get(md_def, silent=silent)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        md_def = core_defs.MetadataProxyDef(tenant=tenant)
+        return self._list(md_def)
+
+    def get_by_name(self, name,
+                    tenant=constants.POLICY_INFRA_TENANT):
+        return super(NsxPolicyMetadataProxyApi, self).get_by_name(
+            name, tenant=tenant)
+
+    def create_or_overwrite(self, name, mdproxy_id=None,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def update(self, mdproxy_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def delete(self, mdproxy_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def get_path(self, mdproxy_id,
+                 tenant=constants.POLICY_INFRA_TENANT):
+        md_def = core_defs.MetadataProxyDef(
+            mdproxy_id=mdproxy_id, tenant=tenant)
+        return md_def.get_resource_full_path()
 
 
 class NsxPolicyDeploymentMapApi(NsxPolicyResourceBase):
