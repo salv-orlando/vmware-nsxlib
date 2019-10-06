@@ -173,6 +173,7 @@ FEATURE_PARTIAL_UPDATES = 'Partial Update with PATCH'
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'
 FEATURE_NSX_POLICY_NETWORKING = 'NSX Policy Networking'
+FEATURE_NSX_POLICY_MDPROXY = 'NSX Policy Metadata Proxy'
 
 # FEATURE available depending on Inventory service backend version
 FEATURE_CONTAINER_CLUSTER_INVENTORY = 'Container Cluster Inventory'
