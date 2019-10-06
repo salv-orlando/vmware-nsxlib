@@ -308,6 +308,12 @@ class NsxPolicyResourceBase(object):
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
                         error=error_msg)
+                if (info and info['state'] == constants.STATE_REALIZED and
+                    info.get('realization_specific_identifier')):
+                    LOG.warning("Realization ID for %s was not found via "
+                                "search api although it was realized",
+                                policy_resource_path)
+                    return info['realization_specific_identifier']
             eventlet.sleep(sleep)
             test_num += 1
 
