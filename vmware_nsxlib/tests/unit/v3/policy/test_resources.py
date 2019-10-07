@@ -1982,7 +1982,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             'display_name': 'map_name',
             'rules': [
                 {'id': entry1_id, 'resource_type': 'Rule',
-                 'dsiplay_name': 'name1', 'scope': ['scope1']},
+                 'display_name': 'name1', 'scope': ['scope1']},
                 {'id': entry2_id, 'resource_type': 'Rule',
                  'display_name': 'name2', 'scope': ['scope2']},
                 {'id': entry3_id, 'resource_type': 'Rule',
@@ -1994,7 +1994,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             'display_name': 'new_map_name',
             'rules': [
                 {'id': entry1_id, 'resource_type': 'Rule',
-                 'dsiplay_name': 'name1', 'scope': ['new_scope1']},
+                 'display_name': 'name1', 'scope': ['new_scope1']},
                 {'id': entry2_id, 'resource_type': 'Rule',
                  'display_name': 'name2', 'scope': ['scope2']}]}
         map_def = self.mapDef(
@@ -2008,6 +2008,51 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             self.resourceApi.update_with_entries(
                 domain_id, map_id, entries=[entry1, entry2],
                 name='new_map_name', tenant=TEST_TENANT)
+            update_call.assert_called_once_with(
+                map_def.get_resource_path(), updated_map)
+
+    def test_update_with_entries_for_IGNORE_entries(self):
+        domain_id = '111'
+        map_id = '222'
+        entry1_id = 'entry1'
+        entry2_id = 'entry2'
+        entry3_id = 'entry3'
+        original_map = {
+            'id': map_id,
+            'resource_type': self.resource_type,
+            'category': constants.CATEGORY_APPLICATION,
+            'display_name': 'map_name',
+            'rules': [
+                {'id': entry1_id, 'resource_type': 'Rule',
+                 'display_name': 'name1', 'scope': ['scope1'],
+                 '_created_time': 1},
+                {'id': entry2_id, 'resource_type': 'Rule',
+                 'display_name': 'name2', 'scope': ['scope2']},
+                {'id': entry3_id, 'resource_type': 'Rule',
+                 'display_name': 'name3', 'scope': ['scope3']}]}
+        updated_map = {
+            'id': map_id,
+            'resource_type': self.resource_type,
+            'category': constants.CATEGORY_APPLICATION,
+            'display_name': 'new_map_name',
+            'rules': [
+                {'id': entry1_id, 'resource_type': 'Rule',
+                 'display_name': 'name1', 'scope': ['scope1'],
+                 '_created_time': 1},
+                {'id': entry2_id, 'resource_type': 'Rule',
+                 'display_name': 'name2', 'scope': ['scope2']},
+                {'id': entry3_id, 'resource_type': 'Rule',
+                 'display_name': 'name3', 'scope': ['scope3']}]}
+        map_def = self.mapDef(
+            domain_id=domain_id,
+            map_id=map_id,
+            tenant=TEST_TENANT)
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=original_map),\
+            mock.patch.object(self.policy_api.client,
+                              "update") as update_call:
+            self.resourceApi.update_with_entries(
+                domain_id, map_id, name='new_map_name', tenant=TEST_TENANT)
             update_call.assert_called_once_with(
                 map_def.get_resource_path(), updated_map)
 
