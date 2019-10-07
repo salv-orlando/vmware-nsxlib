@@ -3031,7 +3031,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             delay=self.nsxlib_config.realization_wait_sec,
             max_attempts=self.nsxlib_config.realization_max_attempts)
         def _do_create_with_retry():
-            self.policy_api.create_with_parent(map_def, entries)
+            self._create_or_store(map_def, entries)
 
         _do_create_with_retry()
         return map_id
@@ -3219,34 +3219,63 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             map_sequence_number=map_sequence_number)
         map_path = map_def.get_resource_path()
 
-        def _overwrite_entries(old_entries, new_entries):
+        def _overwrite_entries(old_entries, new_entries, transaction):
             # Replace old entries with new entries, but copy additional
-            # attributes from old entries for those kept in new entries.
+            # attributes from old entries for those kept in new entries
+            # and marked the unwanted ones in the old entries as deleted
+            # if it is in the transaction call.
             old_rules = {entry["id"]: entry for entry in old_entries}
-            new_rules = []
+            replaced_entries = []
             for entry in new_entries:
                 rule_id = entry.get_id()
                 new_rule = entry.get_obj_dict()
                 old_rule = old_rules.get(rule_id)
                 if old_rule:
+                    old_rules.pop(rule_id)
                     for key, value in old_rule.items():
                         if key not in new_rule:
                             new_rule[key] = value
-                new_rules.append(new_rule)
-            return new_rules
+                replaced_entries.append(
+                    self.entry_def.adapt_from_rule_dict(
+                        new_rule, domain_id, map_id))
+
+            if transaction:
+                replaced_entries.extend(
+                    _mark_delete_entries(old_rules.values()))
+            return replaced_entries
+
+        def _mark_delete_entries(delete_rule_dicts):
+            delete_entries = []
+            for delete_rule_dict in delete_rule_dicts:
+                delete_entry = self.entry_def.adapt_from_rule_dict(
+                    delete_rule_dict, domain_id, map_id)
+                delete_entry.set_delete()
+                delete_entries.append(delete_entry)
+            return delete_entries
 
         @utils.retry_upon_exception(
             exceptions.StaleRevision,
             max_attempts=self.policy_api.client.max_attempts)
         def _update():
+            transaction = trans.NsxPolicyTransaction.get_current()
             # Get the current data of communication map & its entries
             comm_map = self.policy_api.get(map_def)
+            replaced_entries = None
+            ignore_entries = (entries == IGNORE)
+            if not ignore_entries:
+                replaced_entries = _overwrite_entries(comm_map['rules'],
+                                                      entries, transaction)
+                comm_map.pop('rules')
             map_def.set_obj_dict(comm_map)
-            body = map_def.get_obj_dict()
-            if entries != IGNORE:
-                body['rules'] = _overwrite_entries(comm_map['rules'], entries)
             # Update the entire map at the NSX
-            self.policy_api.client.update(map_path, body)
+            if transaction:
+                self._create_or_store(map_def, replaced_entries)
+            else:
+                body = map_def.get_obj_dict()
+                if not ignore_entries:
+                    body['rules'] = [rule.get_obj_dict() for rule in
+                                     replaced_entries]
+                self.policy_api.client.update(map_path, body)
 
         _update()
 

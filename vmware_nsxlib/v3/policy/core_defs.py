@@ -83,6 +83,9 @@ class ResourceDef(object):
 
         self.body = {}
 
+        # Whether this entry needs to be deleted
+        self.delete = False
+
         # As of now, for some defs (ex: services) child entry is required,
         # meaning parent creation will fail without the child.
         # Unfortunately in transactional API policy still fails us, even if
@@ -91,6 +94,12 @@ class ResourceDef(object):
         # populate child entry inside parent clause in transactional API.
         # TODO(annak): remove this if/when policy solves this
         self.mandatory_child_def = None
+
+    def set_delete(self):
+        self.delete = True
+
+    def get_delete(self):
+        return self.delete
 
     def get_obj_dict(self):
         body = self.body if self.body else {}
@@ -1480,6 +1489,17 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
             service_ids = self.get_attr('service_ids')
             body['services'] = self.get_services_path(service_ids)
         return body
+
+    @classmethod
+    def adapt_from_rule_dict(cls, rule_dict, domain_id, map_id):
+        entry_id = rule_dict.pop('id', None)
+        name = rule_dict.pop('display_name', None)
+
+        rule_def = cls(tenant=constants.POLICY_INFRA_TENANT,
+                       domain_id=domain_id, map_id=map_id, entry_id=entry_id,
+                       name=name)
+        rule_def.set_obj_dict(rule_dict)
+        return rule_def
 
 
 class CommunicationMapEntryDef(SecurityPolicyRuleBaseDef):
