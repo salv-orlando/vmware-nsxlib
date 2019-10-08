@@ -223,17 +223,23 @@ class NsxPolicyResourceBase(object):
             realization_info.get('realization_specific_identifier')):
             return realization_info['realization_specific_identifier']
 
-    def _get_realization_error_message(self, info):
+    def _get_realization_error_message_and_code(self, info):
         error_msg = 'unknown'
+        error_code = None
+        related_error_codes = []
         if info.get('alarms'):
             alarm = info['alarms'][0]
             error_msg = alarm.get('message')
-            if (alarm.get('error_details') and
-                alarm['error_details'].get('related_errors')):
-                related = alarm['error_details']['related_errors'][0]
-                error_msg = '%s: %s' % (error_msg,
-                                        related.get('error_message'))
-        return error_msg
+            if alarm.get('error_details'):
+                error_code = alarm['error_details'].get('error_code')
+                if alarm['error_details'].get('related_errors'):
+                    related = alarm['error_details']['related_errors']
+                    for err_obj in related:
+                        error_msg = '%s: %s' % (error_msg,
+                                                err_obj.get('error_message'))
+                        if err_obj.get('error_code'):
+                            related_error_codes.append(err_obj['error_code'])
+        return error_msg, error_code, related_error_codes
 
     def _wait_until_realized(self, resource_def, entity_type=None,
                              sleep=None, max_attempts=None):
@@ -254,11 +260,13 @@ class NsxPolicyResourceBase(object):
                 if info['state'] == constants.STATE_REALIZED:
                     return info
                 if info['state'] == constants.STATE_ERROR:
-                    error_msg = self._get_realization_error_message(info)
+                    error_msg, error_code, related_error_codes = \
+                        self._get_realization_error_message_and_code(info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
-                        error=error_msg)
+                        error=error_msg, error_code=error_code,
+                        related_error_codes=related_error_codes)
 
         try:
             return get_info()
@@ -302,11 +310,13 @@ class NsxPolicyResourceBase(object):
             if resource_def and test_num % check_status == (check_status - 1):
                 info = self._get_realization_info(resource_def)
                 if info and info['state'] == constants.STATE_ERROR:
-                    error_msg = self._get_realization_error_message(info)
+                    error_msg, error_code, related_error_codes = \
+                        self._get_realization_error_message_and_code(info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
-                        error=error_msg)
+                        error=error_msg, error_code=error_code,
+                        related_error_codes=related_error_codes)
                 if (info and info['state'] == constants.STATE_REALIZED and
                     info.get('realization_specific_identifier')):
                     LOG.warning("Realization ID for %s was not found via "

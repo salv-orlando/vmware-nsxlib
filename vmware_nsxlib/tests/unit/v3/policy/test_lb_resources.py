@@ -807,6 +807,39 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                               lbs_id, max_attempts=5, sleep=0.1,
                               tenant=TEST_TENANT)
 
+    def test_wait_until_realized_error(self):
+        lbs_id = 'test_lbs'
+        error_code = 23500
+        related_error_code = 23707
+        error_msg = 'Found errors in the request.'
+        related_error_msg = 'Exceed maximum number of load balancer.'
+        info = {'state': constants.STATE_ERROR,
+                'realization_specific_identifier': lbs_id,
+                'entity_type': 'LbServiceDto',
+                'alarms': [{
+                    'message': error_msg,
+                    'error_details': {
+                        'related_errors': [{
+                            'error_code': related_error_code,
+                            'module_name': 'LOAD-BALANCER',
+                            'error_message': related_error_msg
+                        }],
+                        'error_code': error_code,
+                        'module_name': 'LOAD-BALANCER',
+                        'error_message': error_msg
+                    }
+                }]}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            with self.assertRaises(nsxlib_exc.RealizationErrorStateError) as e:
+                self.resourceApi.wait_until_realized(
+                    lbs_id, tenant=TEST_TENANT)
+            error_msg_tail = "%s: %s" % (error_msg, related_error_msg)
+            self.assertTrue(e.exception.msg.endswith(error_msg_tail))
+            self.assertEqual(e.exception.error_code, error_code)
+            self.assertEqual(e.exception.related_error_codes,
+                             [related_error_code])
+
     def test_wait_until_realized_succeed(self):
         lbs_id = 'test_lbs'
         info = {'state': constants.STATE_REALIZED,

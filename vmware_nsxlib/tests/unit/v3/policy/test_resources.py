@@ -4034,6 +4034,30 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
                               ip_pool_id, max_attempts=5, sleep=0.1,
                               tenant=TEST_TENANT)
 
+    def test_wait_until_realized_error(self):
+        ip_alloc_id = 'ip_alloc_1'
+        error_code = 5109
+        error_msg = 'Insufficient free IP addresses.'
+        info = {'state': constants.STATE_ERROR,
+                'realization_specific_identifier': ip_alloc_id,
+                'entity_type': 'AllocationIpAddress',
+                'alarms': [{
+                    'message': error_msg,
+                    'error_details': {
+                        'error_code': error_code,
+                        'module_name': 'id-allocation service',
+                        'error_message': error_msg
+                    }
+                }]}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            with self.assertRaises(nsxlib_exc.RealizationErrorStateError) as e:
+                self.resourceApi.wait_until_realized(
+                    ip_alloc_id, tenant=TEST_TENANT)
+            self.assertTrue(e.exception.msg.endswith(error_msg))
+            self.assertEqual(e.exception.error_code, error_code)
+            self.assertEqual(e.exception.related_error_codes, [])
+
     def test_wait_until_realized_succeed(self):
         ip_pool_id = 'p1'
         info = {'state': constants.STATE_REALIZED,
