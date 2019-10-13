@@ -1741,6 +1741,10 @@ class MetadataProxyDef(ResourceDef):
     def resource_type():
         return 'MetadataProxyConfig'
 
+    @staticmethod
+    def resource_use_cache():
+        return True
+
     def path_defs(self):
         return (TenantDef,)
 
