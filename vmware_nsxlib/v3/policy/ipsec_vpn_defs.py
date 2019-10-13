@@ -271,5 +271,7 @@ class Tier1IPSecVpnSessionStatusDef(core_defs.ResourceDef):
 
     @property
     def path_ids(self):
+        # TODO(asarfaty): Why do we need the last '' entry? Need to find a
+        # better solution for this.
         return ('tenant', 'tier1_id', 'service_id', 'vpn_service_id',
                 'session_id', '')
