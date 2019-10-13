@@ -57,6 +57,11 @@ REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
 MDPROXY_PATTERN = TENANTS_PATH_PATTERN + "metadata-proxies/"
 
+TIER0_LOCALE_SERVICES_PATH_PATTERN = (TIER0S_PATH_PATTERN +
+                                      "%s/locale-services/")
+TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
+                                      "%s/locale-services/")
+
 
 @six.add_metaclass(abc.ABCMeta)
 class ResourceDef(object):
@@ -257,12 +262,13 @@ class DomainDef(ResourceDef):
 
 class RouteAdvertisement(object):
 
-    types = {'static_routes': 'TIER1_STATIC_ROUTES',
-             'subnets': 'TIER1_CONNECTED',
-             'nat': 'TIER1_NAT',
-             'lb_vip': 'TIER1_LB_VIP',
-             'lb_snat': 'TIER1_LB_SNAT',
-             'dns_forwarder_ip': 'TIER1_DNS_FORWARDER_IP'}
+    types = {'static_routes': constants.ADV_RULE_TYPE_TIER1_STATIC_ROUTES,
+             'subnets': constants.ADV_RULE_TIER1_CONNECTED,
+             'nat': constants.ADV_RULE_TIER1_NAT,
+             'lb_vip': constants.ADV_RULE_TIER1_LB_VIP,
+             'lb_snat': constants.ADV_RULE_TIER1_LB_SNAT,
+             'dns_forwarder_ip': constants.ADV_RULE_TIER1_DNS_FORWARDER_IP,
+             'ipsec_endpoints': constants.ADV_RULE_TIER1_IPSEC_LOCAL_ENDPOINT}
 
     def __init__(self, **kwargs):
         self.attrs = kwargs
@@ -417,7 +423,7 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
 
     @property
     def path_pattern(self):
-        return TIER0S_PATH_PATTERN + "%s/locale-services/"
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN
 
     @property
     def path_ids(self):
@@ -428,7 +434,7 @@ class Tier1LocaleServiceDef(RouterLocaleServiceDef):
 
     @property
     def path_pattern(self):
-        return TIER1S_PATH_PATTERN + "%s/locale-services/"
+        return TIER1_LOCALE_SERVICES_PATH_PATTERN
 
     @property
     def path_ids(self):
@@ -443,7 +449,7 @@ class Tier0InterfaceDef(ResourceDef):
 
     @property
     def path_pattern(self):
-        return TIER0S_PATH_PATTERN + "%s/locale-services/%s/interfaces/"
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN + "%s/interfaces/"
 
     @property
     def path_ids(self):
@@ -458,7 +464,7 @@ class Tier1InterfaceDef(ResourceDef):
 
     @property
     def path_pattern(self):
-        return TIER1S_PATH_PATTERN + "%s/locale-services/%s/interfaces/"
+        return TIER1_LOCALE_SERVICES_PATH_PATTERN + "%s/interfaces/"
 
     def get_obj_dict(self):
         body = super(Tier1InterfaceDef, self).get_obj_dict()
