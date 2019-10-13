@@ -852,6 +852,10 @@ class NsxLibEdgeCluster(utils.NsxLibApiBase):
     def resource_type(self):
         return 'EdgeCluster'
 
+    @property
+    def use_cache_for_get(self):
+        return True
+
     def get_transport_nodes(self, uuid):
         ec = self.get(uuid)
         members = []
@@ -969,6 +973,10 @@ class NsxLibMetadataProxy(utils.NsxLibApiBase):
     @property
     def resource_type(self):
         return 'MetadataProxy'
+
+    @property
+    def use_cache_for_get(self):
+        return True
 
     def update(self, uuid, server_url=None, secret=None, edge_cluster_id=None):
         body = {}
