@@ -1179,7 +1179,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             return self._get_realized_id_using_search(
                 self.get_path(tier1_id, tenant=tenant),
                 self.nsx_api.logical_router.resource_type,
-                resource_def=tier1_id)
+                resource_def=tier1_def)
         return self._get_realized_id(tier1_def, entity_type=entity_type,
                                      realization_info=realization_info)
 
