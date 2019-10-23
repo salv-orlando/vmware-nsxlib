@@ -579,6 +579,7 @@ FAKE_TIERO_ROUTER = {
         "target_id": "c3d80576-e340-403d-a2d0-f4a72a1db6e3"
     }],
     "advanced_config": {
+        "transport_zone_id": FAKE_TZ_UUID,
         "external_transit_networks": ["100.64.0.0/16"],
         "internal_transit_network": "169.254.0.0/28"
     },

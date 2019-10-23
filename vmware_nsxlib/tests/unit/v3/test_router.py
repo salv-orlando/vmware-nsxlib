@@ -161,6 +161,13 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
             tz = self.nsxlib.router.get_tier0_router_overlay_tz(tier0_uuid)
             self.assertEqual(tz, test_constants.FAKE_TZ_UUID)
 
+    def test_get_tier0_router_overlay_tz_via_advanced_config(self):
+        tier0_uuid = uuidutils.generate_uuid()
+        with mock.patch.object(self.nsxlib.router._router_client, 'get',
+                               return_value=test_constants.FAKE_TIERO_ROUTER):
+            tz = self.nsxlib.router.get_tier0_router_overlay_tz(tier0_uuid)
+            self.assertEqual(tz, test_constants.FAKE_TZ_UUID)
+
     def test_get_connected_t0_transit_net(self):
         t1_uuid = uuidutils.generate_uuid()
         transit_net = '1.1.1.0'

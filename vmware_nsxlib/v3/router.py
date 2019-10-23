@@ -293,6 +293,10 @@ class RouterLib(object):
         return tier0_tzs
 
     def get_tier0_router_overlay_tz(self, tier0_uuid):
+        lrouter = self._router_client.get(tier0_uuid)
+        tz_uuid = lrouter.get('advanced_config', {}).get('transport_zone_id')
+        if tz_uuid:
+            return tz_uuid
         tz_uuids = self.get_tier0_router_tz(tier0_uuid)
         for tz_uuid in tz_uuids:
             # look for the overlay tz
