@@ -363,12 +363,32 @@ FAKE_TZ = {
 }
 
 FAKE_TN_UUID = uuidutils.generate_uuid()
+FAKE_TZ_EP_UUID = uuidutils.generate_uuid()
+FAKE_TZ_EP_UUID2 = uuidutils.generate_uuid()
 FAKE_TN = {
     "resource_type": "TransportNode",
     "revision": 0,
     "id": FAKE_TZ_UUID,
     "display_name": FAKE_NAME,
-    "transport_zone_endpoints": [{"transport_zone_id": FAKE_TZ_UUID}]
+    "transport_zone_endpoints": [{"transport_zone_id": FAKE_TZ_UUID}],
+    "host_switch_spec": {
+        "host_switches": [
+            {
+                'transport_zone_endpoints': [
+                    {
+                        'transport_zone_id': FAKE_TZ_EP_UUID
+                    }
+                ]
+            },
+            {
+                'transport_zone_endpoints': [
+                    {
+                        'transport_zone_id': FAKE_TZ_EP_UUID2
+                    }
+                ]
+            }
+        ]
+    }
 }
 
 FAKE_MD_UUID = uuidutils.generate_uuid()
