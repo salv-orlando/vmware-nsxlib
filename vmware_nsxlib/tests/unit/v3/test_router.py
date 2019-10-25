@@ -139,6 +139,8 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
 
     def test_get_tier0_router_tz(self):
         tier0_uuid = uuidutils.generate_uuid()
+        self.nsxlib.feature_supported = mock.MagicMock()
+        self.nsxlib.feature_supported.return_value = False
         with mock.patch.object(self.nsxlib.router._router_client, 'get',
                                return_value=test_constants.FAKE_TIERO_ROUTER),\
             mock.patch.object(self.nsxlib.edge_cluster, 'get',
@@ -150,6 +152,8 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
 
     def test_get_tier0_router_overlay_tz(self):
         tier0_uuid = uuidutils.generate_uuid()
+        self.nsxlib.feature_supported = mock.MagicMock()
+        self.nsxlib.feature_supported.return_value = False
         with mock.patch.object(self.nsxlib.router._router_client, 'get',
                                return_value=test_constants.FAKE_TIERO_ROUTER),\
             mock.patch.object(self.nsxlib.edge_cluster, 'get',

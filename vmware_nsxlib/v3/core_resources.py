@@ -907,9 +907,21 @@ class NsxLibTransportNode(utils.NsxLibApiBase):
         return True
 
     def get_transport_zones(self, uuid):
-        tz = self.get(uuid)
-        return [ep.get('transport_zone_id') for ep in
-                tz.get('transport_zone_endpoints', [])]
+        tn = self.get(uuid)
+
+        if (self.nsxlib and self.nsxlib.feature_supported(
+            nsx_constants.FEATURE_GET_TZ_FROM_SWITCH)):
+            if (not tn.get('host_switch_spec') or not
+                tn['host_switch_spec'].get('host_switches')):
+                return []
+
+            host_switches = tn.get('host_switch_spec').get('host_switches', [])
+
+            return [ep.get('transport_zone_id') for ep in
+                    host_switches[0].get('transport_zone_endpoints', [])]
+        else:
+            return [ep.get('transport_zone_id') for ep in
+                    tn.get('transport_zone_endpoints', [])]
 
 
 class NsxLibDhcpProfile(utils.NsxLibApiBase):
