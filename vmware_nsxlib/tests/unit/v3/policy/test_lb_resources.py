@@ -867,6 +867,8 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
             profile_id=waf_profile_id, tenant=TEST_TENANT)
         waf_profile_binding = lb_defs.WAFProfileBindingDef(
             waf_profile_path=waf_profile_path)
+        lb_acl = self.resourceApi.build_access_list_control(
+            constants.ACTION_ALLOW, 'fake_group_path', True)
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             result = self.resourceApi.create_or_overwrite(
@@ -874,10 +876,13 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 virtual_server_id=obj_id,
                 waf_profile_binding=waf_profile_binding,
                 description=description,
+                access_list_control=lb_acl,
                 tenant=TEST_TENANT)
             expected_def = lb_defs.LBVirtualServerDef(
+                nsx_version=self.policy_lib.get_version(),
                 virtual_server_id=obj_id, name=name, description=description,
                 waf_profile_binding=waf_profile_binding,
+                access_list_control=lb_acl.get_obj_dict(),
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(obj_id, result)
@@ -1136,6 +1141,16 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
+
+    def test_build_access_list_control(self):
+        lb_acl = self.resourceApi.build_access_list_control(
+            constants.ACTION_ALLOW, 'fake_group_path', True)
+        expected_acl_dict = {
+            'action': constants.ACTION_ALLOW,
+            'enabled': True,
+            'group_path': 'fake_group_path'
+        }
+        self.assertDictEqual(lb_acl.get_obj_dict(), expected_acl_dict)
 
     def test_wait_until_realized_fail(self):
         vs_id = 'test_vs'

@@ -700,6 +700,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                             server_ssl_profile_binding=IGNORE,
                             waf_profile_binding=IGNORE,
                             max_concurrent_connections=IGNORE,
+                            access_list_control=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT,
                             tags=IGNORE):
         virtual_server_id = self._init_obj_uuid(virtual_server_id)
@@ -719,6 +720,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             server_ssl_profile_binding=server_ssl_profile_binding,
             waf_profile_binding=waf_profile_binding,
             max_concurrent_connections=max_concurrent_connections,
+            access_list_control=access_list_control,
             tags=tags
         )
         self._create_or_store(lbvs_def)
@@ -750,6 +752,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                server_ssl_profile_binding=IGNORE,
                waf_profile_binding=IGNORE,
                max_concurrent_connections=IGNORE,
+               access_list_control=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -773,6 +776,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                 server_ssl_profile_binding=server_ssl_profile_binding,
                 waf_profile_binding=waf_profile_binding,
                 max_concurrent_connections=max_concurrent_connections,
+                access_list_control=access_list_control,
                 tags=tags)
 
         _update()
@@ -911,6 +915,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
         return self._update(
             virtual_server_id=virtual_server_id, vs_data=body,
             rules=lb_rules, tenant=tenant)
+
+    def build_access_list_control(self, action, group_path, enabled=None):
+        return lb_defs.LBAccessListControlDef(action, group_path, enabled)
 
     def get_path(self, virtual_server_id,
                  tenant=constants.POLICY_INFRA_TENANT):

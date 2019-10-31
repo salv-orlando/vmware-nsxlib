@@ -294,7 +294,25 @@ class LBVirtualServerDef(ResourceDef):
                     lb_pool_id=lb_pool_id, tenant=self.get_tenant())
                 path = lb_pool_def.get_resource_full_path()
             body['pool_path'] = path
+        if self.has_attr('access_list_control'):
+            lb_alc = self.get_attr('access_list_control')
+            if isinstance(lb_alc, LBAccessListControlDef):
+                self.attrs['access_list_control'] = lb_alc.get_obj_dict()
+            self._set_attrs_if_supported(body, ['access_list_control'])
         return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'access_list_control':
+                return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported. "
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+        return False
 
 
 class ClientSSLProfileBindingDef(object):
@@ -516,3 +534,19 @@ class LBTcpMonitorProfileDef(LBMonitorProfileBaseDef):
     @staticmethod
     def resource_type():
         return "LBTcpMonitorProfile"
+
+
+class LBAccessListControlDef(object):
+    def __init__(self, action, group_path, enabled=None):
+        self.action = action
+        self.group_path = group_path
+        self.enabled = enabled
+
+    def get_obj_dict(self):
+        access_list_control = {
+            'action': self.action,
+            'group_path': self.group_path
+        }
+        if self.enabled is not None:
+            access_list_control['enabled'] = self.enabled
+        return access_list_control
