@@ -554,7 +554,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
         lb_pool = self.policy_api.get(lb_pool_def)
         lb_pool_members = lb_pool.get('members', [])
         lb_pool_members = [x for x in lb_pool_members if (
-            x.get('ip_address') != ip_address and x.get('port') != str(port))]
+            x.get('ip_address') != ip_address or x.get('port') != str(port))]
         self._update(lb_pool_id=lb_pool_id, members=lb_pool_members,
                      tenant=tenant)
 
