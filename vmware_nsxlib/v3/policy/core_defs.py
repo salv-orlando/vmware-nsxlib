@@ -429,6 +429,9 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
     def path_ids(self):
         return ('tenant', 'tier0_id', 'service_id')
 
+    def path_defs(self):
+        return (TenantDef, Tier0Def)
+
 
 class Tier1LocaleServiceDef(RouterLocaleServiceDef):
 
@@ -439,6 +442,9 @@ class Tier1LocaleServiceDef(RouterLocaleServiceDef):
     @property
     def path_ids(self):
         return ('tenant', 'tier1_id', 'service_id')
+
+    def path_defs(self):
+        return (TenantDef, Tier1Def)
 
 
 class Tier0InterfaceDef(ResourceDef):
@@ -753,9 +759,11 @@ class PortAddressBinding(object):
         self.vlan_id = vlan_id
 
     def get_obj_dict(self):
-        return {'ip_address': self.ip_address,
-                'mac_address': self.mac_address,
-                'vlan_id': self.vlan_id}
+        data = {'ip_address': self.ip_address,
+                'mac_address': self.mac_address}
+        if self.vlan_id is not None:
+            data['vlan_id'] = self.vlan_id
+        return data
 
 
 class SegmentPortDef(ResourceDef):
