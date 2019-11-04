@@ -1297,6 +1297,72 @@ class LogicalRouterTestCase(BaseTestResource):
     def test_get_transportzone_id_from_t1(self):
         self._test_get_transportzone_id(nsx_constants.ROUTER_TYPE_TIER1_DR)
 
+    def test_get_redistribution(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        router.get_redistribution(router_id)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+             'redistribution' % router_id),
+            headers=self.default_headers())
+
+    def test_get_redistribution_rules(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        router.get_redistribution_rules(router_id)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+             'redistribution/rules' % router_id),
+            headers=self.default_headers())
+
+    def test_update_redistribution_rules(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        rules = mock.Mock()
+        with mock.patch.object(router.client, 'get',
+                               return_value={}):
+            router.update_redistribution_rules(router_id, rules)
+            test_client.assert_json_call(
+                'put', router,
+                ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+                 'redistribution/rules' % router_id),
+                data=jsonutils.dumps({'rules': rules}),
+                headers=self.default_headers())
+
+    def test_get_bgp_config(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        router.get_bgp_config(router_id)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/bgp' %
+             router_id),
+            headers=self.default_headers())
+
+    def test_get_route_map(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        route_map_id = 'fake_route_map'
+        router.get_route_map(router_id, route_map_id)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/route-maps/%s'
+             % (router_id, route_map_id)),
+            headers=self.default_headers())
+
+    def test_get_ip_prefix_list(self):
+        router = self.get_mocked_resource()
+        router_id = test_constants.FAKE_ROUTER_UUID
+        ip_prefix_list_id = 'fake_ip_prefix_list'
+        router.get_ip_prefix_list(router_id, ip_prefix_list_id)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+             'ip-prefix-lists/%s' % (router_id, ip_prefix_list_id)),
+            headers=self.default_headers())
+
 
 class LogicalRouterPortTestCase(BaseTestResource):
 

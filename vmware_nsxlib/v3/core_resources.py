@@ -841,6 +841,35 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             resource = self.get_path()
         return self.client.list(resource)
 
+    def get_redistribution(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/redistribution' %
+                    logical_router_id)
+        return self.client.get(resource)
+
+    def get_redistribution_rules(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/redistribution/rules' %
+                    logical_router_id)
+        return self.client.get(resource)
+
+    def update_redistribution_rules(self, logical_router_id, rules):
+        resource = ('logical-routers/%s/routing/redistribution/rules' %
+                    logical_router_id)
+        return self._update_resource(resource, {'rules': rules}, retry=True)
+
+    def get_bgp_config(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/bgp' % logical_router_id)
+        return self.client.get(resource)
+
+    def get_route_map(self, logical_router_id, route_map_id):
+        resource = ('logical-routers/%s/routing/route-maps/%s' % (
+                    logical_router_id, route_map_id))
+        return self.client.get(resource)
+
+    def get_ip_prefix_list(self, logical_router_id, ip_prefix_list_id):
+        resource = ('logical-routers/%s/routing/ip-prefix-lists/%s' % (
+                    logical_router_id, ip_prefix_list_id))
+        return self.client.get(resource)
+
 
 class NsxLibEdgeCluster(utils.NsxLibApiBase):
 
