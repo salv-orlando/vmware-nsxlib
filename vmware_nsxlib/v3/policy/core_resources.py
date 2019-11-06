@@ -2701,7 +2701,8 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
     def allocate_block_subnet(self, ip_pool_id, ip_block_id, size,
                               ip_subnet_id=None, auto_assign_gateway=IGNORE,
                               name=IGNORE, description=IGNORE, tags=IGNORE,
-                              tenant=constants.POLICY_INFRA_TENANT):
+                              tenant=constants.POLICY_INFRA_TENANT,
+                              start_ip=IGNORE):
         ip_subnet_id = self._init_obj_uuid(ip_subnet_id)
         args = self._get_user_args(
             ip_pool_id=ip_pool_id,
@@ -2712,9 +2713,11 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             name=name,
             description=description,
             tags=tags,
-            tenant=tenant)
+            tenant=tenant,
+            start_ip=start_ip)
 
-        ip_subnet_def = core_defs.IpPoolBlockSubnetDef(**args)
+        ip_subnet_def = core_defs.IpPoolBlockSubnetDef(
+            nsx_version=self.version, **args)
         self._create_or_store(ip_subnet_def)
 
     def release_block_subnet(self, ip_pool_id, ip_subnet_id,

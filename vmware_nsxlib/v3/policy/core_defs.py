@@ -1186,7 +1186,21 @@ class IpPoolBlockSubnetDef(IpPoolSubnetDef):
             self._set_attr_if_specified(
                 body, 'ip_block_id', body_attr='ip_block_path',
                 value=ip_block_path)
+        self._set_attr_if_supported(body, 'start_ip')
         return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'start_ip':
+                return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+        return False
 
 
 class IpPoolStaticSubnetDef(IpPoolSubnetDef):
