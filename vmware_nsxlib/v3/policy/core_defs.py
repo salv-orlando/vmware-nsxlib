@@ -1046,9 +1046,11 @@ class SegmentPortDef(ResourceDef):
         if address_bindings:
             body['address_bindings'] = [binding.get_obj_dict()
                                         for binding in address_bindings]
-        if self.has_attr('attachment_type') or self.has_attr('vif_id'):
+        if (self.has_attr('attachment_type') or self.has_attr('vif_id') or
+            self.has_attr('hyperbus_mode')):
             if (not self.get_attr('attachment_type') and
-                not self.get_attr('vif_id')):
+                not self.get_attr('vif_id') and
+                not self.get_attr('hyperbus_mode')):
                 # detach operation
                 body['attachment'] = None
             else:
@@ -1057,13 +1059,15 @@ class SegmentPortDef(ResourceDef):
                     attachment['type'] = self.get_attr('attachment_type')
                 if self.get_attr('vif_id'):
                     attachment['id'] = self.get_attr('vif_id')
+                if self.get_attr('hyperbus_mode'):
+                    self._set_attr_if_supported(attachment, 'hyperbus_mode')
 
                 self._set_attrs_if_specified(attachment,
                                              ['context_id',
                                               'app_id',
                                               'traffic_tag',
                                               'allocate_addresses'])
-                self._set_attr_if_supported(body, 'hyperbus_mode')
+
                 body['attachment'] = attachment
 
         if (self.has_attr('admin_state') and
