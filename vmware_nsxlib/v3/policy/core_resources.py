@@ -370,6 +370,20 @@ class NsxPolicyResourceBase(object):
 
             _do_create_with_retry()
 
+    def _delete_or_store(self, policy_def):
+        transaction = trans.NsxPolicyTransaction.get_current()
+        if transaction:
+            # Mark this resource is about to be deleted
+            policy_def.set_delete()
+            # Set some mandatory default values to avoid failure
+            # TODO(asarfaty): This can be removed once platform bug is fixed
+            policy_def.set_default_mandatory_vals()
+            # Store this def for batch apply for this transaction
+            transaction.store_def(policy_def, self.policy_api.client)
+        else:
+            # No transaction - apply now
+            self.policy_api.delete(policy_def)
+
 
 class NsxPolicyDomainApi(NsxPolicyResourceBase):
     """NSX Policy Domain."""
@@ -1645,7 +1659,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         nat_rule_def = self.entry_def(tier1_id=tier1_id, nat_id=nat_id,
                                       nat_rule_id=nat_rule_id, tenant=tenant)
-        self.policy_api.delete(nat_rule_def)
+        self._delete_or_store(nat_rule_def)
 
     def get(self, tier1_id, nat_rule_id, nat_id=DEFAULT_NAT_ID,
             tenant=constants.POLICY_INFRA_TENANT):
