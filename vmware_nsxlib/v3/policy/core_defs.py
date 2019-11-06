@@ -272,6 +272,9 @@ class ResourceDef(object):
                      if key not in meta]
         return len(body_args) == 0
 
+    def set_default_mandatory_vals(self):
+        pass
+
 
 class TenantDef(ResourceDef):
     @property
@@ -583,6 +586,25 @@ class RouterNatRule(ResourceDef):
                                             'enabled'])
         return body
 
+    def set_default_mandatory_vals(self):
+        if not self.has_attr('action'):
+            self.attrs['action'] = constants.NAT_ACTION_DNAT
+
+
+class Tier1NatDef(RouterDef):
+
+    @property
+    def path_pattern(self):
+        return TIER1S_PATH_PATTERN + "%s/nat"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier1_id')
+
+    @staticmethod
+    def resource_type():
+        return 'PolicyNat'
+
 
 class Tier1NatRule(RouterNatRule):
 
@@ -595,7 +617,7 @@ class Tier1NatRule(RouterNatRule):
         return ('tenant', 'tier1_id', 'nat_id', 'nat_rule_id')
 
     def path_defs(self):
-        return (TenantDef, Tier1Def)
+        return (TenantDef, Tier1Def, Tier1NatDef)
 
 
 class RouteAdvertisementRule(object):
@@ -666,6 +688,21 @@ class Tier0StaticRoute(RouterStaticRoute):
         return (TenantDef, Tier0Def)
 
 
+class Tier0NatDef(RouterDef):
+
+    @property
+    def path_pattern(self):
+        return TIER0S_PATH_PATTERN + "%s/nat"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier0_id')
+
+    @staticmethod
+    def resource_type():
+        return 'PolicyNat'
+
+
 class Tier0NatRule(RouterNatRule):
 
     @property
@@ -677,7 +714,7 @@ class Tier0NatRule(RouterNatRule):
         return ('tenant', 'tier0_id', 'nat_id', 'nat_rule_id')
 
     def path_defs(self):
-        return (TenantDef, Tier0Def)
+        return (TenantDef, Tier0Def, Tier0NatDef)
 
 
 class Subnet(object):

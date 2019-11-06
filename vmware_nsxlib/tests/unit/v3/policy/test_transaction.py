@@ -21,6 +21,7 @@ import mock
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3.policy import policy_testcase
 from vmware_nsxlib.v3 import policy
+from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import transaction as trans
 
 
@@ -248,6 +249,92 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
                                        'Segment': seg1},
                                       {'resource_type': 'ChildSegment',
                                        'Segment': seg2}]}
+
+        self.assert_infra_patch_call(expected_body)
+
+    def test_tier1_nat_rules_create(self):
+        tier1_id = 'tier1-1'
+        nat_rule_id1 = 'nat1'
+        nat_rule_id2 = 'nat2'
+
+        nat_rule1 = {"action": constants.NAT_ACTION_SNAT,
+                     "display_name": "snat rule",
+                     "id": nat_rule_id1,
+                     "resource_type": "PolicyNatRule"}
+        nat_rule2 = {"action": constants.NAT_ACTION_DNAT,
+                     "display_name": "dnat rule",
+                     "id": nat_rule_id2,
+                     "resource_type": "PolicyNatRule"}
+
+        policy_nat = {"id": "USER",
+                      "resource_type": "PolicyNat",
+                      "children": [
+                          {"PolicyNatRule": nat_rule1,
+                           "resource_type": "ChildPolicyNatRule"},
+                          {"PolicyNatRule": nat_rule2,
+                           "resource_type": "ChildPolicyNatRule"}]}
+        tier1_dict = {"id": tier1_id,
+                      "resource_type": "Tier1",
+                      "children": [{"PolicyNat": policy_nat,
+                                    "resource_type": "ChildPolicyNat"}]}
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.tier1_nat_rule.create_or_overwrite(
+                'snat rule',
+                tier1_id,
+                nat_rule_id=nat_rule_id1,
+                action=constants.NAT_ACTION_SNAT)
+
+            self.policy_lib.tier1_nat_rule.create_or_overwrite(
+                'dnat rule',
+                tier1_id,
+                nat_rule_id=nat_rule_id2,
+                action=constants.NAT_ACTION_DNAT)
+
+        expected_body = {"resource_type": "Infra",
+                         "children": [{"Tier1": tier1_dict,
+                                       "resource_type": "ChildTier1"}]}
+
+        self.assert_infra_patch_call(expected_body)
+
+    def test_tier1_nat_rules_delete(self):
+        tier1_id = 'tier1-1'
+        nat_rule_id1 = 'nat1'
+        nat_rule_id2 = 'nat2'
+
+        nat_rule1 = {"action": constants.NAT_ACTION_DNAT,
+                     "id": nat_rule_id1,
+                     "resource_type": "PolicyNatRule"}
+        nat_rule2 = {"action": constants.NAT_ACTION_DNAT,
+                     "id": nat_rule_id2,
+                     "resource_type": "PolicyNatRule"}
+
+        policy_nat = {"id": "USER",
+                      "resource_type": "PolicyNat",
+                      "children": [
+                          {"PolicyNatRule": nat_rule1,
+                           "marked_for_delete": True,
+                           "resource_type": "ChildPolicyNatRule"},
+                          {"PolicyNatRule": nat_rule2,
+                           "marked_for_delete": True,
+                           "resource_type": "ChildPolicyNatRule"}]}
+        tier1_dict = {"id": tier1_id,
+                      "resource_type": "Tier1",
+                      "children": [{"PolicyNat": policy_nat,
+                                    "resource_type": "ChildPolicyNat"}]}
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.tier1_nat_rule.delete(
+                tier1_id,
+                nat_rule_id=nat_rule_id1)
+
+            self.policy_lib.tier1_nat_rule.delete(
+                tier1_id,
+                nat_rule_id=nat_rule_id2)
+
+        expected_body = {"resource_type": "Infra",
+                         "children": [{"Tier1": tier1_dict,
+                                       "resource_type": "ChildTier1"}]}
 
         self.assert_infra_patch_call(expected_body)
 
