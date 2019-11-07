@@ -19,6 +19,7 @@ from oslo_log import log
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client
+from vmware_nsxlib.v3 import cluster_management
 from vmware_nsxlib.v3 import core_resources
 from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import lib
@@ -110,6 +111,8 @@ class NsxLib(lib.NsxLibBase):
             self.client, self.nsxlib_config, nsxlib=self)
         self.host_switch_profiles = resources.NsxlibHostSwitchProfiles(
             self.client, self.nsxlib_config, nsxlib=self)
+        self.cluster_management = cluster_management.NsxLibClusterManagement(
+            self.client, self.nsxlib_config)
 
         # Update tag limits
         self.tag_limits = self.get_tag_limits()
