@@ -67,7 +67,10 @@ class NsxPolicyTransaction(object):
 
         self.client = client
         # TODO(annak): raise exception for different tenants
-        self.defs.append(resource_def)
+        if isinstance(resource_def, list):
+            self.defs.extend(resource_def)
+        else:
+            self.defs.append(resource_def)
 
     def _sort_defs(self):
         sorted_defs = []
@@ -96,9 +99,12 @@ class NsxPolicyTransaction(object):
 
         self.defs = sorted_defs
 
-    def _build_wrapper_dict(self, resource_class, node):
-        return {'resource_type': 'Child%s' % resource_class,
-                resource_class: node}
+    def _build_wrapper_dict(self, resource_class, node, delete=False):
+        wrapper_dict = {'resource_type': 'Child%s' % resource_class,
+                        resource_class: node}
+        if delete:
+            wrapper_dict.update({'marked_for_delete': True})
+        return wrapper_dict
 
     def _find_parent_in_dict(self, d, resource_def, level=1):
 
@@ -179,8 +185,9 @@ class NsxPolicyTransaction(object):
                 child_dict_key = child_def.get_last_section_dict_key
                 node[child_dict_key] = [child_def.get_obj_dict()]
             parent_dict['children'].append(
-                self._build_wrapper_dict(resource_class, node))
-
+                self._build_wrapper_dict(resource_class,
+                                         node,
+                                         resource_def.get_delete()))
         if body:
             headers = {'nsx-enable-partial-patch': 'true'}
             self.client.patch(url, body, headers=headers)
