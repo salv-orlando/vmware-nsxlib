@@ -4141,3 +4141,134 @@ class NsxPolicyExcludeListApi(NsxPolicyResourceBase):
         raise exceptions.ManagerError(details=err_msg)
 
     # TODO(asarfaty): Add support for add/remove member
+
+
+class NsxPolicyTier0RouteMapApi(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.Tier0RouteMapDef
+
+    def create_or_overwrite(self, name, tier0_id,
+                            route_map_id=None,
+                            entries=IGNORE,
+                            description=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        route_map_id = self._init_obj_uuid(route_map_id)
+        route_map_def = self._init_def(tier0_id=tier0_id,
+                                       route_map_id=route_map_id,
+                                       name=name,
+                                       entries=entries,
+                                       description=description,
+                                       tags=tags,
+                                       tenant=tenant)
+        self._create_or_store(route_map_def)
+        return route_map_id
+
+    def delete(self, tier0_id, route_map_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        route_map_def = self.entry_def(tier0_id=tier0_id,
+                                       route_map_id=route_map_id,
+                                       tenant=tenant)
+        self.policy_api.delete(route_map_def)
+
+    def get(self, tier0_id, route_map_id,
+            tenant=constants.POLICY_INFRA_TENANT):
+        route_map_def = self.entry_def(tier0_id=tier0_id,
+                                       route_map_id=route_map_id,
+                                       tenant=tenant)
+        return self.policy_api.get(route_map_def)
+
+    def list(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
+        route_map_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
+        return self._list(route_map_def)
+
+    def update(self, name, tier0_id,
+               route_map_id,
+               entries,
+               description=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(tier0_id=tier0_id,
+                     route_map_id=route_map_id,
+                     name=name,
+                     entries=entries,
+                     description=description,
+                     tags=tags,
+                     tenant=tenant)
+
+    def build_route_map_entry(self, action, community_list_matches=None,
+                              prefix_list_matches=None, entry_set=None):
+        return core_defs.RouteMapEntry(action, community_list_matches,
+                                       prefix_list_matches, entry_set)
+
+    def build_route_map_entry_set(self, local_preference=100,
+                                  as_path_prepend=None, community=None,
+                                  med=None, weight=None):
+        return core_defs.RouteMapEntrySet(local_preference, as_path_prepend,
+                                          community, med, weight)
+
+    def build_community_match_criteria(self, criteria, match_operator=None):
+        return core_defs.CommunityMatchCriteria(criteria, match_operator)
+
+
+class NsxPolicyTier0PrefixListApi(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.Tier0PrefixListDef
+
+    def create_or_overwrite(self, name, tier0_id,
+                            prefix_list_id=None,
+                            prefixes=IGNORE,
+                            description=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+
+        prefix_list_id = self._init_obj_uuid(prefix_list_id)
+        prefix_list_def = self._init_def(tier0_id=tier0_id,
+                                         prefix_list_id=prefix_list_id,
+                                         name=name,
+                                         prefixes=prefixes,
+                                         description=description,
+                                         tags=tags,
+                                         tenant=tenant)
+        self._create_or_store(prefix_list_def)
+        return prefix_list_id
+
+    def delete(self, tier0_id, prefix_list_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        prefix_list_def = self.entry_def(tier0_id=tier0_id,
+                                         prefix_list_id=prefix_list_id,
+                                         tenant=tenant)
+        self.policy_api.delete(prefix_list_def)
+
+    def get(self, tier0_id, prefix_list_id,
+            tenant=constants.POLICY_INFRA_TENANT):
+        prefix_list_def = self.entry_def(tier0_id=tier0_id,
+                                         prefix_list_id=prefix_list_id,
+                                         tenant=tenant)
+        return self.policy_api.get(prefix_list_def)
+
+    def list(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
+        prefix_list_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
+        return self._list(prefix_list_def)
+
+    def update(self, name, tier0_id,
+               prefix_list_id,
+               prefixes,
+               description=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(tier0_id=tier0_id,
+                     prefix_list_id=prefix_list_id,
+                     name=name,
+                     prefixes=prefixes,
+                     description=description,
+                     tags=tags,
+                     tenant=tenant)
+
+    def build_prefix_entry(self, network, le=None, ge=None,
+                           action=constants.ADV_RULE_PERMIT):
+        return core_defs.PrefixEntry(network, le, ge, action)

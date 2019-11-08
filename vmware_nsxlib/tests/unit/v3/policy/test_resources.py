@@ -5197,3 +5197,227 @@ class TestPolicyExcludeList(NsxPolicyLibTestCase):
 
     def test_update(self):
         self.skipTest("The action is not supported by this resource")
+
+
+class TestPolicyTier0RouteMap(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyTier0RouteMap, self).setUp()
+        self.resourceApi = self.policy_lib.tier0_route_map
+
+    def test_create(self):
+        name = 'route_map_test'
+        tier0_id = 't0_test'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            # test with 'entries'
+            entry = core_defs.RouteMapEntry('DENY')
+            result = self.resourceApi.create_or_overwrite(
+                name, tier0_id, entries=[entry], tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0RouteMapDef(
+                tier0_id=tier0_id,
+                route_map_id=mock.ANY,
+                name=name,
+                entries=[entry],
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        tier0_id = 't0_test'
+        route_map_id = 'route_map_test'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(tier0_id, route_map_id, tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0RouteMapDef(
+                tier0_id=tier0_id,
+                route_map_id=route_map_id,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        tier0_id = 't0_test'
+        route_map_id = 'route_map_test'
+        entries = []
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': route_map_id}) as api_call:
+            result = self.resourceApi.get(tier0_id, route_map_id,
+                                          tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0RouteMapDef(
+                tier0_id=tier0_id,
+                route_map_id=route_map_id,
+                entries=entries,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(route_map_id, result['id'])
+
+    def test_list(self):
+        tier0_id = 't0_test'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tier0_id=tier0_id,
+                                           tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0RouteMapDef(
+                tier0_id=tier0_id,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        tier0_id = 't0_test'
+        route_map_id = 'route_map_test'
+        name = 'new_name'
+        entries = []
+        with self.mock_get(tier0_id, name), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(name, tier0_id, route_map_id, entries,
+                                    tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0RouteMapDef(
+                tier0_id=tier0_id,
+                route_map_id=route_map_id,
+                name=name,
+                entries=entries,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_build_route_map_entry(self):
+        action = constants.ADV_RULE_PERMIT
+        community_list_matches = mock.ANY
+        prefix_list_matches = ["prefix_list_matches"]
+        entry_set = mock.ANY
+        route_map_entry = self.resourceApi.build_route_map_entry(
+            action, community_list_matches, prefix_list_matches, entry_set)
+
+        self.assertEqual(action, route_map_entry.action)
+        self.assertEqual(community_list_matches,
+                         route_map_entry.community_list_matches)
+        self.assertEqual(prefix_list_matches,
+                         route_map_entry.prefix_list_matches)
+        self.assertEqual(entry_set, route_map_entry.entry_set)
+
+    def test_build_route_map_entry_set(self):
+        local_preference = 100
+        as_path_prepend = mock.ANY
+        community = mock.ANY
+        med = mock.ANY
+        weight = mock.ANY
+        entry_set = self.resourceApi.build_route_map_entry_set(
+            local_preference, as_path_prepend, community, med, weight)
+
+        self.assertEqual(local_preference, entry_set.local_preference)
+        self.assertEqual(as_path_prepend, entry_set.as_path_prepend)
+        self.assertEqual(community, entry_set.community)
+        self.assertEqual(med, entry_set.med)
+        self.assertEqual(weight, entry_set.weight)
+
+    def test_build_community_match_criteria(self):
+        criteria = "test_criteria"
+        match_operator = mock.ANY
+        match_criteria = self.resourceApi.build_community_match_criteria(
+            criteria, match_operator)
+
+        self.assertEqual(criteria, match_criteria.criteria)
+        self.assertEqual(match_operator, match_criteria.match_operator)
+
+
+class TestPolicyTier0PrefixList(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyTier0PrefixList, self).setUp()
+        self.resourceApi = self.policy_lib.tier0_prefix_list
+
+    def test_create(self):
+        name = 'prefix_list_test'
+        tier0_id = 't0_test'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            # test with 'prefixes'
+            prefix = core_defs.PrefixEntry('network_test')
+            result = self.resourceApi.create_or_overwrite(
+                name, tier0_id, prefixes=[prefix], tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0PrefixListDef(
+                tier0_id=tier0_id,
+                prefix_list_id=mock.ANY,
+                name=name,
+                prefixes=[prefix],
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        tier0_id = 't0_test'
+        prefix_list_id = 'prefix_list_test'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(tier0_id, prefix_list_id,
+                                    tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0PrefixListDef(
+                tier0_id=tier0_id,
+                prefix_list_id=prefix_list_id,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        tier0_id = 't0_test'
+        prefix_list_id = 'prefix_list_test'
+        with mock.patch.object(
+            self.policy_api, "get",
+            return_value={'id': prefix_list_id}) as api_call:
+            result = self.resourceApi.get(tier0_id, prefix_list_id,
+                                          tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0PrefixListDef(
+                tier0_id=tier0_id,
+                prefix_list_id=prefix_list_id,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(prefix_list_id, result['id'])
+
+    def test_list(self):
+        tier0_id = 't0_test'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tier0_id=tier0_id,
+                                           tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0PrefixListDef(
+                tier0_id=tier0_id,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        tier0_id = 't0_test'
+        prefix_list_id = 'prefix_list_test'
+        name = 'new_name'
+        prefixes = []
+        with self.mock_get(tier0_id, name), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(name, tier0_id, prefix_list_id, prefixes,
+                                    tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0PrefixListDef(
+                tier0_id=tier0_id,
+                prefix_list_id=prefix_list_id,
+                name=name,
+                prefixes=prefixes,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_build_prefix_entry(self):
+        network = "network_test"
+        le = mock.ANY
+        ge = mock.ANY
+        action = constants.ADV_RULE_DENY
+        prefix_entry = self.resourceApi.build_prefix_entry(
+            network, le, ge, action)
+
+        self.assertEqual(network, prefix_entry.network)
+        self.assertEqual(le, prefix_entry.le)
+        self.assertEqual(ge, prefix_entry.ge)
+        self.assertEqual(action, prefix_entry.action)

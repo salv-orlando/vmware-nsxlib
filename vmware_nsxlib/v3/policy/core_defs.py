@@ -2116,3 +2116,134 @@ class NsxPolicyApi(object):
         entity = self.get_realized_entity(path, silent=silent)
         if entity:
             return entity['state']
+
+
+class RouteMapEntry(object):
+    def __init__(self, action, community_list_matches=None,
+                 prefix_list_matches=None, entry_set=None):
+        self.action = action
+        self.community_list_matches = community_list_matches
+        self.prefix_list_matches = prefix_list_matches
+        self.entry_set = entry_set
+
+    def get_obj_dict(self):
+        body = {'action': self.action}
+        if self.community_list_matches:
+            body['community_list_matches'] = [community.get_obj_dict()
+                                              for community in
+                                              self.community_list_matches]
+        if self.prefix_list_matches:
+            body['prefix_list_matches'] = (
+                self.prefix_list_matches
+                if isinstance(self.prefix_list_matches, list) else
+                [self.prefix_list_matches])
+        if self.entry_set:
+            body['set'] = self.entry_set.get_obj_dict()
+        return body
+
+
+class RouteMapEntrySet(object):
+    def __init__(self, local_preference=100, as_path_prepend=None,
+                 community=None, med=None, weight=None):
+        self.local_preference = local_preference
+        self.as_path_prepend = as_path_prepend
+        self.community = community
+        self.med = med
+        self.weight = weight
+
+    def get_obj_dict(self):
+        body = {'local_preference': self.local_preference}
+        if self.as_path_prepend:
+            body['as_path_prepend'] = self.as_path_prepend
+        if self.community:
+            body['community'] = self.community
+        if self.med:
+            body['med'] = self.med
+        if self.weight:
+            body['weight'] = self.weight
+        return body
+
+
+class CommunityMatchCriteria(object):
+    def __init__(self, criteria, match_operator=None):
+        self.criteria = criteria
+        self.match_operator = match_operator
+
+    def get_obj_dict(self):
+        body = {'criteria': self.criteria}
+        if self.match_operator:
+            body['match_operator'] = self.match_operator
+        return body
+
+
+class Tier0RouteMapDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return TIER0S_PATH_PATTERN + "%s/route-maps/"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier0_id', 'route_map_id')
+
+    @staticmethod
+    def resource_type():
+        return 'Tier0RouteMap'
+
+    def path_defs(self):
+        return (TenantDef, Tier0Def)
+
+    def get_obj_dict(self):
+        body = super(Tier0RouteMapDef, self).get_obj_dict()
+        entries = self.get_attr('entries')
+        if entries:
+            entries = [entry.get_obj_dict()
+                       if isinstance(entry, RouteMapEntry) else entry
+                       for entry in self.get_attr('entries')]
+            body['entries'] = entries
+        return body
+
+
+class PrefixEntry(object):
+    def __init__(self, network, le=None, ge=None,
+                 action=constants.ADV_RULE_PERMIT):
+        self.network = network
+        self.le = le
+        self.ge = ge
+        self.action = action
+
+    def get_obj_dict(self):
+        body = {'network': self.network,
+                'action': self.action}
+        if self.le is not None:
+            body['le'] = self.le
+        if self.ge is not None:
+            body['ge'] = self.ge
+
+        return body
+
+
+class Tier0PrefixListDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return TIER0S_PATH_PATTERN + "%s/prefix-lists/"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier0_id', 'prefix_list_id')
+
+    @staticmethod
+    def resource_type():
+        return 'PrefixList'
+
+    def path_defs(self):
+        return (TenantDef, Tier0Def)
+
+    def get_obj_dict(self):
+        body = super(Tier0PrefixListDef, self).get_obj_dict()
+        prefixes = self.get_attr('prefixes')
+        if prefixes:
+            prefixes = [prefix.get_obj_dict() for prefix in prefixes]
+            body['prefixes'] = prefixes
+        return body
