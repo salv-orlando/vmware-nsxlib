@@ -754,7 +754,8 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                max_concurrent_connections=IGNORE,
                access_list_control=IGNORE,
                tags=IGNORE,
-               tenant=constants.POLICY_INFRA_TENANT):
+               tenant=constants.POLICY_INFRA_TENANT,
+               allow_partial_updates=True):
 
         @utils.retry_upon_exception(
             nsxlib_exc.StaleRevision,
@@ -777,7 +778,8 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                 waf_profile_binding=waf_profile_binding,
                 max_concurrent_connections=max_concurrent_connections,
                 access_list_control=access_list_control,
-                tags=tags)
+                tags=tags,
+                allow_partial_updates=allow_partial_updates)
 
         _update()
 

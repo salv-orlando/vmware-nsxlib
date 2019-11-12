@@ -142,10 +142,10 @@ class NsxPolicyResourceBase(object):
 
         return resource_def
 
-    def _update(self, **kwargs):
+    def _update(self, allow_partial_updates=True, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
-
-        if self.policy_api.partial_updates_supported():
+        if (allow_partial_updates and
+                self.policy_api.partial_updates_supported()):
             policy_def = self._init_def(**kwargs)
             partial_updates = True
         else:

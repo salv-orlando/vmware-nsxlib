@@ -959,6 +959,22 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_non_partial_update(self):
+        obj_id = '111'
+        vs_name = 'name-name'
+        with self.mock_get(obj_id, vs_name, max_concurrent_connections=80), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(obj_id,
+                                    max_concurrent_connections=None,
+                                    tenant=TEST_TENANT,
+                                    allow_partial_updates=False)
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=obj_id, name=vs_name,
+                max_concurrent_connections=None,
+                tenant=TEST_TENANT)
+            update_call.assert_called_with(mock.ANY, partial_updates=False)
+            self.assert_called_with_def(update_call, expected_def)
+
     def test_add_lb_rule(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
