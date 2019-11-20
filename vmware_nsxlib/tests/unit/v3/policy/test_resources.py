@@ -3856,14 +3856,41 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
         ip_block_id = 'block-id'
         size = 256
         ip_subnet_id = 'subnet-id'
+        start_ip = '192.168.1.0'
 
-        with mock.patch.object(self.policy_api,
-                               "create_or_update") as api_call:
+        with mock.patch.object(
+                self.policy_api, "create_or_update") as api_call, \
+                mock.patch.object(self.resourceApi, 'version', '3.0.0'):
             self.resourceApi.allocate_block_subnet(
                 ip_pool_id, ip_block_id, size, ip_subnet_id,
-                tenant=TEST_TENANT)
+                tenant=TEST_TENANT, start_ip=start_ip)
 
             expected_def = core_defs.IpPoolBlockSubnetDef(
+                nsx_version='3.0.0',
+                ip_pool_id=ip_pool_id,
+                ip_block_id=ip_block_id,
+                ip_subnet_id=ip_subnet_id,
+                size=size,
+                tenant=TEST_TENANT,
+                start_ip=start_ip)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_allocate_block_subnet_with_unsupported_attribute(self):
+        ip_pool_id = '111'
+        ip_block_id = 'block-id'
+        size = 256
+        ip_subnet_id = 'subnet-id'
+        start_ip = '192.168.1.0'
+
+        with mock.patch.object(
+                self.policy_api, "create_or_update") as api_call, \
+                mock.patch.object(self.resourceApi, 'version', '2.5.0'):
+            self.resourceApi.allocate_block_subnet(
+                ip_pool_id, ip_block_id, size, ip_subnet_id,
+                tenant=TEST_TENANT, start_ip=start_ip)
+
+            expected_def = core_defs.IpPoolBlockSubnetDef(
+                nsx_version='2.5.0',
                 ip_pool_id=ip_pool_id,
                 ip_block_id=ip_block_id,
                 ip_subnet_id=ip_subnet_id,
