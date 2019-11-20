@@ -172,10 +172,6 @@ class NsxLib(lib.NsxLibBase):
             # features available since 3.0.0
             if (feature == nsx_constants.FEATURE_GET_TZ_FROM_SWITCH):
                 return True
-
-        if (version.LooseVersion(self.get_version()) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_2_5_1)):
-            # features available since 2.5.1
             if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
                 return True
 
