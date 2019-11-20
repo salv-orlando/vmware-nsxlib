@@ -168,12 +168,6 @@ class NsxPolicyLib(lib.NsxLibBase):
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_2_5_1)):
-            # features available since 2.5.1
-            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
-                return True
-
-        if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
             # features available since 3.0.0
             if feature == nsx_constants.FEATURE_PARTIAL_UPDATES:
@@ -187,6 +181,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_ADMIN_STATE:
+                return True
+            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
