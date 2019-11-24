@@ -37,6 +37,7 @@ PROVIDERS_PATH_PATTERN = TENANTS_PATH_PATTERN + "providers/"
 TIER0S_PATH_PATTERN = TENANTS_PATH_PATTERN + "tier-0s/"
 TIER1S_PATH_PATTERN = TENANTS_PATH_PATTERN + "tier-1s/"
 SERVICES_PATH_PATTERN = TENANTS_PATH_PATTERN + "services/"
+GLOBAL_CONFIG_PATH_PATTERN = TENANTS_PATH_PATTERN + "global-config/"
 ENFORCEMENT_POINT_PATTERN = (TENANTS_PATH_PATTERN +
                              "sites/default/enforcement-points/")
 TRANSPORT_ZONE_PATTERN = ENFORCEMENT_POINT_PATTERN + "%s/transport-zones/"
@@ -2010,6 +2011,28 @@ class CertificateDef(ResourceDef):
         body = super(CertificateDef, self).get_obj_dict()
         self._set_attrs_if_specified(body, ['pem_encoded', 'key_algo',
                                             'private_key', 'passphrase'])
+        return body
+
+
+class GlobalConfigDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return GLOBAL_CONFIG_PATH_PATTERN
+
+    @property
+    def path_ids(self):
+        # Adding dummy 2nd key to satisfy get_section_path
+        # This resource has no keys, since it is a single object
+        return ('tenant', 'dummy')
+
+    @staticmethod
+    def resource_type():
+        return "GlobalConfig"
+
+    def get_obj_dict(self):
+        body = super(GlobalConfigDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['l3_forwarding_mode'])
         return body
 
 

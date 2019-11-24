@@ -128,6 +128,7 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.exclude_list = core_resources.NsxPolicyExcludeListApi(*args)
         self.load_balancer = lb_resources.NsxPolicyLoadBalancerApi(*args)
         self.ipsec_vpn = ipsec_vpn_resources.NsxPolicyIpsecVpnApi(*args)
+        self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
 
     @property
     def keepalive_section(self):
@@ -177,6 +178,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             if feature == nsx_constants.FEATURE_NSX_POLICY_MDPROXY:
                 return True
             if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
+                return True
+            if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
