@@ -5170,3 +5170,69 @@ class TestPolicyExcludeList(NsxPolicyLibTestCase):
 
     def test_update(self):
         self.skipTest("The action is not supported by this resource")
+
+
+class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyGlobalConfig, self).setUp()
+        self.resourceApi = self.policy_lib.global_config
+
+    def test_create_or_overwrite(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_delete(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_get(self):
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get(tenant=TEST_TENANT)
+            expected_def = core_defs.GlobalConfigDef(
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_list(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_update(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_enable_ipv6(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_ONLY'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.enable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                "%s/global-config/" % TEST_TENANT,
+                {'l3_forwarding_mode': 'IPV4_AND_IPV6'})
+
+    def test_enable_ipv6_no_call(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_AND_IPV6'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.enable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_not_called()
+
+    def test_disable_ipv6(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_AND_IPV6'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                "%s/global-config/" % TEST_TENANT,
+                {'l3_forwarding_mode': 'IPV4_ONLY'})
+
+    def test_disable_ipv6_no_call(self):
+        current_config = {'l3_forwarding_mode': 'IPV4_ONLY'}
+        with mock.patch.object(self.policy_api, "get",
+                               return_value=current_config) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_not_called()
