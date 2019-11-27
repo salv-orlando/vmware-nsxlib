@@ -5421,3 +5421,18 @@ class TestPolicyTier0PrefixList(NsxPolicyLibTestCase):
         self.assertEqual(le, prefix_entry.le)
         self.assertEqual(ge, prefix_entry.ge)
         self.assertEqual(action, prefix_entry.action)
+
+
+class TestNsxSearch(NsxPolicyLibTestCase):
+
+    def test_nsx_search_by_realization(self):
+        """Test search of resources with the specified tag."""
+        with mock.patch.object(self.policy_lib.client, 'url_get') as search:
+            realized_id = 'xxx'
+            realized_type = 'RealizedLogicalSwitch'
+            query = ('resource_type:GenericPolicyRealizedResource AND '
+                     'realization_specific_identifier:%s AND '
+                     'entity_type:%s' % (realized_id, realized_type))
+            self.policy_lib.search_resource_by_realized_id(
+                realized_id, realized_type)
+            search.assert_called_with('search?query=%s' % query)
