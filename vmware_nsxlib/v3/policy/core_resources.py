@@ -2446,6 +2446,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                             context_id=IGNORE,
                             traffic_tag=IGNORE,
                             allocate_addresses=IGNORE,
+                            hyperbus_mode=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
         port_id = self._init_obj_uuid(port_id)
@@ -2461,6 +2462,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                                   context_id=context_id,
                                   traffic_tag=traffic_tag,
                                   allocate_addresses=allocate_addresses,
+                                  hyperbus_mode=hyperbus_mode,
                                   tags=tags,
                                   tenant=tenant)
         self._create_or_store(port_def)
@@ -2493,6 +2495,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                name=IGNORE,
                description=IGNORE,
                address_bindings=IGNORE,
+               hyperbus_mode=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2502,6 +2505,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                      name=name,
                      description=description,
                      address_bindings=address_bindings,
+                     hyperbus_mode=hyperbus_mode,
                      tags=tags,
                      tenant=tenant)
 
@@ -2521,6 +2525,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                allocate_addresses,
                app_id=None,
                context_id=None,
+               hyperbus_mode=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
         port_def = self.entry_def(segment_id=segment_id,
@@ -2531,6 +2536,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                                   vif_id=vif_id,
                                   app_id=app_id,
                                   context_id=context_id,
+                                  hyperbus_mode=hyperbus_mode,
                                   tenant=tenant)
 
         self.policy_api.create_or_update(port_def)
