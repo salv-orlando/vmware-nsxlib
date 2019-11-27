@@ -522,6 +522,32 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
     def path_defs(self):
         return (TenantDef, Tier0Def)
 
+    def get_obj_dict(self):
+        body = super(Tier0LocaleServiceDef, self).get_obj_dict()
+
+        if (self.has_attr('route_redistribution_config') and
+            self._version_dependant_attr_supported(
+                'route_redistribution_config')):
+            config = self.get_attr('route_redistribution_config')
+            body['route_redistribution_config'] = (
+                config.get_obj_dict()
+                if isinstance(config, Tier0RouteRedistributionConfig)
+                else config)
+        return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'route_redistribution_config':
+                return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+        return False
+
 
 class Tier1LocaleServiceDef(RouterLocaleServiceDef):
 
@@ -2426,3 +2452,188 @@ class NsxPolicyApi(object):
     def get_intent_consolidated_status(self, path, silent=False):
         return self.client.get(REALIZATION_STATUS_PATH % path,
                                silent=silent)
+
+
+class RouteMapEntry(object):
+    def __init__(self, action, community_list_matches=None,
+                 prefix_list_matches=None, entry_set=None):
+        self.action = action
+        self.community_list_matches = community_list_matches
+        self.prefix_list_matches = prefix_list_matches
+        self.entry_set = entry_set
+
+    def get_obj_dict(self):
+        body = {'action': self.action}
+        if self.community_list_matches:
+            body['community_list_matches'] = [community.get_obj_dict()
+                                              for community in
+                                              self.community_list_matches]
+        if self.prefix_list_matches:
+            body['prefix_list_matches'] = (
+                self.prefix_list_matches
+                if isinstance(self.prefix_list_matches, list) else
+                [self.prefix_list_matches])
+        if self.entry_set:
+            body['set'] = self.entry_set.get_obj_dict()
+        return body
+
+
+class RouteMapEntrySet(object):
+    def __init__(self, local_preference=100, as_path_prepend=None,
+                 community=None, med=None, weight=None):
+        self.local_preference = local_preference
+        self.as_path_prepend = as_path_prepend
+        self.community = community
+        self.med = med
+        self.weight = weight
+
+    def get_obj_dict(self):
+        body = {'local_preference': self.local_preference}
+        if self.as_path_prepend:
+            body['as_path_prepend'] = self.as_path_prepend
+        if self.community:
+            body['community'] = self.community
+        if self.med:
+            body['med'] = self.med
+        if self.weight:
+            body['weight'] = self.weight
+        return body
+
+
+class CommunityMatchCriteria(object):
+    def __init__(self, criteria, match_operator=None):
+        self.criteria = criteria
+        self.match_operator = match_operator
+
+    def get_obj_dict(self):
+        body = {'criteria': self.criteria}
+        if self.match_operator:
+            body['match_operator'] = self.match_operator
+        return body
+
+
+class Tier0RouteMapDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return TIER0S_PATH_PATTERN + "%s/route-maps/"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier0_id', 'route_map_id')
+
+    @staticmethod
+    def resource_type():
+        return 'Tier0RouteMap'
+
+    def path_defs(self):
+        return (TenantDef, Tier0Def)
+
+    def get_obj_dict(self):
+        body = super(Tier0RouteMapDef, self).get_obj_dict()
+        entries = self.get_attr('entries')
+        if entries:
+            entries = [entry.get_obj_dict()
+                       if isinstance(entry, RouteMapEntry) else entry
+                       for entry in self.get_attr('entries')]
+            body['entries'] = entries
+        return body
+
+
+class PrefixEntry(object):
+    def __init__(self, network, le=None, ge=None,
+                 action=constants.ADV_RULE_PERMIT):
+        self.network = network
+        self.le = le
+        self.ge = ge
+        self.action = action
+
+    def get_obj_dict(self):
+        body = {'network': self.network,
+                'action': self.action}
+        if self.le is not None:
+            body['le'] = self.le
+        if self.ge is not None:
+            body['ge'] = self.ge
+
+        return body
+
+
+class Tier0PrefixListDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return TIER0S_PATH_PATTERN + "%s/prefix-lists/"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'tier0_id', 'prefix_list_id')
+
+    @staticmethod
+    def resource_type():
+        return 'PrefixList'
+
+    def path_defs(self):
+        return (TenantDef, Tier0Def)
+
+    def get_obj_dict(self):
+        body = super(Tier0PrefixListDef, self).get_obj_dict()
+        prefixes = self.get_attr('prefixes')
+        if prefixes:
+            prefixes = [prefix.get_obj_dict() for prefix in prefixes]
+            body['prefixes'] = prefixes
+        return body
+
+
+class BgpRoutingConfigDef(ResourceDef):
+
+    @staticmethod
+    def resource_type():
+        return 'BgpRoutingConfig'
+
+    @property
+    def path_pattern(self):
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN + "%s/bgp"
+
+    @property
+    def path_ids(self):
+        # Adding dummy key to satisfy get_section_path
+        # This resource has no keys, since it is a single object
+        return ('tenant', 'tier0_id', 'service_id', 'dummy')
+
+
+class Tier0RouteRedistributionConfig(object):
+
+    def __init__(self, enabled=None, redistribution_rules=None):
+        self.enabled = enabled
+        self.redistribution_rules = redistribution_rules
+
+    def get_obj_dict(self):
+        body = {}
+        if self.enabled:
+            body['enabled'] = self.enabled
+        if self.redistribution_rules is not None:
+            rules = [rule.get_obj_dict()
+                     if isinstance(rule, Tier0RouteRedistributionRule) else
+                     rule for rule in self.redistribution_rules]
+            body['redistribution_rules'] = rules
+
+        return body
+
+
+class Tier0RouteRedistributionRule(object):
+
+    def __init__(self, name=None, route_redistribution_types=None,
+                 route_map_path=None):
+        self.name = name
+        self.route_redistribution_types = route_redistribution_types or []
+        self.route_map_path = route_map_path
+
+    def get_obj_dict(self):
+        body = {'route_redistribution_types': self.route_redistribution_types}
+        if self.name:
+            body['name'] = self.name
+        if self.route_map_path:
+            body['route_map_path'] = self.route_map_path
+
+        return body

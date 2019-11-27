@@ -167,13 +167,13 @@ class NsxPolicyLib(lib.NsxLibBase):
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
-            if (feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING):
+            if feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_2_5_0)):
             # Features available since 2.5
-            if (feature == nsx_constants.FEATURE_ENS_WITH_QOS):
+            if feature == nsx_constants.FEATURE_ENS_WITH_QOS:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
@@ -187,11 +187,13 @@ class NsxPolicyLib(lib.NsxLibBase):
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_DHCP:
                 return True
-            if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
+            if feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG:
+                return True
+            if feature == nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG:
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_ADMIN_STATE:
                 return True
-            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
+            if feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
