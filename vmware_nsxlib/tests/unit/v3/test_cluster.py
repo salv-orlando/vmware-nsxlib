@@ -125,6 +125,44 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             mock_get_def_headers.assert_called_once_with(
                 mock.ANY, cluster_provider, False, token_provider_inst)
 
+    @mock.patch("vmware_nsxlib.v3.cluster.NSXHTTPAdapter.__init__")
+    def test_new_connection_with_ca_file(self, mock_adaptor_init):
+        mock_api = mock.Mock()
+        mock_api.nsxlib_config = mock.Mock()
+        mock_api.nsxlib_config.retries = 100
+        mock_api.nsxlib_config.insecure = False
+        mock_adaptor_init.return_value = None
+        provider = cluster.NSXRequestsHTTPProvider()
+        with mock.patch.object(cluster.TimeoutSession, 'request',
+                               return_value=get_sess_create_resp()):
+            session = provider.new_connection(
+                mock_api, cluster.Provider('9.8.7.6', 'https://9.8.7.6',
+                                           None, None, "ca_file"))
+
+            self.assertEqual("ca_file", session.verify)
+            mock_adaptor_init.assert_called_once_with(
+                pool_connections=1, pool_maxsize=1,
+                max_retries=100, pool_block=False, thumbprint=None)
+
+    @mock.patch("vmware_nsxlib.v3.cluster.NSXHTTPAdapter.__init__")
+    def test_new_connection_with_thumbprint(self, mock_adaptor_init):
+        mock_api = mock.Mock()
+        mock_api.nsxlib_config = mock.Mock()
+        mock_api.nsxlib_config.retries = 100
+        mock_api.nsxlib_config.insecure = False
+        mock_adaptor_init.return_value = None
+        provider = cluster.NSXRequestsHTTPProvider()
+        with mock.patch.object(cluster.TimeoutSession, 'request',
+                               return_value=get_sess_create_resp()):
+            session = provider.new_connection(
+                mock_api, cluster.Provider('9.8.7.6', 'https://9.8.7.6',
+                                           None, None, None, "thumbprint"))
+
+            self.assertIsNone(session.verify)
+            mock_adaptor_init.assert_called_once_with(
+                pool_connections=1, pool_maxsize=1,
+                max_retries=100, pool_block=False, thumbprint="thumbprint")
+
     def test_validate_connection_keep_alive(self):
         mock_conn = mocks.MockRequestSessionApi()
         mock_conn.default_headers = {}
@@ -187,6 +225,16 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         with mock.patch.object(client.JSONRESTClient, "get",
                                return_value={'healthy': True}):
             provider.validate_connection(mock_cluster, mock_ep, mock_conn)
+
+
+class NSXHTTPAdapterTestCase(nsxlib_testcase.NsxClientTestCase):
+
+    @mock.patch("requests.adapters.HTTPAdapter.init_poolmanager")
+    def test_init_poolmanager(self, mock_init_poolmanager):
+        cluster.NSXHTTPAdapter(thumbprint="thumbprint")
+        mock_init_poolmanager.assert_called_once_with(
+            mock.ANY, mock.ANY, block=mock.ANY,
+            assert_fingerprint="thumbprint")
 
 
 class NsxV3ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):

@@ -221,16 +221,28 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         # NSX v3 doesn't use redirects
         session.max_redirects = 0
 
-        session.verify = not config.insecure
-        if session.verify and provider.ca_file:
+        if config.insecure:
+            # no verification on server certificate
+            session.verify = False
+            thumbprint = None
+        elif provider.ca_file:
             # verify using the said ca bundle path
             session.verify = provider.ca_file
+            thumbprint = None
+        elif provider.thumbprint:
+            # verify using the thumbprint
+            session.verify = None
+            thumbprint = provider.thumbprint
+        else:
+            # verify using the default system root CAs
+            session.verify = True
+            thumbprint = None
 
         # we are pooling with eventlet in the cluster class
-        adapter = adapters.HTTPAdapter(
+        adapter = NSXHTTPAdapter(
             pool_connections=1, pool_maxsize=1,
             max_retries=config.retries,
-            pool_block=False)
+            pool_block=False, thumbprint=thumbprint)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
@@ -314,6 +326,17 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                          {'url': provider.url, 'hdr': session.default_headers})
 
 
+class NSXHTTPAdapter(adapters.HTTPAdapter):
+    def __init__(self, *args, **kwargs):
+        self.thumbprint = kwargs.pop("thumbprint", None)
+        super(NSXHTTPAdapter, self).__init__(*args, **kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        if self.thumbprint:
+            kwargs["assert_fingerprint"] = self.thumbprint
+        super(NSXHTTPAdapter, self).init_poolmanager(*args, **kwargs)
+
+
 class ClusterHealth(object):
     """Indicator of overall cluster health.
 
@@ -343,12 +366,14 @@ class Provider(object):
     Which has a unique id a connection URL, and the credential details.
     """
 
-    def __init__(self, provider_id, provider_url, username, password, ca_file):
+    def __init__(self, provider_id, provider_url, username, password, ca_file,
+                 thumbprint=None):
         self.id = provider_id
         self.url = provider_url
         self.username = username
         self.password = password
         self.ca_file = ca_file
+        self.thumbprint = thumbprint
 
     def __str__(self):
         return str(self.url)
@@ -717,5 +742,6 @@ class NSXClusteredAPI(ClusteredAPI):
                     urlparse.urlunparse(conf_url),
                     self.nsxlib_config.username(provider_index),
                     self.nsxlib_config.password(provider_index),
-                    self.nsxlib_config.ca_file(provider_index)))
+                    self.nsxlib_config.ca_file(provider_index),
+                    self.nsxlib_config.thumbprint(provider_index)))
         return providers

@@ -35,13 +35,18 @@ class NsxLibConfig(object):
                              instead of basic authentication.
     :param insecure: If true, the NSX Manager server certificate is not
                      verified. If false the CA bundle specified via "ca_file"
-                     will be used or if unset the default system root CAs
+                     will be used or if unset the "thumbprint" will be used.
+                     If "thumbprint" is unset, the default system root CAs
                      will be used.
     :param ca_file: Specify a CA bundle file to use in verifying the NSX
                     Manager server certificate. This option is ignored if
-                    "insecure" is set to True. If "insecure" is set to
-                    False and ca_file is unset, the system root CAs will
-                    be used to verify the server certificate.
+                    "insecure" is set to True. If "insecure" is set to False
+                    and "ca_file" is unset, the "thumbprint" will be used.
+                    If "thumbprint" is unset, the system root CAs will be
+                    used to verify the server certificate.
+    :param thumbprint: Specify a thumbprint string to use in verifying the
+                       NSX Manager server certificate. This option is ignored
+                       if "insecure" is set to True or "ca_file" is defined.
     :param token_provider: None, or instance of implemented AbstractJWTProvider
                            which will return the JSON Web Token used in the
                            requests in NSX for authorization.
@@ -98,6 +103,7 @@ class NsxLibConfig(object):
                  client_cert_provider=None,
                  insecure=True,
                  ca_file=None,
+                 thumbprint=None,
                  token_provider=None,
                  concurrent_connections=10,
                  retries=3,
@@ -123,6 +129,7 @@ class NsxLibConfig(object):
         self._username = username
         self._password = password
         self._ca_file = ca_file
+        self._thumbprint = thumbprint
         self.insecure = insecure
         self.concurrent_connections = concurrent_connections
         self.retries = retries
@@ -178,3 +185,6 @@ class NsxLibConfig(object):
 
     def ca_file(self, index):
         return self._attribute_by_index(self._ca_file, index)
+
+    def thumbprint(self, index):
+        return self._attribute_by_index(self._thumbprint, index)
