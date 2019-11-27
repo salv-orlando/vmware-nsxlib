@@ -3695,6 +3695,67 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
                 tier0_id, tenant=TEST_TENANT)
             self.assertEqual(result, bgp_config)
 
+    def test_build_route_redistribution_rule(self):
+        name = "rule_name"
+        types = ["T1_CONNECTED", "T1_SEGMENT"]
+        route_map_path = "/infra/route_map_path"
+        rule = self.resourceApi.build_route_redistribution_rule(
+            name, types, route_map_path)
+        self.assertEqual(name, rule.name)
+        self.assertEqual(types, rule.route_redistribution_types)
+        self.assertEqual(route_map_path, rule.route_map_path)
+
+    def test_build_route_redistribution_config(self):
+        enabled = True
+        rules = ["redistribution_types"]
+        config = self.resourceApi.build_route_redistribution_config(
+            enabled, rules)
+        self.assertEqual(enabled, config.enabled)
+        self.assertEqual(rules, config.redistribution_rules)
+
+    def test_get_route_redistribution_config(self):
+        tier0_id = '111'
+        config = 'redistribution_config'
+        with mock.patch.object(
+            self.resourceApi, "get_locale_services",
+            return_value=[{'route_redistribution_config': config}]):
+            result = self.resourceApi.get_route_redistribution_config(
+                tier0_id, tenant=TEST_TENANT)
+            self.assertEqual(config, result)
+
+    def test_update_route_redistribution_config(self):
+        tier0_id = '111'
+        service_id = '222'
+        config = 'redistribution_config'
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call:
+            self.resourceApi.update_route_redistribution_config(
+                tier0_id, config, service_id, tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0LocaleServiceDef(
+                nsx_version='3.0.0', tier0_id=tier0_id, service_id=service_id,
+                route_redistribution_config=config, tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+        with mock.patch.object(self.resourceApi, "get_locale_services",
+                               return_value=[]):
+            self.assertRaises(
+                nsxlib_exc.ManagerError,
+                self.resourceApi.update_route_redistribution_config,
+                tier0_id, config, tenant=TEST_TENANT)
+
+    def test_feature_supported(self):
+        with mock.patch.object(self.policy_lib, "get_version",
+                               return_value='2.5.0'):
+            self.assertFalse(
+                self.policy_lib.feature_supported(
+                    nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG))
+        with mock.patch.object(self.policy_lib, "get_version",
+                               return_value='3.0.0'):
+            self.assertTrue(
+                self.policy_lib.feature_supported(
+                    nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG))
+
 
 class TestPolicyTier1Segment(NsxPolicyLibTestCase):
 

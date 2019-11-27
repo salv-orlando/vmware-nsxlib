@@ -181,6 +181,8 @@ class NsxPolicyLib(lib.NsxLibBase):
                 return True
             if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
                 return True
+            if feature == nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG:
+                return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
 

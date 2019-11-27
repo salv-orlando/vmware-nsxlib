@@ -1541,6 +1541,42 @@ class NsxPolicyTier0Api(NsxPolicyResourceBase):
             except exceptions.ResourceNotFound:
                 continue
 
+    def build_route_redistribution_rule(self, name=None, types=None,
+                                        route_map_path=None):
+        return core_defs.Tier0RouteRedistributionRule(
+            name, types, route_map_path)
+
+    def build_route_redistribution_config(self, enabled=None, rules=None):
+        return core_defs.Tier0RouteRedistributionConfig(enabled, rules)
+
+    def get_route_redistribution_config(self, tier0_id,
+                                        tenant=constants.POLICY_INFRA_TENANT):
+        services = self.get_locale_services(tier0_id, tenant=tenant)
+        for srv in services:
+            if srv.get('route_redistribution_config'):
+                return srv['route_redistribution_config']
+
+    def update_route_redistribution_config(
+        self, tier0_id, redistribution_config, service_id=None,
+        tenant=constants.POLICY_INFRA_TENANT):
+        if not service_id:
+            # Update on the first locale service
+            services = self.get_locale_services(tier0_id, tenant=tenant)
+            if len(services) > 0:
+                service_id = services[0]['id']
+        if not service_id:
+            err_msg = (_("Cannot update route redistribution config without "
+                         "locale service on Tier0 router"))
+            raise exceptions.ManagerError(details=err_msg)
+
+        service_def = core_defs.Tier0LocaleServiceDef(
+            nsx_version=self.version,
+            tier0_id=tier0_id,
+            service_id=service_id,
+            route_redistribution_config=redistribution_config,
+            tenant=tenant)
+        self.policy_api.create_or_update(service_def)
+
 
 class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
     DEFAULT_NAT_ID = 'USER'

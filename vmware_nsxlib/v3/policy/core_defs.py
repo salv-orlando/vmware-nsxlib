@@ -505,6 +505,32 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
     def path_defs(self):
         return (TenantDef, Tier0Def)
 
+    def get_obj_dict(self):
+        body = super(Tier0LocaleServiceDef, self).get_obj_dict()
+
+        if (self.has_attr('route_redistribution_config') and
+            self._version_dependant_attr_supported(
+                'route_redistribution_config')):
+            config = self.get_attr('route_redistribution_config')
+            body['route_redistribution_config'] = (
+                config.get_obj_dict()
+                if isinstance(config, Tier0RouteRedistributionConfig)
+                else config)
+        return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'route_redistribution_config':
+                return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+        return False
+
 
 class Tier1LocaleServiceDef(RouterLocaleServiceDef):
 
@@ -2302,3 +2328,40 @@ class BgpRoutingConfigDef(ResourceDef):
         # Adding dummy key to satisfy get_section_path
         # This resource has no keys, since it is a single object
         return ('tenant', 'tier0_id', 'service_id', 'dummy')
+
+
+class Tier0RouteRedistributionConfig(object):
+
+    def __init__(self, enabled=None, redistribution_rules=None):
+        self.enabled = enabled
+        self.redistribution_rules = redistribution_rules
+
+    def get_obj_dict(self):
+        body = {}
+        if self.enabled:
+            body['enabled'] = self.enabled
+        if self.redistribution_rules is not None:
+            rules = [rule.get_obj_dict()
+                     if isinstance(rule, Tier0RouteRedistributionRule) else
+                     rule for rule in self.redistribution_rules]
+            body['redistribution_rules'] = rules
+
+        return body
+
+
+class Tier0RouteRedistributionRule(object):
+
+    def __init__(self, name=None, route_redistribution_types=None,
+                 route_map_path=None):
+        self.name = name
+        self.route_redistribution_types = route_redistribution_types or []
+        self.route_map_path = route_map_path
+
+    def get_obj_dict(self):
+        body = {'route_redistribution_types': self.route_redistribution_types}
+        if self.name:
+            body['name'] = self.name
+        if self.route_map_path:
+            body['route_map_path'] = self.route_map_path
+
+        return body
