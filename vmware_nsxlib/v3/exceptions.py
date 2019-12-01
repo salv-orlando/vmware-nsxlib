@@ -197,6 +197,10 @@ class NsxSearchTimeout(NsxSearchError):
                 "or running low on resources")
 
 
+class NsxSearchOutOfSync(NsxSearchError):
+    message = _("Index is currently out of sync")
+
+
 class NsxPendingDelete(NsxLibException):
     message = _("An object with the same name is marked for deletion. Either "
                 "use another path or wait for the purge cycle to permanently "
