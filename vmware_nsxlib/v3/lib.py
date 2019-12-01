@@ -136,7 +136,7 @@ class NsxLibBase(object):
         url = self._add_pagination_parameters("search?query=%s" % query,
                                               cursor, page_size)
 
-        # Retry the search on case of error
+        # Retry the search in case of error
         @utils.retry_upon_exception(exceptions.NsxSearchError,
                                     max_attempts=self.client.max_attempts)
         def do_search(url):
@@ -173,8 +173,8 @@ class NsxLibBase(object):
         url = self._add_pagination_parameters("search?query=%s" % query,
                                               cursor, page_size)
 
-        # Retry the search on case of error
-        @utils.retry_upon_exception(exceptions.NsxIndexingInProgress,
+        # Retry the search in case of error
+        @utils.retry_upon_exception(exceptions.NsxSearchError,
                                     max_attempts=self.client.max_attempts)
         def do_search(url):
             return self.client.url_get(url)

@@ -37,6 +37,7 @@ def http_error_to_exception(status_code, error_code):
         requests.codes.BAD_REQUEST:
             {'60508': exceptions.NsxIndexingInProgress,
              '60514': exceptions.NsxSearchTimeout,
+             '60515': exceptions.NsxSearchOutOfSync,
              '8327': exceptions.NsxOverlapVlan,
              '500045': exceptions.NsxPendingDelete,
              '500030': exceptions.ResourceInUse,
