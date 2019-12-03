@@ -4138,3 +4138,46 @@ class NsxPolicyExcludeListApi(NsxPolicyResourceBase):
         raise exceptions.ManagerError(details=err_msg)
 
     # TODO(asarfaty): Add support for add/remove member
+
+
+class NsxPolicyGlobalConfig(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.GlobalConfigDef
+
+    def create_or_overwrite(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def delete(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def get(self, tenant=constants.POLICY_INFRA_TENANT, silent=False):
+        global_config_def = self.entry_def(tenant=tenant)
+        return self.policy_api.get(global_config_def, silent=silent)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def update(self, members=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def _set_l3_forwarding_mode(self, mode, tenant):
+        # Using PUT as PATCH is not supported for this API
+        config = self.get()
+        if config['l3_forwarding_mode'] != mode:
+            config['l3_forwarding_mode'] = mode
+            config_def = self.entry_def(tenant=tenant)
+            path = config_def.get_resource_path()
+            self.policy_api.client.update(path, config)
+
+    def enable_ipv6(self, tenant=constants.POLICY_INFRA_TENANT):
+        return self._set_l3_forwarding_mode('IPV4_AND_IPV6', tenant)
+
+    def disable_ipv6(self, tenant=constants.POLICY_INFRA_TENANT):
+        return self._set_l3_forwarding_mode('IPV4_ONLY', tenant)
