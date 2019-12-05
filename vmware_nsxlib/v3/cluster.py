@@ -630,47 +630,51 @@ class ClusteredAPI(object):
         return _call_proxy
 
     def _proxy(self, proxy_for, uri, *args, **kwargs):
-        # proxy http request call to an avail endpoint
-        with self.endpoint_connection() as conn_data:
-            conn = conn_data.connection
-            endpoint = conn_data.endpoint
 
-            # http conn must support requests style interface
-            do_request = getattr(conn, proxy_for)
+        @utils.retry_upon_none_result(self.nsxlib_config.max_attempts)
+        def _proxy_internal(proxy_for, uri, *args, **kwargs):
+            # proxy http request call to an avail endpoint
+            with self.endpoint_connection() as conn_data:
+                conn = conn_data.connection
+                endpoint = conn_data.endpoint
 
-            if not uri.startswith('/'):
-                uri = "/%s" % uri
-            url = "%s%s" % (endpoint.provider.url, uri)
-            try:
-                LOG.debug("API cluster proxy %s %s to %s",
-                          proxy_for.upper(), uri, url)
-                # Add the connection default headers
-                if conn.default_headers:
-                    kwargs['headers'] = kwargs.get('headers', {})
-                    kwargs['headers'].update(conn.default_headers)
+                # http conn must support requests style interface
+                do_request = getattr(conn, proxy_for)
 
-                # call the actual connection method to do the
-                # http request/response over the wire
-                response = do_request(url, *args, **kwargs)
-                endpoint.set_state(EndpointState.UP)
+                if not uri.startswith('/'):
+                    uri = "/%s" % uri
+                url = "%s%s" % (endpoint.provider.url, uri)
+                try:
+                    LOG.debug("API cluster proxy %s %s to %s",
+                              proxy_for.upper(), uri, url)
+                    # Add the connection default headers
+                    if conn.default_headers:
+                        kwargs['headers'] = kwargs.get('headers', {})
+                        kwargs['headers'].update(conn.default_headers)
 
-                return response
-            except Exception as e:
-                LOG.warning("Request failed due to: %s", e)
-                if (not self._http_provider.is_connection_exception(e) and
-                    not self._http_provider.is_timeout_exception(e)):
-                    # only trap and retry connection & timeout errors
-                    raise e
-                if self._http_provider.is_conn_open_exception(e):
-                    # unable to establish new connection - endpoint is
-                    # inaccessible
-                    endpoint.set_state(EndpointState.DOWN)
+                    # call the actual connection method to do the
+                    # http request/response over the wire
+                    response = do_request(url, *args, **kwargs)
+                    endpoint.set_state(EndpointState.UP)
 
-                LOG.debug("Connection to %s failed, checking additional "
-                          "connections and endpoints" % url)
-                # this might be a result of server closing connection
-                # retry until exhausting connections and endpoints
-                return self._proxy(proxy_for, uri, *args, **kwargs)
+                    return response
+                except Exception as e:
+                    LOG.warning("Request failed due to: %s", e)
+                    if (not self._http_provider.is_connection_exception(e) and
+                        not self._http_provider.is_timeout_exception(e)):
+                        # only trap and retry connection & timeout errors
+                        raise e
+                    if self._http_provider.is_conn_open_exception(e):
+                        # unable to establish new connection - endpoint is
+                        # inaccessible
+                        endpoint.set_state(EndpointState.DOWN)
+
+                    LOG.info("Connection to %s failed, checking additional "
+                             "connections and endpoints" % url)
+                    # this might be a result of server closing connection
+                    # return None so it will retry upto max_attempts.
+
+        return _proxy_internal(proxy_for, uri, *args, **kwargs)
 
 
 class NSXClusteredAPI(ClusteredAPI):
