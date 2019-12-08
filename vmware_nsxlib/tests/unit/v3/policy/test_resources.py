@@ -3217,6 +3217,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
         tier0_id = '111'
         nat_rule_id = 'rule1'
         action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
         cidr1 = '1.1.1.1/32'
         cidr2 = '2.2.2.0/24'
         enabled = True
@@ -3230,6 +3231,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
                 action=action,
                 translated_network=cidr1,
                 source_network=cidr2,
+                firewall_match=firewall_match,
                 tenant=TEST_TENANT,
                 enabled=enabled)
             expected_def = core_defs.Tier0NatRule(
@@ -3241,6 +3243,7 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
                 action=action,
                 translated_network=cidr1,
                 source_network=cidr2,
+                firewall_match=firewall_match,
                 tenant=TEST_TENANT,
                 enabled=enabled)
             self.assert_called_with_def(api_call, expected_def)
@@ -3276,6 +3279,44 @@ class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(mock_t0_nat_rule, result)
 
+    def test_update(self):
+        name = 'test'
+        description = 'desc'
+        tier0_id = '111'
+        nat_rule_id = 'rule1'
+        action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_EXTERNAL
+        cidr1 = '1.1.1.1/32'
+        cidr2 = '2.2.2.0/24'
+        enabled = True
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.update(
+                tier0_id, nat_rule_id,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+
+            expected_def = core_defs.Tier0NatRule(
+                tier0_id=tier0_id,
+                nat_rule_id=nat_rule_id,
+                nat_id=self.resourceApi.DEFAULT_NAT_ID,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+            self.assert_called_with_def(api_call, expected_def)
+
 
 class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
 
@@ -3289,6 +3330,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
         tier1_id = '111'
         nat_rule_id = 'rule1'
         action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
         cidr1 = '1.1.1.1/32'
         cidr2 = '2.2.2.0/24'
         enabled = True
@@ -3301,6 +3343,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 description=description,
                 action=action,
                 translated_network=cidr1,
+                firewall_match=firewall_match,
                 source_network=cidr2,
                 tenant=TEST_TENANT,
                 enabled=enabled)
@@ -3313,6 +3356,7 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 description=description,
                 action=action,
                 translated_network=cidr1,
+                firewall_match=firewall_match,
                 source_network=cidr2,
                 tenant=TEST_TENANT,
                 enabled=enabled)
@@ -3332,6 +3376,44 @@ class TestPolicyTier1NatRule(NsxPolicyLibTestCase):
                 nat_rule_id=nat_rule_id,
                 nat_id=self.resourceApi.DEFAULT_NAT_ID,
                 tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update(self):
+        name = 'test'
+        description = 'desc'
+        tier1_id = '111'
+        nat_rule_id = 'rule1'
+        action = constants.NAT_ACTION_SNAT
+        firewall_match = constants.NAT_FIREWALL_MATCH_INTERNAL
+        cidr1 = '1.1.1.1/32'
+        cidr2 = '2.2.2.0/24'
+        enabled = True
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.update(
+                tier1_id, nat_rule_id,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
+
+            expected_def = core_defs.Tier1NatRule(
+                tier1_id=tier1_id,
+                nat_rule_id=nat_rule_id,
+                nat_id=self.resourceApi.DEFAULT_NAT_ID,
+                name=name,
+                description=description,
+                action=action,
+                translated_network=cidr1,
+                firewall_match=firewall_match,
+                source_network=cidr2,
+                tenant=TEST_TENANT,
+                enabled=enabled)
             self.assert_called_with_def(api_call, expected_def)
 
 
