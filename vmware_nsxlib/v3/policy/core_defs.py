@@ -449,6 +449,7 @@ class Tier1Def(RouterDef):
                 'route_advertisement').get_obj_dict()
 
         self._set_attrs_if_specified(body, ['enable_standby_relocation'])
+        self._set_attr_if_supported(body, 'pool_allocation')
         if self.has_attr('route_advertisement_rules'):
             body['route_advertisement_rules'] = [
                 a.get_obj_dict()
@@ -463,6 +464,20 @@ class Tier1Def(RouterDef):
         if 'route_advertisement_types' in obj_dict:
             route_adv.set_obj_dict(obj_dict['route_advertisement_types'])
         return route_adv
+
+    def _version_dependant_attr_supported(self, attr):
+        # Attributes supported after 3.0.0
+        if attr in ['pool_allocation']:
+            if (version.LooseVersion(self.nsx_version) >=
+                    version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+                return True
+            else:
+                LOG.warning(
+                    "Attribute % is not supported. Current NSX version %s, "
+                    "minimum supported version %s",
+                    attr, self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+                return False
+        return False
 
 
 class RouterLocaleServiceDef(ResourceDef):

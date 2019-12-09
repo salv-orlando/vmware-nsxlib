@@ -2557,6 +2557,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         name = 'test'
         description = 'desc'
         tier0_id = '111'
+        pool_alloc_type = 'LB_SMALL'
         route_adv = self.resourceApi.build_route_advertisement(
             lb_vip=True,
             lb_snat=True)
@@ -2568,9 +2569,11 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 tier0=tier0_id,
                 force_whitelisting=True,
                 route_advertisement=route_adv,
+                pool_allocation=pool_alloc_type,
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.Tier1Def(
+                nsx_version=self.policy_lib.get_version(),
                 tier1_id=mock.ANY,
                 name=name,
                 description=description,
@@ -2578,6 +2581,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 force_whitelisting=True,
                 failover_mode=constants.NON_PREEMPTIVE,
                 route_advertisement=route_adv,
+                pool_allocation=pool_alloc_type,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
@@ -2635,17 +2639,22 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         obj_id = '111'
         name = 'new name'
         tier0 = 'tier0'
+        pool_alloc_type = 'LB_SMALL'
         with self.mock_get(obj_id, name), \
             self.mock_create_update() as update_call:
             self.resourceApi.update(obj_id,
                                     name=name, tier0=tier0,
                                     enable_standby_relocation=False,
+                                    pool_allocation=pool_alloc_type,
                                     tenant=TEST_TENANT)
-            expected_def = core_defs.Tier1Def(tier1_id=obj_id,
-                                              name=name,
-                                              tier0=tier0,
-                                              enable_standby_relocation=False,
-                                              tenant=TEST_TENANT)
+            expected_def = core_defs.Tier1Def(
+                nsx_version=self.policy_lib.get_version(),
+                tier1_id=obj_id,
+                name=name,
+                tier0=tier0,
+                enable_standby_relocation=False,
+                pool_allocation=pool_alloc_type,
+                tenant=TEST_TENANT)
             self.assert_called_with_def(
                 update_call, expected_def)
 
@@ -3163,6 +3172,38 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                     {'name': new_rule}],
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
+
+    def test_create_with_unsupported_attr(self):
+        name = 'test'
+        description = 'test_version_support'
+        tier0_id = 'tier0'
+        pool_alloc_type = 'LB_SMALL'
+        route_adv = self.resourceApi.build_route_advertisement(
+            lb_vip=True,
+            lb_snat=True)
+
+        with mock.patch.object(
+                self.policy_api, "create_or_update") as api_call, \
+                mock.patch.object(self.resourceApi, 'version', '0.0.0'):
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                tier0=tier0_id,
+                force_whitelisting=True,
+                route_advertisement=route_adv,
+                pool_allocation=pool_alloc_type,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=mock.ANY,
+                name=name,
+                description=description,
+                tier0=tier0_id,
+                force_whitelisting=True,
+                failover_mode=constants.NON_PREEMPTIVE,
+                route_advertisement=route_adv,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
 
 
 class TestPolicyTier1NoPassthrough(TestPolicyTier1):

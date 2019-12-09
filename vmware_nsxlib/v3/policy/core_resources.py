@@ -972,6 +972,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                             dhcp_config=IGNORE,
                             disable_firewall=IGNORE,
                             ipv6_ndra_profile_id=IGNORE,
+                            pool_allocation=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
         tier1_id = self._init_obj_uuid(tier1_id)
@@ -986,6 +987,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                                    dhcp_config=dhcp_config,
                                    disable_firewall=disable_firewall,
                                    ipv6_ndra_profile_id=ipv6_ndra_profile_id,
+                                   pool_allocation=pool_allocation,
                                    tenant=tenant)
 
         self._create_or_store(tier1_def)
@@ -1017,6 +1019,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                ipv6_ndra_profile_id=IGNORE,
                route_advertisement=IGNORE,
                route_advertisement_rules=IGNORE,
+               pool_allocation=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
                current_body=None):
 
@@ -1032,6 +1035,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                      ipv6_ndra_profile_id=ipv6_ndra_profile_id,
                      route_advertisement=route_advertisement,
                      route_advertisement_rules=route_advertisement_rules,
+                     pool_allocation=pool_allocation,
                      tags=tags,
                      tenant=tenant)
 
