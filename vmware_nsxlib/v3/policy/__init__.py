@@ -114,9 +114,12 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.segment_port_qos_profiles = (
             core_resources.SegmentPortQosProfilesBindingMapApi(
                 *args))
+        self.segment_dhcp_static_bindings = (
+            core_resources.SegmentDhcpStaticBindingConfigApi(*args))
         self.ipv6_ndra_profile = (
             core_resources.NsxIpv6NdraProfileApi(*args))
         self.dhcp_relay_config = core_resources.NsxDhcpRelayConfigApi(*args)
+        self.dhcp_server_config = core_resources.NsxDhcpServerConfigApi(*args)
         self.md_proxy = core_resources.NsxPolicyMetadataProxyApi(*args)
         self.certificate = core_resources.NsxPolicyCertApi(*args)
         self.exclude_list = core_resources.NsxPolicyExcludeListApi(*args)
@@ -153,13 +156,13 @@ class NsxPolicyLib(lib.NsxLibBase):
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
-            if (feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING):
+            if feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_2_5_0)):
             # Features available since 2.5
-            if (feature == nsx_constants.FEATURE_ENS_WITH_QOS):
+            if feature == nsx_constants.FEATURE_ENS_WITH_QOS:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
@@ -169,9 +172,11 @@ class NsxPolicyLib(lib.NsxLibBase):
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_MDPROXY:
                 return True
-            if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
+            if feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION:
                 return True
-            if (feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG):
+            if feature == nsx_constants.FEATURE_NSX_POLICY_DHCP:
+                return True
+            if feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG:
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)

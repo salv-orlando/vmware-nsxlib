@@ -15,12 +15,16 @@
 #
 
 import abc
+from distutils import version
 
+from oslo_log import log as logging
 import six
 
+from vmware_nsxlib.v3 import nsx_constants
+from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3 import utils
 
-from vmware_nsxlib.v3.policy import constants
+LOG = logging.getLogger(__name__)
 
 TENANTS_PATH_PATTERN = "%s/"
 DOMAINS_PATH_PATTERN = TENANTS_PATH_PATTERN + "domains/"
@@ -56,6 +60,7 @@ EXCLUDE_LIST_PATH_PATTERN = (TENANTS_PATH_PATTERN +
 
 REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
+DHCP_SERVER_PATTERN = TENANTS_PATH_PATTERN + "dhcp-server-configs/"
 MDPROXY_PATTERN = TENANTS_PATH_PATTERN + "metadata-proxies/"
 
 TIER0_LOCALE_SERVICES_PATH_PATTERN = (TIER0S_PATH_PATTERN +
@@ -675,14 +680,70 @@ class Tier0NatRule(RouterNatRule):
 
 
 class Subnet(object):
-    def __init__(self, gateway_address, dhcp_ranges=None):
+    def __init__(self, gateway_address, dhcp_ranges=None, dhcp_config=None):
         self.gateway_address = gateway_address
         self.dhcp_ranges = dhcp_ranges
+        self.dhcp_config = dhcp_config
 
     def get_obj_dict(self):
         body = {'gateway_address': self.gateway_address}
         if self.dhcp_ranges:
             body['dhcp_ranges'] = self.dhcp_ranges
+        if self.dhcp_config:
+            body['dhcp_config'] = (
+                self.dhcp_config.get_obj_dict()
+                if isinstance(self.dhcp_config, SegmentDhcpConfig)
+                else self.dhcp_config)
+
+        return body
+
+
+class SegmentDhcpConfig(object):
+    def __init__(self, server_address=None, dns_servers=None,
+                 lease_time=None, options=None, is_ipv6=False):
+        if is_ipv6:
+            self.resource_type = 'SegmentDhcpV6Config'
+        else:
+            self.resource_type = 'SegmentDhcpV4Config'
+
+        self.server_address = server_address
+        self.dns_servers = dns_servers
+        self.lease_time = lease_time
+        self.options = options
+
+    def get_obj_dict(self):
+        body = {'resource_type': self.resource_type}
+        if self.server_address:
+            body['server_address'] = self.server_address
+        if self.dns_servers:
+            body['dns_servers'] = self.dns_servers
+        if self.lease_time:
+            body['lease_time'] = self.lease_time
+        if self.options:
+            body['options'] = (
+                self.options.get_obj_dict()
+                if isinstance(self.options, DhcpOptions)
+                else self.options)
+
+        return body
+
+
+class DhcpOptions(object):
+    def __init__(self, option_121=None, others=None, is_ipv6=False):
+        if is_ipv6:
+            self.resource_type = 'DhcpV6Options'
+        else:
+            self.resource_type = 'DhcpV4Options'
+
+        self.option_121 = option_121
+        self.others = others
+
+    def get_obj_dict(self):
+        body = {'resource_type': self.resource_type}
+        if self.option_121:
+            body['option_121'] = self.option_121
+        if self.others:
+            body['others'] = self.others
 
         return body
 
@@ -703,13 +764,12 @@ class BaseSegmentDef(ResourceDef):
     def get_obj_dict(self):
         body = super(BaseSegmentDef, self).get_obj_dict()
         if self.has_attr('subnets'):
-            # Note(asarfaty): removing subnets through PATCH api is not
-            # supported
+            subnets = []
             if self.get_attr('subnets'):
                 subnets = [subnet.get_obj_dict()
                            for subnet in self.get_attr('subnets')]
-                self._set_attr_if_specified(body, 'subnets',
-                                            value=subnets)
+            self._set_attr_if_specified(body, 'subnets', value=subnets)
+
         if self.has_attr('ip_pool_id'):
             ip_pool_id = self.get_attr('ip_pool_id')
             adv_cfg = self._get_adv_config(ip_pool_id)
@@ -761,6 +821,23 @@ class SegmentDef(BaseSegmentDef):
     def path_defs(self):
         return (TenantDef,)
 
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'metadata_proxy_id':
+                return True
+            if attr == 'dhcp_server_config_id':
+                return True
+        else:
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+            return False
+
+        return False
+
     def get_obj_dict(self):
         body = super(SegmentDef, self).get_obj_dict()
         if self.has_attr('tier1_id'):
@@ -787,7 +864,8 @@ class SegmentDef(BaseSegmentDef):
 
         # TODO(annak): support also tier0
 
-        if self.has_attr('metadata_proxy_id'):
+        if (self.has_attr('metadata_proxy_id') and
+            self._version_dependant_attr_supported('metadata_proxy_id')):
             paths = ""
             if self.get_attr('metadata_proxy_id'):
                 mdproxy = MetadataProxyDef(
@@ -798,6 +876,69 @@ class SegmentDef(BaseSegmentDef):
                                         body_attr='metadata_proxy_paths',
                                         value=paths)
 
+        # TODO(asarfaty): Also support relay config here
+        if (self.has_attr('dhcp_server_config_id') and
+            self._version_dependant_attr_supported('dhcp_server_config_id')):
+            path = ""
+            if self.get_attr('dhcp_server_config_id'):
+                dhcp_config = DhcpServerConfigDef(
+                    config_id=self.get_attr('dhcp_server_config_id'),
+                    tenant=self.get_tenant())
+                path = dhcp_config.get_resource_full_path()
+            self._set_attr_if_specified(body, 'dhcp_server_config_id',
+                                        body_attr='dhcp_config_path',
+                                        value=path)
+
+        return body
+
+
+class DhcpV4StaticBindingConfig(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return SEGMENTS_PATH_PATTERN + "%s/dhcp-static-binding-configs/"
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'segment_id', 'binding_id')
+
+    @staticmethod
+    def resource_type():
+        return 'DhcpV4StaticBindingConfig'
+
+    def path_defs(self):
+        return (TenantDef, SegmentDef)
+
+    def get_obj_dict(self):
+        body = super(DhcpV4StaticBindingConfig, self).get_obj_dict()
+        # TODO(asarfaty): add object or v4/6 options
+        self._set_attrs_if_specified(body,
+                                     ['gateway_address',
+                                      'host_name',
+                                      'ip_address',
+                                      'lease_time',
+                                      'mac_address',
+                                      'options'])
+        return body
+
+
+class DhcpV6StaticBindingConfig(DhcpV4StaticBindingConfig):
+
+    @staticmethod
+    def resource_type():
+        return 'DhcpV6StaticBindingConfig'
+
+    def path_defs(self):
+        return (TenantDef, SegmentDef)
+
+    def get_obj_dict(self):
+        body = super(DhcpV6StaticBindingConfig, self).get_obj_dict()
+        self._set_attrs_if_specified(body,
+                                     ['domain_names',
+                                      'dns_nameservers',
+                                      'ip_addresses',
+                                      'sntp_servers',
+                                      'preferred_time'])
         return body
 
 
@@ -1773,6 +1914,31 @@ class DhcpRelayConfigDef(ResourceDef):
     def get_obj_dict(self):
         body = super(DhcpRelayConfigDef, self).get_obj_dict()
         self._set_attr_if_specified(body, 'server_addresses')
+        return body
+
+
+class DhcpServerConfigDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return DHCP_SERVER_PATTERN
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'config_id')
+
+    @staticmethod
+    def resource_type():
+        return 'DhcpServerConfig'
+
+    def path_defs(self):
+        return (TenantDef,)
+
+    def get_obj_dict(self):
+        body = super(DhcpServerConfigDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['edge_cluster_path',
+                                            'server_addresses',
+                                            'lease_time'])
         return body
 
 

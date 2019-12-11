@@ -175,6 +175,7 @@ FEATURE_RELAX_SCALE_VALIDATION = 'Relax Scale Validation for LbService'
 FEATURE_NSX_POLICY = 'NSX Policy'
 FEATURE_NSX_POLICY_NETWORKING = 'NSX Policy Networking'
 FEATURE_NSX_POLICY_MDPROXY = 'NSX Policy Metadata Proxy'
+FEATURE_NSX_POLICY_DHCP = 'NSX Policy DHCP'
 FEATURE_NSX_POLICY_GLOBAL_CONFIG = 'NSX Policy Global Config'
 
 # FEATURE available depending on Inventory service backend version
