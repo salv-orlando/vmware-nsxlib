@@ -3849,7 +3849,8 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         super(TestPolicySegment, self).setUp()
         self.resourceApi = self.policy_lib.segment
 
-    def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None):
+    def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
+                     dhcp_server=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -3865,6 +3866,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
         if mdproxy:
             kwargs['metadata_proxy_id'] = mdproxy
+
+        if dhcp_server:
+            kwargs['dhcp_server_config_id'] = dhcp_server
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
@@ -3892,6 +3896,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_with_mdproxy(self):
         self._test_create(mdproxy='md1')
+
+    def test_create_with_dhcp_server_config(self):
+        self._test_create(dhcp_server='dhcp1')
 
     def test_delete(self):
         segment_id = '111'
@@ -5164,6 +5171,103 @@ class TestPolicyTier1SegmentPort(NsxPolicyLibTestCase):
             self.assertEqual(info, actual_info)
 
 
+class TestPolicySegmentDhcpStaticBinding(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicySegmentDhcpStaticBinding, self).setUp()
+        self.resourceApi = self.policy_lib.segment_dhcp_static_bindings
+
+    def test_create(self):
+        """Create v4 static bindings"""
+        name = 'test'
+        description = 'desc'
+        segment_id = "segment"
+        ip_address = "1.1.1.1"
+        mac_address = "fa:16:3e:44:56:df"
+
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite_v4(
+                name, segment_id, description=description,
+                ip_address=ip_address, mac_address=mac_address,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.DhcpV4StaticBindingConfig(
+                segment_id=segment_id,
+                binding_id=mock.ANY,
+                name=name,
+                description=description,
+                ip_address=ip_address,
+                mac_address=mac_address,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_create_v6(self):
+        """Create v6 static bindings"""
+        name = 'test'
+        description = 'desc'
+        segment_id = "segment"
+        ip_address = "2000::01ab"
+        mac_address = "fa:16:3e:44:56:df"
+
+        with mock.patch.object(
+            self.policy_api, "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite_v6(
+                name, segment_id, description=description,
+                ip_addresses=[ip_address],
+                mac_address=mac_address,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.DhcpV6StaticBindingConfig(
+                segment_id=segment_id,
+                binding_id=mock.ANY,
+                name=name,
+                description=description,
+                ip_addresses=[ip_address],
+                mac_address=mac_address,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_list(self):
+        segment_id = '111'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(segment_id, tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpV4StaticBindingConfig(
+                segment_id=segment_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_delete(self):
+        segment_id = '111'
+        binding_id = '222'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(segment_id, binding_id, tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpV4StaticBindingConfig(
+                segment_id=segment_id,
+                binding_id=binding_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        segment_id = '111'
+        binding_id = '222'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': binding_id}) as api_call:
+            result = self.resourceApi.get(segment_id, binding_id,
+                                          tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpV4StaticBindingConfig(
+                segment_id=segment_id,
+                binding_id=binding_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(binding_id, result['id'])
+
+
 class TestPolicyDhcpRelayConfig(NsxPolicyLibTestCase):
 
     def setUp(self, *args, **kwargs):
@@ -5215,6 +5319,95 @@ class TestPolicyDhcpRelayConfig(NsxPolicyLibTestCase):
             expected_def = core_defs.DhcpRelayConfigDef(tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual([], result)
+
+
+class TestPolicyDhcpServerConfig(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyDhcpServerConfig, self).setUp()
+        self.resourceApi = self.policy_lib.dhcp_server_config
+
+    def test_create(self):
+        name = 'test'
+        description = 'desc'
+        server_addr = '1.1.1.1'
+        lease_time = 100
+        edge_cluster_path = 'dummy/path'
+        tags = [{'scope': 'a', 'tag': 'b'}]
+
+        with self.mock_create_update() as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                server_addresses=[server_addr],
+                edge_cluster_path=edge_cluster_path,
+                lease_time=lease_time, tags=tags,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.DhcpServerConfigDef(
+                config_id=mock.ANY,
+                name=name,
+                description=description,
+                server_addresses=[server_addr],
+                edge_cluster_path=edge_cluster_path,
+                lease_time=lease_time,
+                tags=tags,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        config_id = '111'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(config_id, tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpServerConfigDef(config_id=config_id,
+                                                         tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        config_id = '111'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': config_id}) as api_call:
+            result = self.resourceApi.get(config_id, tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpServerConfigDef(config_id=config_id,
+                                                         tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(config_id, result['id'])
+
+    def test_list(self):
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = core_defs.DhcpServerConfigDef(tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        name = 'test'
+        description = 'desc'
+        server_addr = '1.1.1.1'
+        lease_time = 100
+        edge_cluster_path = 'dummy/path'
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        config_id = 'aaa'
+
+        with self.mock_create_update() as api_call:
+            self.resourceApi.update(
+                config_id, name=name, description=description,
+                server_addresses=[server_addr],
+                edge_cluster_path=edge_cluster_path,
+                lease_time=lease_time, tags=tags,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.DhcpServerConfigDef(
+                config_id=mock.ANY,
+                name=name,
+                description=description,
+                server_addresses=[server_addr],
+                edge_cluster_path=edge_cluster_path,
+                lease_time=lease_time,
+                tags=tags,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
 
 
 class TestPolicyCertificate(NsxPolicyLibTestCase):
