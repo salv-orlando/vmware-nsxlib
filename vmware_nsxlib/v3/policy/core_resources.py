@@ -1868,6 +1868,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             transport_zone_id=IGNORE,
                             ip_pool_id=IGNORE,
                             metadata_proxy_id=IGNORE,
+                            dhcp_server_config_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1877,19 +1878,21 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             raise exceptions.InvalidInput(details=err_msg)
 
         segment_id = self._init_obj_uuid(segment_id)
-        segment_def = self._init_def(segment_id=segment_id,
-                                     name=name,
-                                     description=description,
-                                     tier1_id=tier1_id,
-                                     tier0_id=tier0_id,
-                                     subnets=subnets,
-                                     dns_domain_name=dns_domain_name,
-                                     vlan_ids=vlan_ids,
-                                     transport_zone_id=transport_zone_id,
-                                     ip_pool_id=ip_pool_id,
-                                     metadata_proxy_id=metadata_proxy_id,
-                                     tags=tags,
-                                     tenant=tenant)
+        segment_def = self._init_def(
+            segment_id=segment_id,
+            name=name,
+            description=description,
+            tier1_id=tier1_id,
+            tier0_id=tier0_id,
+            subnets=subnets,
+            dns_domain_name=dns_domain_name,
+            vlan_ids=vlan_ids,
+            transport_zone_id=transport_zone_id,
+            ip_pool_id=ip_pool_id,
+            metadata_proxy_id=metadata_proxy_id,
+            dhcp_server_config_id=dhcp_server_config_id,
+            tags=tags,
+            tenant=tenant)
         self._create_or_store(segment_def)
         return segment_id
 
@@ -1919,6 +1922,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                tier1_id=IGNORE, tier0_id=IGNORE, subnets=IGNORE,
                dns_domain_name=IGNORE,
                vlan_ids=IGNORE, tags=IGNORE, metadata_proxy_id=IGNORE,
+               dhcp_server_config_id=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
         self._update(segment_id=segment_id,
@@ -1930,6 +1934,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                      dns_domain_name=dns_domain_name,
                      vlan_ids=vlan_ids,
                      metadata_proxy_id=metadata_proxy_id,
+                     dhcp_server_config_id=dhcp_server_config_id,
                      tags=tags,
                      tenant=tenant)
 
@@ -2579,6 +2584,108 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
         return self._wait_until_realized(port_def, entity_type=entity_type,
                                          sleep=sleep,
                                          max_attempts=max_attempts)
+
+
+# This resource is both for DhcpV4StaticBindingConfig and
+# DhcpV6StaticBindingConfig
+class SegmentDhcpStaticBindingConfigApi(NsxPolicyResourceBase):
+    @property
+    def entry_def(self):
+        return core_defs.DhcpV4StaticBindingConfig
+
+    def create_or_overwrite(self, name,
+                            segment_id,
+                            binding_id=None,
+                            **kwargs):
+        err_msg = (_("This action is not supported. Please call "
+                     "create_or_overwrite_v4 or create_or_overwrite_v6"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    def create_or_overwrite_v4(self, name,
+                               segment_id,
+                               binding_id=None,
+                               description=IGNORE,
+                               gateway_address=IGNORE,
+                               host_name=IGNORE,
+                               ip_address=IGNORE,
+                               lease_time=IGNORE,
+                               mac_address=IGNORE,
+                               options=IGNORE,
+                               tags=IGNORE,
+                               tenant=constants.POLICY_INFRA_TENANT):
+
+        binding_id = self._init_obj_uuid(binding_id)
+        binding_def = self._init_def(segment_id=segment_id,
+                                     binding_id=binding_id,
+                                     name=name,
+                                     description=description,
+                                     gateway_address=gateway_address,
+                                     host_name=host_name,
+                                     ip_address=ip_address,
+                                     lease_time=lease_time,
+                                     mac_address=mac_address,
+                                     options=options,
+                                     tags=tags,
+                                     tenant=tenant)
+        self._create_or_store(binding_def)
+        return binding_id
+
+    def create_or_overwrite_v6(self, name,
+                               segment_id,
+                               binding_id=None,
+                               description=IGNORE,
+                               domain_names=IGNORE,
+                               dns_nameservers=IGNORE,
+                               ip_addresses=IGNORE,
+                               sntp_servers=IGNORE,
+                               preferred_time=IGNORE,
+                               lease_time=IGNORE,
+                               mac_address=IGNORE,
+                               options=IGNORE,
+                               tags=IGNORE,
+                               tenant=constants.POLICY_INFRA_TENANT):
+
+        binding_id = self._init_obj_uuid(binding_id)
+        args = self._get_user_args(segment_id=segment_id,
+                                   binding_id=binding_id,
+                                   name=name,
+                                   description=description,
+                                   domain_names=domain_names,
+                                   dns_nameservers=dns_nameservers,
+                                   ip_addresses=ip_addresses,
+                                   sntp_servers=sntp_servers,
+                                   preferred_time=preferred_time,
+                                   lease_time=lease_time,
+                                   mac_address=mac_address,
+                                   options=options,
+                                   tags=tags,
+                                   tenant=tenant)
+        binding_def = core_defs.DhcpV6StaticBindingConfig(**args)
+        self._create_or_store(binding_def)
+        return binding_id
+
+    def delete(self, segment_id, binding_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        binding_def = self.entry_def(segment_id=segment_id,
+                                     binding_id=binding_id,
+                                     tenant=tenant)
+        self.policy_api.delete(binding_def)
+
+    def get(self, segment_id, binding_id,
+            tenant=constants.POLICY_INFRA_TENANT,
+            silent=False):
+        binding_def = self.entry_def(segment_id=segment_id,
+                                     binding_id=binding_id,
+                                     tenant=tenant)
+        return self.policy_api.get(binding_def, silent=silent)
+
+    def list(self, segment_id, tenant=constants.POLICY_INFRA_TENANT):
+        binding_def = self.entry_def(segment_id=segment_id, tenant=tenant)
+        return self._list(binding_def)
+
+    def update(self, segment_id, binding_id, **kwargs):
+        err_msg = (_("This action is currently not supported"))
+        raise exceptions.ManagerError(details=err_msg)
 
 
 class NsxPolicyIpBlockApi(NsxPolicyResourceBase):
@@ -4035,6 +4142,63 @@ class NsxDhcpRelayConfigApi(NsxPolicyResourceBase):
                      name=name,
                      description=description,
                      server_addresses=server_addresses,
+                     tags=tags,
+                     tenant=tenant)
+
+
+class NsxDhcpServerConfigApi(NsxPolicyResourceBase):
+    @property
+    def entry_def(self):
+        return core_defs.DhcpServerConfigDef
+
+    def create_or_overwrite(self, name,
+                            config_id=None,
+                            description=None,
+                            server_addresses=IGNORE,
+                            edge_cluster_path=IGNORE,
+                            lease_time=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+
+        config_id = self._init_obj_uuid(config_id)
+        config_def = self._init_def(
+            config_id=config_id,
+            name=name,
+            description=description,
+            server_addresses=server_addresses,
+            edge_cluster_path=edge_cluster_path,
+            lease_time=lease_time,
+            tags=tags,
+            tenant=tenant)
+        self._create_or_store(config_def)
+        return config_id
+
+    def delete(self, config_id, tenant=constants.POLICY_INFRA_TENANT):
+        config_def = self.entry_def(config_id=config_id, tenant=tenant)
+        self.policy_api.delete(config_def)
+
+    def get(self, config_id, tenant=constants.POLICY_INFRA_TENANT,
+            silent=False):
+        config_def = self.entry_def(config_id=config_id, tenant=tenant)
+        return self.policy_api.get(config_def, silent=silent)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        config_def = self.entry_def(tenant=tenant)
+        return self._list(config_def)
+
+    def update(self, config_id, name=IGNORE,
+               description=IGNORE,
+               server_addresses=IGNORE,
+               edge_cluster_path=IGNORE,
+               lease_time=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(config_id=config_id,
+                     name=name,
+                     description=description,
+                     server_addresses=server_addresses,
+                     edge_cluster_path=edge_cluster_path,
+                     lease_time=lease_time,
                      tags=tags,
                      tenant=tenant)
 
