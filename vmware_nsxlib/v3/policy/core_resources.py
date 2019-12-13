@@ -1525,6 +1525,18 @@ class NsxPolicyTier0Api(NsxPolicyResourceBase):
                                         subnet.get('prefix_len')))
         return cidrs
 
+    def get_bgp_config(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
+        services = self.get_locale_services(tier0_id, tenant=tenant)
+        for srv in services:
+            bgpconfig_def = core_defs.BgpRoutingConfigDef(
+                tier0_id=tier0_id,
+                service_id=srv['id'],
+                tenant=constants.POLICY_INFRA_TENANT)
+            try:
+                return self.policy_api.get(bgpconfig_def)
+            except exceptions.ResourceNotFound:
+                continue
+
 
 class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
     DEFAULT_NAT_ID = 'USER'

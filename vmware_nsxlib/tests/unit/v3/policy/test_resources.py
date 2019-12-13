@@ -3560,6 +3560,18 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
             pt_mock.assert_called_once_with(logical_router_id)
             self.assertIsNotNone(result)
 
+    def test_get_bgp_config(self):
+        tier0_id = '111'
+        services = {'results': [{'id': 'service1'}]}
+        bgp_config = {"id": "bgp", "enabled": True}
+        with mock.patch.object(self.resourceApi.policy_api, "get",
+                               return_value=bgp_config), \
+            mock.patch.object(self.resourceApi.policy_api, "list",
+                              return_value=services):
+            result = self.resourceApi.get_bgp_config(
+                tier0_id, tenant=TEST_TENANT)
+            self.assertEqual(result, bgp_config)
+
 
 class TestPolicyTier1Segment(NsxPolicyLibTestCase):
 

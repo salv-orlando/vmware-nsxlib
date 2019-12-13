@@ -2270,3 +2270,20 @@ class Tier0PrefixListDef(ResourceDef):
             prefixes = [prefix.get_obj_dict() for prefix in prefixes]
             body['prefixes'] = prefixes
         return body
+
+
+class BgpRoutingConfigDef(ResourceDef):
+
+    @staticmethod
+    def resource_type():
+        return 'BgpRoutingConfig'
+
+    @property
+    def path_pattern(self):
+        return TIER0_LOCALE_SERVICES_PATH_PATTERN + "%s/bgp"
+
+    @property
+    def path_ids(self):
+        # Adding dummy key to satisfy get_section_path
+        # This resource has no keys, since it is a single object
+        return ('tenant', 'tier0_id', 'service_id', 'dummy')
