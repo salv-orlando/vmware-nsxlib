@@ -164,7 +164,7 @@ class NsxLib(lib.NsxLibBase):
 
     def export_restricted(self):
         node = self.client.get("node")
-        return node.get('export_type') is 'RESTRICTED'
+        return node.get('export_type') == 'RESTRICTED'
 
     def feature_supported(self, feature):
         if (version.LooseVersion(self.get_version()) >=
