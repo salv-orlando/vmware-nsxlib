@@ -337,12 +337,11 @@ class NsxV3JSONClientTestCase(nsxlib_testcase.NsxClientTestCase):
         self.assertEqual(resp, {'result': {'ok': 200}})
 
     def test_mask_password(self):
-        pwds = ('my!pwd0#', 'some0therlong$pwd', 'pwd')
+        pwds = ('my!pwd0#', 'some0therlong$pwd')
         body = {'name_pwd': 'name1',
                 'password': pwds[0],
                 'some_list': {'name_password': 'name2',
-                              'password': pwds[1]},
-                'password': pwds[2]}
+                              'password': pwds[1]}}
 
         cl = client.RESTClient(None)
         json_body = jsonutils.dumps(body)
