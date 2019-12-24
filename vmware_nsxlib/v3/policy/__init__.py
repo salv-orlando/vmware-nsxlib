@@ -213,7 +213,7 @@ class NsxPolicyLib(lib.NsxLibBase):
         query = ('resource_type:GenericPolicyRealizedResource AND '
                  'realization_specific_identifier:%s AND '
                  'entity_type:%s' % (realized_id, realized_type))
-        url = "search?query=%s" % query
+        url = self._get_search_url() % query
 
         # Retry the search on case of error
         @lib_utils.retry_upon_exception(exceptions.NsxSearchError,
