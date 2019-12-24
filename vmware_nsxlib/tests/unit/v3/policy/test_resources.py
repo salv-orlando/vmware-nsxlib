@@ -5254,6 +5254,25 @@ class TestPolicyExcludeList(NsxPolicyLibTestCase):
         self.skipTest("The action is not supported by this resource")
 
 
+class TestNsxSearch(NsxPolicyLibTestCase):
+
+    def setUp(self):
+        super(TestNsxSearch, self).setUp()
+        self.search_path = 'search/query?query=%s'
+
+    def test_nsx_search_by_realization(self):
+        """Test search of resources with the specified tag."""
+        with mock.patch.object(self.policy_lib.client, 'url_get') as search:
+            realized_id = 'xxx'
+            realized_type = 'RealizedLogicalSwitch'
+            query = ('resource_type:GenericPolicyRealizedResource AND '
+                     'realization_specific_identifier:%s AND '
+                     'entity_type:%s' % (realized_id, realized_type))
+            self.policy_lib.search_resource_by_realized_id(
+                realized_id, realized_type)
+            search.assert_called_with(self.search_path % query)
+
+
 class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
 
     def setUp(self, *args, **kwargs):
@@ -5318,18 +5337,3 @@ class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
             self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
             api_get.assert_called_once()
             api_put.assert_not_called()
-
-
-class TestNsxSearch(NsxPolicyLibTestCase):
-
-    def test_nsx_search_by_realization(self):
-        """Test search of resources with the specified tag."""
-        with mock.patch.object(self.policy_lib.client, 'url_get') as search:
-            realized_id = 'xxx'
-            realized_type = 'RealizedLogicalSwitch'
-            query = ('resource_type:GenericPolicyRealizedResource AND '
-                     'realization_specific_identifier:%s AND '
-                     'entity_type:%s' % (realized_id, realized_type))
-            self.policy_lib.search_resource_by_realized_id(
-                realized_id, realized_type)
-            search.assert_called_with('search?query=%s' % query)
