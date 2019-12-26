@@ -5560,6 +5560,10 @@ class TestPolicyTier0PrefixList(NsxPolicyLibTestCase):
 
 class TestNsxSearch(NsxPolicyLibTestCase):
 
+    def setUp(self):
+        super(TestNsxSearch, self).setUp()
+        self.search_path = 'search/query?query=%s'
+
     def test_nsx_search_by_realization(self):
         """Test search of resources with the specified tag."""
         with mock.patch.object(self.policy_lib.client, 'url_get') as search:
@@ -5570,7 +5574,7 @@ class TestNsxSearch(NsxPolicyLibTestCase):
                      'entity_type:%s' % (realized_id, realized_type))
             self.policy_lib.search_resource_by_realized_id(
                 realized_id, realized_type)
-            search.assert_called_with('search?query=%s' % query)
+            search.assert_called_with(self.search_path % query)
 
 
 class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
