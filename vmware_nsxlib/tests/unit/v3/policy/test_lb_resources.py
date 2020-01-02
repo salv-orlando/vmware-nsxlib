@@ -1191,6 +1191,21 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 sleep=0.1, tenant=TEST_TENANT)
             self.assertEqual(info, actual_info)
 
+    def test_remove_virtual_server_client_ssl_profile_binding(self):
+        vs_id = 'test-id'
+        vs_name = 'test-name'
+        exist_binding = {
+            'default_certificate_path': '/infra/certificates/test-cert',
+            'client_ssl_profile_path': '/infra/lb-client-ssl-profiles/default'}
+        with self.mock_get(
+                vs_id, vs_name, client_ssl_profile_binding=exist_binding), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.remove_virtual_server_client_ssl_profile_binding(
+                vs_id)
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=vs_id, name=vs_name)
+            self.assert_called_with_def(update_call, expected_def)
+
 
 class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
 

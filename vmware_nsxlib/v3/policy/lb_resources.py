@@ -812,6 +812,17 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             client_ssl_profile_binding=client_ssl_profile_binding,
             tenant=tenant)
 
+    def remove_virtual_server_client_ssl_profile_binding(
+            self, virtual_server_id, tenant=constants.POLICY_INFRA_TENANT):
+        lbvs_def = self._get_and_update_def(
+            virtual_server_id=virtual_server_id, tenant=tenant)
+        body = lbvs_def.body if lbvs_def.body else {}
+        body.pop('client_ssl_profile_binding', None)
+        if body:
+            lbvs_def.set_obj_dict(body)
+        self.policy_api.create_or_update(
+            lbvs_def, partial_updates=False)
+
     def update_virtual_server_with_vip(self, virtual_server_id, vip,
                                        tenant=constants.POLICY_INFRA_TENANT):
         return self.update(
