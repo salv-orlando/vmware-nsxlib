@@ -46,7 +46,8 @@ def http_error_to_exception(status_code, error_code):
         requests.codes.CONFLICT: exceptions.StaleRevision,
         requests.codes.PRECONDITION_FAILED: exceptions.StaleRevision,
         requests.codes.INTERNAL_SERVER_ERROR:
-            {'99': exceptions.ClientCertificateNotTrusted,
+            {'98': exceptions.CannotConnectToServer,
+             '99': exceptions.ClientCertificateNotTrusted,
              '607': exceptions.APITransactionAborted},
         requests.codes.FORBIDDEN:
             {'98': exceptions.BadXSRFToken},
@@ -325,7 +326,9 @@ class NSX3Client(JSONRESTClient):
     def _rest_call(self, url, **kwargs):
         if kwargs.get('with_retries', True):
             # Retry on "607: Persistence layer is currently reconfiguring"
-            retry_codes = [exceptions.APITransactionAborted]
+            # and on "98: Cannot connect to server"
+            retry_codes = [exceptions.APITransactionAborted,
+                           exceptions.CannotConnectToServer]
             if self.rate_limit_retry:
                 # If too many requests are handled by the nsx at the same time,
                 # error "429: Too Many Requests" or "503: Server Unavailable"
