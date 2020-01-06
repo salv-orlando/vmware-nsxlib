@@ -126,6 +126,108 @@ class TestPolicyLBClientSSLProfileApi(test_resources.NsxPolicyLibTestCase):
             self.assert_called_with_def(update_call, expected_def)
 
 
+class TestPolicyLBServerSSLProfileApi(test_resources.NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyLBServerSSLProfileApi, self).setUp()
+        self.resourceApi = self.policy_lib.load_balancer.server_ssl_profile
+
+    def test_create_with_id(self):
+        name = 'd1'
+        description = 'desc'
+        obj_id = '111'
+        protocols = ['TLS_V1_1']
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name,
+                server_ssl_profile_id=obj_id,
+                description=description,
+                protocols=protocols,
+                tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                server_ssl_profile_id=obj_id,
+                name=name,
+                description=description,
+                protocols=protocols,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(obj_id, result)
+
+    def test_create_without_id(self):
+        name = 'd1'
+        description = 'desc'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                server_ssl_profile_id=mock.ANY,
+                name=name,
+                description=description,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(obj_id, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                server_ssl_profile_id=obj_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}) as api_call:
+            result = self.resourceApi.get(obj_id, tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                server_ssl_profile_id=obj_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(obj_id, result['id'])
+
+    def test_get_by_name(self):
+        name = 'd1'
+        with mock.patch.object(
+            self.policy_api, "list",
+            return_value={'results': [{'display_name': name}]}) as api_call:
+            obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
+            self.assertIsNotNone(obj)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_list(self):
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        obj_id = '111'
+        name = 'new name'
+        description = 'new desc'
+        with self.mock_get(obj_id, name), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(obj_id,
+                                    name=name,
+                                    description=description,
+                                    tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServerSslProfileDef(
+                server_ssl_profile_id=obj_id,
+                name=name,
+                description=description,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+
 class TestPolicyLBPersistenceProfile(
     test_resources.NsxPolicyLibTestCase):
 

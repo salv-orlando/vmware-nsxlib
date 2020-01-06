@@ -154,6 +154,61 @@ class NsxPolicyLBAppProfileFastUdpApi(
         return lb_defs.LBFastUdpProfile
 
 
+class NsxPolicyLoadBalancerServerSSLProfileApi(NsxPolicyResourceBase):
+    """NSX Policy LB server ssl profile"""
+
+    @property
+    def entry_def(self):
+        return lb_defs.LBServerSslProfileDef
+
+    def create_or_overwrite(self, name, server_ssl_profile_id=None,
+                            description=IGNORE, tags=IGNORE,
+                            cipher_group_label=IGNORE, ciphers=IGNORE,
+                            protocols=IGNORE, session_cache_enabled=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        server_ssl_profile_id = self._init_obj_uuid(server_ssl_profile_id)
+        lb_server_ssl_profile_def = self._init_def(
+            server_ssl_profile_id=server_ssl_profile_id,
+            name=name,
+            description=description,
+            tags=tags,
+            protocols=protocols,
+            tenant=tenant)
+        self._create_or_store(lb_server_ssl_profile_def)
+        return server_ssl_profile_id
+
+    def delete(self, server_ssl_profile_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        lb_server_ssl_profile_def = self.entry_def(
+            server_ssl_profile_id=server_ssl_profile_id,
+            tenant=tenant)
+        self.policy_api.delete(lb_server_ssl_profile_def)
+
+    def get(self, server_ssl_profile_id,
+            tenant=constants.POLICY_INFRA_TENANT):
+        lb_server_ssl_profile_def = self.entry_def(
+            server_ssl_profile_id=server_ssl_profile_id,
+            tenant=tenant)
+        return self.policy_api.get(lb_server_ssl_profile_def)
+
+    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+        lb_server_ssl_profile_def = self.entry_def(tenant=tenant)
+        return self._list(lb_server_ssl_profile_def)
+
+    def update(self, server_ssl_profile_id,
+               name=IGNORE, description=IGNORE, tags=IGNORE,
+               cipher_group_label=IGNORE, ciphers=IGNORE,
+               protocols=IGNORE, session_cache_enabled=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(
+            server_ssl_profile_id=server_ssl_profile_id,
+            name=name,
+            description=description,
+            tags=tags,
+            protocols=protocols,
+            tenant=tenant)
+
+
 class NsxPolicyLoadBalancerClientSSLProfileApi(NsxPolicyResourceBase):
     """NSX Policy LB client ssl profile"""
 
@@ -1253,6 +1308,8 @@ class NsxPolicyLoadBalancerApi(object):
         self.lb_fast_udp_profile = NsxPolicyLBAppProfileFastUdpApi(*args)
         self.client_ssl_profile = (
             NsxPolicyLoadBalancerClientSSLProfileApi(*args))
+        self.server_ssl_profile = (
+            NsxPolicyLoadBalancerServerSSLProfileApi(*args))
         self.lb_persistence_profile = (
             NsxPolicyLoadBalancerPersistenceProfileApi(*args))
         self.lb_cookie_persistence_profile = (

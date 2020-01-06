@@ -31,6 +31,8 @@ LB_APP_PROFILE_PATTERN = TENANTS_PATH_PATTERN + "lb-app-profiles/"
 LB_MONITOR_PROFILE_PATTERN = TENANTS_PATH_PATTERN + "lb-monitor-profiles/"
 LB_CLIENT_SSL_PROFILE_PATTERN = (TENANTS_PATH_PATTERN +
                                  "lb-client-ssl-profiles/")
+LBSERVER_SSL_PROFILE_PATTERN = (TENANTS_PATH_PATTERN +
+                                "lb-server-ssl-profiles/")
 LB_PERSISTENCE_PROFILE_PATTERN = (TENANTS_PATH_PATTERN +
                                   "lb-persistence-profiles/")
 
@@ -81,6 +83,28 @@ class LBPoolMemberDef(object):
             body['admin_state'] = self.admin_state
         if self.backup_member:
             body['backup_member'] = self.backup_member
+        return body
+
+
+class LBServerSslProfileDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return LBSERVER_SSL_PROFILE_PATTERN
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'server_ssl_profile_id')
+
+    @staticmethod
+    def resource_type():
+        return "LBServerSslProfile"
+
+    def get_obj_dict(self):
+        body = super(LBServerSslProfileDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['cipher_group_label', 'ciphers',
+                                            'protocols',
+                                            'session_cache_enabled'])
         return body
 
 
