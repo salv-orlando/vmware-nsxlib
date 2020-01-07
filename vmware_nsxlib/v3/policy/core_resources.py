@@ -3067,6 +3067,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                     source_groups=None, dest_groups=None,
                     direction=nsx_constants.IN_OUT, logged=False, tag=None,
                     ip_protocol=nsx_constants.IPV4_IPV6,
+                    service_entries=IGNORE,
                     tenant=constants.POLICY_INFRA_TENANT):
         """Get the definition of a single map entry"""
         entry_id = self._init_obj_uuid(entry_id)
@@ -3085,6 +3086,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                               ip_protocol=ip_protocol,
                               logged=logged,
                               tag=tag,
+                              service_entries=service_entries,
                               tenant=tenant)
 
     def create_with_entries(
@@ -3123,6 +3125,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      ip_protocol=nsx_constants.IPV4_IPV6,
                      direction=nsx_constants.IN_OUT,
                      logged=False, tag=None,
+                     service_entries=IGNORE,
                      tenant=constants.POLICY_INFRA_TENANT):
         """Create CommunicationMap Entry.
 
@@ -3152,6 +3155,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                    direction=direction,
                                    logged=logged,
                                    tag=tag,
+                                   service_entries=service_entries,
                                    tenant=tenant)
 
         self._create_or_store(entry_def)
@@ -3256,6 +3260,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      action=IGNORE, source_groups=IGNORE, dest_groups=IGNORE,
                      scope=IGNORE, ip_protocol=IGNORE,
                      direction=IGNORE, logged=IGNORE, tags=IGNORE, tag=IGNORE,
+                     service_entries=IGNORE,
                      tenant=constants.POLICY_INFRA_TENANT):
         if self._any_arg_set(name, description, sequence_number, service_ids,
                              action, source_groups, dest_groups, scope,
@@ -3277,6 +3282,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                 logged=logged,
                 tags=tags,
                 tag=tag,
+                service_entries=service_entries,
                 tenant=tenant)
             self.policy_api.create_or_update(entry_def)
 
