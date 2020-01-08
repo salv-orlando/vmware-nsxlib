@@ -473,7 +473,7 @@ class Tier1Def(RouterDef):
                 return True
             else:
                 LOG.warning(
-                    "Attribute % is not supported. Current NSX version %s, "
+                    "Attribute %s is not supported. Current NSX version %s, "
                     "minimum supported version %s",
                     attr, self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
                 return False
