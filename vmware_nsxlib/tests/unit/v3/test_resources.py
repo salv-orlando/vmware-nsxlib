@@ -1693,6 +1693,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
 
     def tearDown(self):
         self.mock.stop()
+        super(TestNsxSearch, self).tearDown()
 
     @staticmethod
     def get_nsxlib_version():
