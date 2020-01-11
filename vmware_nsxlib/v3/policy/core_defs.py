@@ -1585,6 +1585,8 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
         if self.has_attr('service_ids'):
             service_ids = self.get_attr('service_ids')
             body['services'] = self.get_services_path(service_ids)
+
+        self._set_attr_if_supported(body, 'service_entries')
         return body
 
     @classmethod
@@ -1597,6 +1599,19 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
                        name=name)
         rule_def.set_obj_dict(rule_dict)
         return rule_def
+
+    def _version_dependant_attr_supported(self, attr):
+        if attr == 'service_entries':
+            if (version.LooseVersion(self.nsx_version) >=
+                    version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+                return True
+            LOG.warning(
+                "Ignoring %s for %s %s: this feature is not supported."
+                "Current NSX version: %s. Minimum supported version: %s",
+                attr, self.resource_type, self.attrs.get('name', ''),
+                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+            return False
+        return False
 
 
 class CommunicationMapEntryDef(SecurityPolicyRuleBaseDef):
