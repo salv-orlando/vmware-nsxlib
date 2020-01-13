@@ -873,6 +873,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             virtual_server_id=virtual_server_id, tenant=tenant)
         body = lbvs_def.body if lbvs_def.body else {}
         body.pop('client_ssl_profile_binding', None)
+        # Server ssl profile binding can not exist without client ssl profile
+        # binding
+        body.pop('server_ssl_profile_binding', None)
         if body:
             lbvs_def.set_obj_dict(body)
         self.policy_api.create_or_update(

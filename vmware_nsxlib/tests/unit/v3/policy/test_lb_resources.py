@@ -1296,11 +1296,14 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
     def test_remove_virtual_server_client_ssl_profile_binding(self):
         vs_id = 'test-id'
         vs_name = 'test-name'
-        exist_binding = {
+        client_binding = {
             'default_certificate_path': '/infra/certificates/test-cert',
             'client_ssl_profile_path': '/infra/lb-client-ssl-profiles/default'}
+        server_binding = {
+            'ssl_profile_path': '/infra/lb-server-ssl-profiles/test'}
         with self.mock_get(
-                vs_id, vs_name, client_ssl_profile_binding=exist_binding), \
+                vs_id, vs_name, client_ssl_profile_binding=client_binding,
+                server_ssl_profile_binding=server_binding), \
             self.mock_create_update() as update_call:
             self.resourceApi.remove_virtual_server_client_ssl_profile_binding(
                 vs_id)
