@@ -37,7 +37,6 @@ class NsxPolicyLib(lib.NsxLibBase):
 
     def init_api(self):
         # Initialize the policy client
-        # TODO(annak): move the API class to separate file
         self.policy_api = core_defs.NsxPolicyApi(self.client)
 
         # NSX manager api will be used as a pass-through for apis which are
@@ -177,6 +176,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             if feature == nsx_constants.FEATURE_NSX_POLICY_DHCP:
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_GLOBAL_CONFIG:
+                return True
+            if feature == nsx_constants.FEATURE_NSX_POLICY_ADMIN_STATE:
                 return True
 
         return (feature == nsx_constants.FEATURE_NSX_POLICY)

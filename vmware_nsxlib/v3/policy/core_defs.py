@@ -824,9 +824,9 @@ class SegmentDef(BaseSegmentDef):
     def _version_dependant_attr_supported(self, attr):
         if (version.LooseVersion(self.nsx_version) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr == 'metadata_proxy_id':
-                return True
-            if attr == 'dhcp_server_config_id':
+            if attr in ('metadata_proxy_id',
+                        'dhcp_server_config_id',
+                        'admin_state'):
                 return True
         else:
             LOG.warning(
@@ -889,6 +889,15 @@ class SegmentDef(BaseSegmentDef):
                                         body_attr='dhcp_config_path',
                                         value=path)
 
+        if (self.has_attr('admin_state') and
+            self._version_dependant_attr_supported('admin_state')):
+            if self.get_attr('admin_state'):
+                admin_state = nsx_constants.ADMIN_STATE_UP
+            else:
+                admin_state = nsx_constants.ADMIN_STATE_DOWN
+            self._set_attr_if_specified(body, 'admin_state',
+                                        value=admin_state)
+
         return body
 
 
@@ -939,6 +948,15 @@ class DhcpV6StaticBindingConfig(DhcpV4StaticBindingConfig):
                                       'ip_addresses',
                                       'sntp_servers',
                                       'preferred_time'])
+        if (self.has_attr('admin_state') and
+            self._version_dependant_attr_supported('admin_state')):
+            if self.get_attr('admin_state'):
+                admin_state = nsx_constants.ADMIN_STATE_UP
+            else:
+                admin_state = nsx_constants.ADMIN_STATE_DOWN
+            self._set_attr_if_specified(body, 'admin_state',
+                                        value=admin_state)
+
         return body
 
 
@@ -1003,7 +1021,39 @@ class SegmentPortDef(ResourceDef):
                                               'allocate_addresses'])
                 body['attachment'] = attachment
 
+        if (self.has_attr('admin_state') and
+            self._version_dependant_attr_supported('admin_state')):
+            if self.get_attr('admin_state'):
+                admin_state = nsx_constants.ADMIN_STATE_UP
+            else:
+                admin_state = nsx_constants.ADMIN_STATE_DOWN
+            self._set_attr_if_specified(body, 'admin_state',
+                                        value=admin_state)
+
         return body
+
+    def _version_dependant_attr_supported(self, attr):
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            if attr == 'admin_state':
+                return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
+        return False
+
+
+class SegmentBindingMapDefBase(ResourceDef):
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'segment_id', 'map_id')
+
+    def path_defs(self):
+        return (TenantDef, SegmentDef)
 
 
 class SegmentPortBindingMapDefBase(ResourceDef):
