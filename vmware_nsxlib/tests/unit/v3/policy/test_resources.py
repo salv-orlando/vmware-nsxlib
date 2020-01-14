@@ -3850,7 +3850,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         self.resourceApi = self.policy_lib.segment
 
     def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
-                     dhcp_server=None):
+                     dhcp_server=None, admin_state=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -3869,11 +3869,15 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
         if dhcp_server:
             kwargs['dhcp_server_config_id'] = dhcp_server
+        if admin_state:
+            kwargs['admin_state'] = admin_state
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             result = self.resourceApi.create_or_overwrite(name, **kwargs)
 
+            if admin_state:
+                kwargs['admin_state'] = admin_state if 'UP' else 'DOWN'
             expected_def = core_defs.SegmentDef(
                 nsx_version='3.0.0',
                 segment_id=mock.ANY,
@@ -3899,6 +3903,12 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_with_dhcp_server_config(self):
         self._test_create(dhcp_server='dhcp1')
+
+    def test_create_with_admin_state_up(self):
+        self._test_create(admin_state=True)
+
+    def test_create_with_admin_state_down(self):
+        self._test_create(admin_state=False)
 
     def test_delete(self):
         segment_id = '111'
@@ -3929,14 +3939,18 @@ class TestPolicySegment(NsxPolicyLibTestCase):
     def test_update(self):
         segment_id = '111'
         name = 'new name'
+        admin_state = False
         with self.mock_get(segment_id, name), \
             self.mock_create_update() as update_call:
 
             self.resourceApi.update(segment_id,
                                     name=name,
+                                    admin_state=admin_state,
                                     tenant=TEST_TENANT)
-            expected_def = core_defs.SegmentDef(segment_id=segment_id,
+            expected_def = core_defs.SegmentDef(nsx_version='3.0.0',
+                                                segment_id=segment_id,
                                                 name=name,
+                                                admin_state=admin_state,
                                                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
@@ -4376,6 +4390,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         allocate_addresses = "BOTH"
         tags = [{'scope': 'a', 'tag': 'b'}]
         hyperbus_mode = 'DISABLE'
+        admin_state = True
 
         with mock.patch.object(
             self.policy_api, "create_or_update") as api_call, \
@@ -4386,7 +4401,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
                 context_id=context_id, traffic_tag=traffic_tag,
                 allocate_addresses=allocate_addresses,
-                hyperbus_mode=hyperbus_mode,
+                hyperbus_mode=hyperbus_mode, admin_state=admin_state,
                 tags=tags,
                 tenant=TEST_TENANT)
 
@@ -4403,6 +4418,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 context_id=context_id,
                 traffic_tag=traffic_tag,
                 allocate_addresses=allocate_addresses,
+                admin_state=admin_state,
                 tags=tags,
                 tenant=TEST_TENANT,
                 hyperbus_mode=hyperbus_mode)

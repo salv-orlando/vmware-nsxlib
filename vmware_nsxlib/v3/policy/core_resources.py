@@ -15,6 +15,7 @@
 #
 
 import abc
+from distutils import version
 import sys
 
 import decorator
@@ -1921,6 +1922,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             ip_pool_id=IGNORE,
                             metadata_proxy_id=IGNORE,
                             dhcp_server_config_id=IGNORE,
+                            admin_state=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1943,6 +1945,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             ip_pool_id=ip_pool_id,
             metadata_proxy_id=metadata_proxy_id,
             dhcp_server_config_id=dhcp_server_config_id,
+            admin_state=admin_state,
             tags=tags,
             tenant=tenant)
         self._create_or_store(segment_def)
@@ -1973,9 +1976,9 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def update(self, segment_id, name=IGNORE, description=IGNORE,
                tier1_id=IGNORE, tier0_id=IGNORE, subnets=IGNORE,
                dns_domain_name=IGNORE,
-               vlan_ids=IGNORE, tags=IGNORE, metadata_proxy_id=IGNORE,
-               dhcp_server_config_id=IGNORE,
-               tenant=constants.POLICY_INFRA_TENANT):
+               vlan_ids=IGNORE, metadata_proxy_id=IGNORE,
+               dhcp_server_config_id=IGNORE, admin_state=IGNORE,
+               tags=IGNORE, tenant=constants.POLICY_INFRA_TENANT):
 
         self._update(segment_id=segment_id,
                      name=name,
@@ -1987,6 +1990,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                      vlan_ids=vlan_ids,
                      metadata_proxy_id=metadata_proxy_id,
                      dhcp_server_config_id=dhcp_server_config_id,
+                     admin_state=admin_state,
                      tags=tags,
                      tenant=tenant)
 
@@ -2059,7 +2063,12 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     @check_allowed_passthrough
     def set_admin_state(self, segment_id, admin_state,
                         tenant=constants.POLICY_INFRA_TENANT):
-        """Set the segment admin state using the passthrough api"""
+        """Set the segment admin state using the passthrough/policy api"""
+        if (version.LooseVersion(self.version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            return self.update(segment_id, admin_state=admin_state,
+                               tenant=tenant)
+
         realization_info = self.wait_until_realized(
             segment_id, entity_type='RealizedLogicalSwitch', tenant=tenant)
 
@@ -2101,6 +2110,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                             traffic_tag=IGNORE,
                             allocate_addresses=IGNORE,
                             hyperbus_mode=IGNORE,
+                            admin_state=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2117,6 +2127,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   traffic_tag=traffic_tag,
                                   allocate_addresses=allocate_addresses,
                                   hyperbus_mode=hyperbus_mode,
+                                  admin_state=admin_state,
                                   tags=tags,
                                   tenant=tenant)
         self._create_or_store(port_def)
@@ -2146,6 +2157,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                description=IGNORE,
                address_bindings=IGNORE,
                hyperbus_mode=IGNORE,
+               admin_state=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2155,6 +2167,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      description=description,
                      address_bindings=address_bindings,
                      hyperbus_mode=hyperbus_mode,
+                     admin_state=admin_state,
                      tags=tags,
                      tenant=tenant)
 
@@ -2233,7 +2246,12 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
     @check_allowed_passthrough
     def set_admin_state(self, segment_id, port_id, admin_state,
                         tenant=constants.POLICY_INFRA_TENANT):
-        """Set the segment port admin state using the passthrough api"""
+        """Set the segment port admin state using the passthrough/policy api"""
+        if (version.LooseVersion(self.version) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            return self.update(segment_id, port_id, admin_state=admin_state,
+                               tenant=tenant)
+
         realization_info = self.wait_until_realized(
             segment_id, port_id, entity_type='RealizedLogicalPort',
             tenant=tenant)
