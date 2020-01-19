@@ -120,9 +120,12 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.segment_port_qos_profiles = (
             core_resources.SegmentPortQosProfilesBindingMapApi(
                 *args))
+        self.segment_dhcp_static_bindings = (
+            core_resources.SegmentDhcpStaticBindingConfigApi(*args))
         self.ipv6_ndra_profile = (
             core_resources.NsxIpv6NdraProfileApi(*args))
         self.dhcp_relay_config = core_resources.NsxDhcpRelayConfigApi(*args)
+        self.dhcp_server_config = core_resources.NsxDhcpServerConfigApi(*args)
         self.md_proxy = core_resources.NsxPolicyMetadataProxyApi(*args)
         self.certificate = core_resources.NsxPolicyCertApi(*args)
         self.exclude_list = core_resources.NsxPolicyExcludeListApi(*args)
@@ -176,6 +179,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             if feature == nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE:
                 return True
             if feature == nsx_constants.FEATURE_NSX_POLICY_MDPROXY:
+                return True
+            if feature == nsx_constants.FEATURE_NSX_POLICY_DHCP:
                 return True
             if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
                 return True
