@@ -640,6 +640,35 @@ class TestPolicyLBApplicationProfile(test_resources.NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(obj_id, result)
 
+    def test_fast_tcp_profile_def(self):
+        obj_dict = {'close_timeout': 8,
+                    'ha_flow_mirroring_enabled': False,
+                    'idle_timeout': 100}
+        fast_tcp_profile_def = lb_defs.LBFastTcpProfile(**obj_dict)
+        self.assertDictContainsSubset(obj_dict,
+                                      fast_tcp_profile_def.get_obj_dict())
+
+    def test_fast_udp_profile_def(self):
+        obj_dict = {'flow_mirroring_enabled': False,
+                    'idle_timeout': 100}
+        fast_udp_profile_def = lb_defs.LBFastUdpProfile(**obj_dict)
+        self.assertDictContainsSubset(obj_dict,
+                                      fast_udp_profile_def.get_obj_dict())
+
+    def test_http_profile_def(self):
+        obj_dict = {'http_redirect_to_https': False,
+                    'http_redirect_to': "sample-url",
+                    'idle_timeout': 100,
+                    'ntlm': False,
+                    'request_body_size': 1025,
+                    'request_header_size': 10,
+                    'response_header_size': 10,
+                    'response_timeout': 10,
+                    'x_forwarded_for': 'INSERT'}
+        http_profile_def = lb_defs.LBHttpProfileDef(**obj_dict)
+        self.assertDictContainsSubset(obj_dict,
+                                      http_profile_def.get_obj_dict())
+
     def test_create_without_id(self):
         name = 'd1'
         description = 'desc'

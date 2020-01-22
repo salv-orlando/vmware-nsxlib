@@ -53,6 +53,85 @@ class TestApplicationProfile(nsxlib_testcase.NsxClientTestCase):
                 create.assert_called_with('loadbalancer/application-profiles',
                                           body)
 
+    def test_create_fast_tcp_profiles(self):
+        fake_profile = consts.FAKE_APPLICATION_PROFILE.copy()
+        body = {
+            'display_name': fake_profile['display_name'],
+            'description': fake_profile['description'],
+            'resource_type': app_profile_types.FAST_TCP,
+            'close_timeout': 8,
+            'ha_flow_mirroring_enabled': True,
+            'idle_timeout': 1800,
+            'tags': consts.FAKE_TAGS
+        }
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            self.nsxlib.load_balancer.application_profile.create(
+                display_name=body['display_name'],
+                description=body['description'],
+                resource_type=body['resource_type'],
+                close_timeout=body['close_timeout'],
+                ha_flow_mirroring_enabled=body['ha_flow_mirroring_enabled'],
+                idle_timeout=body['idle_timeout'],
+                tags=consts.FAKE_TAGS)
+            create.assert_called_with('loadbalancer/application-profiles',
+                                      body)
+
+    def test_create_fast_udp_profiles(self):
+        fake_profile = consts.FAKE_APPLICATION_PROFILE.copy()
+        body = {
+            'display_name': fake_profile['display_name'],
+            'description': fake_profile['description'],
+            'resource_type': app_profile_types.FAST_UDP,
+            'flow_mirroring_enabled': True,
+            'idle_timeout': 1800,
+            'tags': consts.FAKE_TAGS
+        }
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            self.nsxlib.load_balancer.application_profile.create(
+                display_name=body['display_name'],
+                description=body['description'],
+                resource_type=body['resource_type'],
+                flow_mirroring_enabled=body['flow_mirroring_enabled'],
+                idle_timeout=body['idle_timeout'],
+                tags=consts.FAKE_TAGS)
+            create.assert_called_with('loadbalancer/application-profiles',
+                                      body)
+
+    def test_create_http_profiles(self):
+        fake_profile = consts.FAKE_APPLICATION_PROFILE.copy()
+        body = {
+            'display_name': fake_profile['display_name'],
+            'description': fake_profile['description'],
+            'resource_type': app_profile_types.HTTP,
+            'http_redirect_to': fake_profile['http_redirect_to'],
+            'http_redirect_to_https': fake_profile['http_redirect_to_https'],
+            'ntlm': fake_profile['ntlm'],
+            'request_body_size': fake_profile['request_body_size'],
+            'request_header_size': fake_profile['request_header_size'],
+            'response_header_size': fake_profile['response_header_size'],
+            'response_timeout': fake_profile['response_timeout'],
+            'x_forwarded_for': fake_profile['x_forwarded_for'],
+            'idle_timeout': fake_profile['idle_timeout'],
+            'tags': consts.FAKE_TAGS
+        }
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            self.nsxlib.load_balancer.application_profile.create(
+                display_name=body['display_name'],
+                description=body['description'],
+                resource_type=body['resource_type'],
+                http_redirect_to=body['http_redirect_to'],
+                http_redirect_to_https=body['http_redirect_to_https'],
+                ntlm=body['ntlm'],
+                request_body_size=body['request_body_size'],
+                request_header_size=body['request_header_size'],
+                response_header_size=body['response_header_size'],
+                response_timeout=body['response_timeout'],
+                x_forwarded_for=body['x_forwarded_for'],
+                idle_timeout=body['idle_timeout'],
+                tags=consts.FAKE_TAGS)
+            create.assert_called_with('loadbalancer/application-profiles',
+                                      body)
+
     def test_list_application_profiles(self):
         with mock.patch.object(self.nsxlib.client, 'list') as list_call:
             self.nsxlib.load_balancer.application_profile.list()

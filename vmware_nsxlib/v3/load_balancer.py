@@ -170,16 +170,22 @@ class ApplicationProfile(LoadBalancerBase):
             body['tags'] = tags
         if resource_type is None:
             return body
-        if resource_type == ApplicationProfileTypes.HTTP:
+        if resource_type in [ApplicationProfileTypes.HTTP,
+                             ApplicationProfileTypes.FAST_TCP,
+                             ApplicationProfileTypes.FAST_UDP]:
             body['resource_type'] = resource_type
-            extra_args = ['http_redirect_to', 'http_redirect_to_https',
-                          'ntlm', 'request_header_size', 'x_forwarded_for',
-                          'idle_timeout']
-            return utils.build_extra_args(body, extra_args, **kwargs)
-        elif (resource_type == ApplicationProfileTypes.FAST_TCP or
-              resource_type == ApplicationProfileTypes.FAST_UDP):
-            body['resource_type'] = resource_type
-            extra_args = ['ha_flow_mirroring_enabled', 'idle_timeout']
+            extra_args = ['idle_timeout']
+            if resource_type == ApplicationProfileTypes.HTTP:
+                extra_args.extend(
+                    ['http_redirect_to', 'http_redirect_to_https', 'ntlm',
+                     'request_body_size', 'request_header_size',
+                     'response_header_size', 'response_timeout',
+                     'x_forwarded_for'])
+            elif resource_type == ApplicationProfileTypes.FAST_TCP:
+                extra_args.extend(
+                    ['close_timeout', 'ha_flow_mirroring_enabled'])
+            elif resource_type == ApplicationProfileTypes.FAST_UDP:
+                extra_args.extend(['flow_mirroring_enabled'])
             return utils.build_extra_args(body, extra_args, **kwargs)
         else:
             raise nsxlib_exc.InvalidInput(

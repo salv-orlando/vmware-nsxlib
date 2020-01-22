@@ -180,10 +180,7 @@ class LBAppProfileBaseDef(ResourceDef):
     def get_obj_dict(self):
         body = super(LBAppProfileBaseDef, self).get_obj_dict()
         self._set_attrs_if_specified(
-            body, ['idle_timeout', 'http_redirect_to_https',
-                   'http_redirect_to', 'idle_timeout', 'ntlm',
-                   'request_body_size', 'request_header_size',
-                   'response_timeout', 'x_forwarded_for'])
+            body, ['idle_timeout'])
         return body
 
 
@@ -193,6 +190,15 @@ class LBHttpProfileDef(LBAppProfileBaseDef):
     def resource_type():
         return "LBHttpProfile"
 
+    def get_obj_dict(self):
+        body = super(LBHttpProfileDef, self).get_obj_dict()
+        self._set_attrs_if_specified(
+            body, ['http_redirect_to', 'http_redirect_to_https', 'ntlm',
+                   'request_body_size', 'request_header_size',
+                   'response_header_size', 'response_timeout',
+                   'x_forwarded_for'])
+        return body
+
 
 class LBFastTcpProfile(LBAppProfileBaseDef):
 
@@ -200,12 +206,24 @@ class LBFastTcpProfile(LBAppProfileBaseDef):
     def resource_type():
         return "LBFastTcpProfile"
 
+    def get_obj_dict(self):
+        body = super(LBFastTcpProfile, self).get_obj_dict()
+        self._set_attrs_if_specified(
+            body, ['close_timeout', 'ha_flow_mirroring_enabled'])
+        return body
+
 
 class LBFastUdpProfile(LBAppProfileBaseDef):
 
     @staticmethod
     def resource_type():
         return "LBFastUdpProfile"
+
+    def get_obj_dict(self):
+        body = super(LBFastUdpProfile, self).get_obj_dict()
+        self._set_attrs_if_specified(
+            body, ['flow_mirroring_enabled'])
+        return body
 
 
 class LBPoolDef(ResourceDef):
