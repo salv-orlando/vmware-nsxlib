@@ -61,7 +61,7 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
 
     def delete_cert(self, cert_id):
         resource = CERT_SECTION + '/' + cert_id
-        self.client.delete(resource)
+        self._delete_by_path_with_retry(resource)
 
     def find_cert_with_pem(self, cert_pem):
         # Find certificate with cert_pem
@@ -89,7 +89,7 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
 
     def delete_identity(self, identity_id):
         resource = ID_SECTION + '/' + identity_id
-        self.client.delete(resource)
+        self._delete_by_path_with_retry(resource)
 
     def find_cert_and_identity(self, name, cert_pem):
         certs = self.get_certs()
