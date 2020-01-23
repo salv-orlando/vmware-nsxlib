@@ -58,7 +58,7 @@ class NsxIpsecVpnIkeProfileApi(core_resources.NsxPolicyResourceBase):
     def delete(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        self.policy_api.delete(profile_def)
+        self._delete_with_retry(profile_def)
 
     def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
@@ -123,7 +123,7 @@ class NsxIpsecVpnTunnelProfileApi(core_resources.NsxPolicyResourceBase):
     def delete(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        self.policy_api.delete(profile_def)
+        self._delete_with_retry(profile_def)
 
     def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
@@ -184,7 +184,7 @@ class NsxIpsecVpnDpdProfileApi(core_resources.NsxPolicyResourceBase):
     def delete(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        self.policy_api.delete(profile_def)
+        self._delete_with_retry(profile_def)
 
     def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
@@ -249,7 +249,7 @@ class NsxIpsecVpnServiceApi(core_resources.NsxPolicyResourceBase):
             service_id=self._locale_service_id(tier1_id),
             vpn_service_id=vpn_service_id,
             tenant=tenant)
-        self.policy_api.delete(service_def)
+        self._delete_with_retry(service_def)
 
     def get(self, tier1_id, vpn_service_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -334,7 +334,7 @@ class NsxIpsecVpnLocalEndpointApi(core_resources.NsxPolicyResourceBase):
             vpn_service_id=vpn_service_id,
             endpoint_id=endpoint_id,
             tenant=tenant)
-        self.policy_api.delete(endpoint_def)
+        self._delete_with_retry(endpoint_def)
 
     def get(self, tier1_id, vpn_service_id, endpoint_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -441,7 +441,7 @@ class NsxIpsecVpnSessionApi(core_resources.NsxPolicyResourceBase):
             vpn_service_id=vpn_service_id,
             session_id=session_id,
             tenant=tenant)
-        self.policy_api.delete(session_def)
+        self._delete_with_retry(session_def)
 
     def get(self, tier1_id, vpn_service_id, session_id,
             tenant=constants.POLICY_INFRA_TENANT):

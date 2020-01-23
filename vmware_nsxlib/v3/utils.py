@@ -306,6 +306,8 @@ class NsxLibApiBase(object):
         self.nsxlib = nsxlib
         super(NsxLibApiBase, self).__init__()
         self.cache = NsxLibCache(self.cache_timeout)
+        self.max_attempts = (self.client.max_attempts
+                             if hasattr(self.client, 'max_attempts') else 1)
 
     @abc.abstractproperty
     def uri_segment(self):
@@ -355,7 +357,7 @@ class NsxLibApiBase(object):
     def delete(self, uuid):
         if self.use_cache_for_get:
             self.cache.remove(uuid)
-        return self.client.delete(self.get_path(uuid))
+        return self._delete_with_retry(uuid)
 
     def find_by_display_name(self, display_name):
         found = []
@@ -416,9 +418,8 @@ class NsxLibApiBase(object):
             # NSX has, we will get a 412: Precondition Failed.
             # In that case we need to re-fetch, patch the response and send
             # it again with the new revision_id
-            @retry_upon_exception(
-                nsxlib_exceptions.StaleRevision,
-                max_attempts=self.client.max_attempts)
+            @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+                                  max_attempts=self.max_attempts)
             def do_update():
                 return self._internal_update_resource(
                     resource, payload,
@@ -439,20 +440,21 @@ class NsxLibApiBase(object):
                 update_payload_cbk=update_payload_cbk)
 
     def _delete_with_retry(self, resource):
+        self._delete_by_path_with_retry(self.get_path(resource))
+
+    def _delete_by_path_with_retry(self, path):
         # Using internal method so we can access max_attempts in the decorator
-        @retry_upon_exception(
-            nsxlib_exceptions.StaleRevision,
-            max_attempts=self.client.max_attempts)
+        @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+                              max_attempts=self.max_attempts)
         def _do_delete():
-            self.client.delete(self.get_path(resource))
+            self.client.delete(path)
 
         _do_delete()
 
     def _create_with_retry(self, resource, body=None, headers=None):
         # Using internal method so we can access max_attempts in the decorator
-        @retry_upon_exception(
-            nsxlib_exceptions.StaleRevision,
-            max_attempts=self.client.max_attempts)
+        @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+                              max_attempts=self.max_attempts)
         def _do_create():
             return self.client.create(resource, body, headers=headers)
 

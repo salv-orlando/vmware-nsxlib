@@ -71,7 +71,7 @@ class NsxLibPortMirror(utils.NsxLibApiBase):
         :param mirror_session_id: string representing the UUID of the port
                                   mirror session to be deleted.
         """
-        self.client.delete(self.get_path(mirror_session_id))
+        self._delete_with_retry(mirror_session_id)
 
 
 class NsxLibBridgeEndpointProfile(utils.NsxLibApiBase):
@@ -126,7 +126,7 @@ class NsxLibBridgeEndpointProfile(utils.NsxLibApiBase):
                                            the bridge endpoint profile to be
                                            deleted.
         """
-        self.client.delete(self.get_path(bridge_endpoint_profile_id))
+        self._delete_with_retry(bridge_endpoint_profile_id)
 
 
 class NsxLibBridgeEndpoint(utils.NsxLibApiBase):
@@ -165,7 +165,7 @@ class NsxLibBridgeEndpoint(utils.NsxLibApiBase):
         :param bridge_endpoint_id: string representing the UUID of the bridge
                                    endpoint to be deleted.
         """
-        self.client.delete(self.get_path(bridge_endpoint_id))
+        self._delete_with_retry(bridge_endpoint_id)
 
 
 class NsxLibLogicalSwitch(utils.NsxLibApiBase):
@@ -556,7 +556,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             if utils.dict_match(kwargs, res):
                 LOG.debug("Deleting %s from resource %s", res, resource)
                 delete_resource = resource + "/" + str(res['id'])
-                self.client.delete(delete_resource)
+                self._delete_by_path_with_retry(delete_resource)
                 matched_num = matched_num + 1
         if matched_num == 0:
             if skip_not_found:
@@ -650,9 +650,9 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         return self.client.create(resource, body)
 
     def delete_static_route(self, logical_router_id, static_route_id):
-        resource = 'logical-routers/%s/routing/static-routes/%s' % (
+        path = 'logical-routers/%s/routing/static-routes/%s' % (
             logical_router_id, static_route_id)
-        self.client.delete(resource)
+        self._delete_by_path_with_retry(path)
 
     def delete_static_route_by_values(self, logical_router_id,
                                       dest_cidr=None, nexthop=None):
@@ -666,9 +666,9 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         return self._delete_resource_by_values(resource, **kwargs)
 
     def delete_nat_rule(self, logical_router_id, nat_rule_id):
-        resource = 'logical-routers/%s/nat/rules/%s' % (logical_router_id,
-                                                        nat_rule_id)
-        self.client.delete(resource)
+        path = 'logical-routers/%s/nat/rules/%s' % (logical_router_id,
+                                                    nat_rule_id)
+        self._delete_by_path_with_retry(path)
 
     def delete_nat_rule_by_values(self, logical_router_id,
                                   strict_mode=True,
@@ -798,7 +798,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         url = lrouter_id
         if force:
             url += '?force=%s' % force
-        return self.client.delete(self.get_path(url))
+        return self._delete_by_path_with_retry(self.get_path(url))
 
     def update(self, lrouter_id, *args, **kwargs):
         body = {}
@@ -1043,7 +1043,7 @@ class NsxLibIpBlockSubnet(utils.NsxLibApiBase):
 
     def delete(self, subnet_id):
         """Delete a IP block subnet on the backend."""
-        self.client.delete(self.get_path(subnet_id))
+        self._delete_with_retry(subnet_id)
 
     def list(self, ip_block_id):
         resource = '%s?block_id=%s' % (self.get_path(), ip_block_id)

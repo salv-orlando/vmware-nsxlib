@@ -153,7 +153,7 @@ class LoadBalancerBase(utils.NsxLibApiBase):
 
     def delete(self, object_id):
         object_url = self.resource + '/' + object_id
-        return self.client.delete(object_url)
+        return self._delete_by_path_with_retry(object_url)
 
 
 class ApplicationProfile(LoadBalancerBase):

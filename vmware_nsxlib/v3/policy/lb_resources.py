@@ -77,7 +77,7 @@ class NsxPolicyLBAppProfileBase(NsxPolicyResourceBase):
         lb_app_profile_def = self.entry_def(
             lb_app_profile_id=lb_app_profile_id,
             tenant=tenant)
-        self.policy_api.delete(lb_app_profile_def)
+        self._delete_with_retry(lb_app_profile_def)
 
     def get(self, lb_app_profile_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -184,7 +184,7 @@ class NsxPolicyLoadBalancerClientSSLProfileApi(NsxPolicyResourceBase):
         lb_client_ssl_profile_def = self.entry_def(
             client_ssl_profile_id=client_ssl_profile_id,
             tenant=tenant)
-        self.policy_api.delete(lb_client_ssl_profile_def)
+        self._delete_with_retry(lb_client_ssl_profile_def)
 
     def get(self, client_ssl_profile_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -244,7 +244,7 @@ class NsxPolicyLoadBalancerPersistenceProfileApi(
         persistence_profile_def = self.entry_def(
             persistence_profile_id=persistence_profile_id,
             tenant=tenant)
-        self.policy_api.delete(persistence_profile_def)
+        self._delete_with_retry(persistence_profile_def)
 
     def get(self, persistence_profile_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -446,7 +446,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         lb_pool_def = self.entry_def(
             lb_pool_id=lb_pool_id, tenant=tenant)
-        self.policy_api.delete(lb_pool_def)
+        self._delete_with_retry(lb_pool_def)
 
     def get(self, lb_pool_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -607,7 +607,7 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         lb_service_def = self.entry_def(
             lb_service_id=lb_service_id, tenant=tenant)
-        self.policy_api.delete(lb_service_def)
+        self._delete_with_retry(lb_service_def)
 
     def get(self, lb_service_id, tenant=constants.POLICY_INFRA_TENANT):
         lb_service_def = self.entry_def(
@@ -728,7 +728,7 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         lbvs_def = self.entry_def(
             virtual_server_id=virtual_server_id, tenant=tenant)
-        self.policy_api.delete(lbvs_def)
+        self._delete_with_retry(lbvs_def)
 
     def get(self, virtual_server_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -952,7 +952,7 @@ class NsxPolicyLBMonitorProfileBase(NsxPolicyResourceBase):
         lb_monitor_profile_def = self.entry_def(
             lb_monitor_profile_id=lb_monitor_profile_id,
             tenant=tenant)
-        self.policy_api.delete(lb_monitor_profile_def)
+        self._delete_with_retry(lb_monitor_profile_def)
 
     def get(self, lb_monitor_profile_id,
             tenant=constants.POLICY_INFRA_TENANT):
