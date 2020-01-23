@@ -845,6 +845,7 @@ class LogicalRouterTestCase(BaseTestResource):
         tier0_router = True
         description = 'dummy'
         tz_id = 'tz_id'
+        failover_mode = 'PREEMPTIVE'
         allocation_pool = {
             'allocation_pool_type': 'LoadBalancerAllocationPool',
             'allocation_size': 'SMALL'
@@ -854,7 +855,8 @@ class LogicalRouterTestCase(BaseTestResource):
             router.create(fake_router['display_name'], None, None,
                           tier0_router,
                           description=description, transport_zone_id=tz_id,
-                          allocation_pool=allocation_pool)
+                          allocation_pool=allocation_pool,
+                          failover_mode=failover_mode)
 
             data = {
                 'display_name': fake_router['display_name'],
@@ -862,6 +864,7 @@ class LogicalRouterTestCase(BaseTestResource):
                 'tags': None,
                 'description': description,
                 'advanced_config': {'transport_zone_id': tz_id},
+                'failover_mode': failover_mode,
                 'allocation_profile': {
                     'allocation_pool': allocation_pool
                 }
