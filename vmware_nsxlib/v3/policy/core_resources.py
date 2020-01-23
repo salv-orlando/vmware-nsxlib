@@ -383,7 +383,17 @@ class NsxPolicyResourceBase(object):
             transaction.store_def(policy_def, self.policy_api.client)
         else:
             # No transaction - apply now
+            self._delete_with_retry(policy_def)
+
+    def _delete_with_retry(self, policy_def):
+
+        @utils.retry_upon_exception(
+            exceptions.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def do_delete():
             self.policy_api.delete(policy_def)
+
+        do_delete()
 
 
 class NsxPolicyDomainApi(NsxPolicyResourceBase):
@@ -408,7 +418,7 @@ class NsxPolicyDomainApi(NsxPolicyResourceBase):
 
     def delete(self, domain_id, tenant=constants.POLICY_INFRA_TENANT):
         domain_def = core_defs.DomainDef(domain_id=domain_id, tenant=tenant)
-        self.policy_api.delete(domain_def)
+        self._delete_with_retry(domain_def)
 
     def get(self, domain_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -531,7 +541,7 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
         group_def = core_defs.GroupDef(domain_id=domain_id,
                                        group_id=group_id,
                                        tenant=tenant)
-        self.policy_api.delete(group_def)
+        self._delete_with_retry(group_def)
 
     def get(self, domain_id, group_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -662,7 +672,7 @@ class NsxPolicyServiceBase(NsxPolicyResourceBase):
         """Delete the service with all its entries"""
         service_def = core_defs.ServiceDef(service_id=service_id,
                                            tenant=tenant)
-        self.policy_api.delete(service_def)
+        self._delete_with_retry(service_def)
 
     def get(self, service_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -996,7 +1006,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
 
     def delete(self, tier1_id, tenant=constants.POLICY_INFRA_TENANT):
         tier1_def = self.entry_def(tier1_id=tier1_id, tenant=tenant)
-        self.policy_api.delete(tier1_def)
+        self._delete_with_retry(tier1_def)
 
     def get(self, tier1_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -1149,7 +1159,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             tier1_id=tier1_id,
             service_id=self._locale_service_id(tier1_id),
             tenant=tenant)
-        self.policy_api.delete(t1service_def)
+        self._delete_with_retry(t1service_def)
 
     def set_edge_cluster_path(self, tier1_id, edge_cluster_path,
                               tenant=constants.POLICY_INFRA_TENANT):
@@ -1220,7 +1230,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             service_id=self._locale_service_id(tier1_id),
             interface_id=interface_id,
             tenant=tenant)
-        self.policy_api.delete(t1interface_def)
+        self._delete_with_retry(t1interface_def)
 
     def list_segment_interface(self, tier1_id,
                                tenant=constants.POLICY_INFRA_TENANT):
@@ -1384,7 +1394,7 @@ class NsxPolicyTier0Api(NsxPolicyResourceBase):
 
     def delete(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
         tier0_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
-        self.policy_api.delete(tier0_def)
+        self._delete_with_retry(tier0_def)
 
     def get(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -1624,7 +1634,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         nat_rule_def = self.entry_def(tier0_id=tier0_id, nat_id=nat_id,
                                       nat_rule_id=nat_rule_id, tenant=tenant)
-        self.policy_api.delete(nat_rule_def)
+        self._delete_with_retry(nat_rule_def)
 
     def get(self, tier0_id, nat_rule_id, nat_id=DEFAULT_NAT_ID,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -1790,7 +1800,7 @@ class NsxPolicyTier1StaticRouteApi(NsxPolicyResourceBase):
         static_route_def = self.entry_def(tier1_id=tier1_id,
                                           static_route_id=static_route_id,
                                           tenant=tenant)
-        self.policy_api.delete(static_route_def)
+        self._delete_with_retry(static_route_def)
 
     def get(self, tier1_id, static_route_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -1864,7 +1874,7 @@ class NsxPolicyTier1SegmentApi(NsxPolicyResourceBase):
         segment_def = self.entry_def(tier1_id=tier1_id,
                                      segment_id=segment_id,
                                      tenant=tenant)
-        self.policy_api.delete(segment_def)
+        self._delete_with_retry(segment_def)
 
     def get(self, tier1_id, segment_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -1960,7 +1970,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             delay=self.nsxlib_config.realization_wait_sec,
             max_attempts=self.nsxlib_config.realization_max_attempts)
         def do_delete():
-            self.policy_api.delete(segment_def)
+            self._delete_with_retry(segment_def)
 
         do_delete()
 
@@ -2138,7 +2148,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
         port_def = self.entry_def(segment_id=segment_id,
                                   port_id=port_id,
                                   tenant=tenant)
-        self.policy_api.delete(port_def)
+        self._delete_with_retry(port_def)
 
     def get(self, segment_id, port_id,
             tenant=constants.POLICY_INFRA_TENANT,
@@ -2271,7 +2281,7 @@ class SegmentProfilesBindingMapBaseApi(NsxPolicyResourceBase):
         map_def = self.entry_def(segment_id=segment_id,
                                  map_id=map_id,
                                  tenant=tenant)
-        self.policy_api.delete(map_def)
+        self._delete_with_retry(map_def)
 
     def get(self, segment_id, map_id=DEFAULT_MAP_ID,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -2340,7 +2350,7 @@ class SegmentPortProfilesBindingMapBaseApi(NsxPolicyResourceBase):
                                  port_id=port_id,
                                  map_id=map_id,
                                  tenant=tenant)
-        self.policy_api.delete(map_def)
+        self._delete_with_retry(map_def)
 
     def get(self, segment_id, port_id, map_id=DEFAULT_MAP_ID,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -2553,7 +2563,7 @@ class NsxPolicyTier1SegmentPortApi(NsxPolicyResourceBase):
                                   tier1_id=tier1_id,
                                   port_id=port_id,
                                   tenant=tenant)
-        self.policy_api.delete(port_def)
+        self._delete_with_retry(port_def)
 
     def get(self, tier1_id, segment_id, port_id,
             tenant=constants.POLICY_INFRA_TENANT,
@@ -2745,7 +2755,7 @@ class SegmentDhcpStaticBindingConfigApi(NsxPolicyResourceBase):
         binding_def = self.entry_def(segment_id=segment_id,
                                      binding_id=binding_id,
                                      tenant=tenant)
-        self.policy_api.delete(binding_def)
+        self._delete_with_retry(binding_def)
 
     def get(self, segment_id, binding_id,
             tenant=constants.POLICY_INFRA_TENANT,
@@ -2790,7 +2800,7 @@ class NsxPolicyIpBlockApi(NsxPolicyResourceBase):
     def delete(self, ip_block_id, tenant=constants.POLICY_INFRA_TENANT):
         ip_block_def = self.entry_def(ip_block_id=ip_block_id,
                                       tenant=tenant)
-        self.policy_api.delete(ip_block_def)
+        self._delete_with_retry(ip_block_def)
 
     def get(self, ip_block_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -2837,7 +2847,7 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
     def delete(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT):
         ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id,
                                      tenant=tenant)
-        self.policy_api.delete(ip_pool_def)
+        self._delete_with_retry(ip_pool_def)
 
     def get(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT):
         ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id,
@@ -2882,7 +2892,7 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             ip_allocation_id=ip_allocation_id,
             ip_pool_id=ip_pool_id,
             tenant=tenant)
-        self.policy_api.delete(ip_allocation_def)
+        self._delete_with_retry(ip_allocation_def)
 
     def list_allocations(self, ip_pool_id,
                          tenant=constants.POLICY_INFRA_TENANT):
@@ -2927,7 +2937,7 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             ip_subnet_id=ip_subnet_id,
             ip_pool_id=ip_pool_id,
             tenant=tenant)
-        self.policy_api.delete(ip_subnet_def)
+        self._delete_with_retry(ip_subnet_def)
 
     def list_block_subnets(self, ip_pool_id,
                            tenant=constants.POLICY_INFRA_TENANT):
@@ -2989,7 +2999,7 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
             ip_subnet_id=ip_subnet_id,
             ip_pool_id=ip_pool_id,
             tenant=tenant)
-        self.policy_api.delete(ip_subnet_def)
+        self._delete_with_retry(ip_subnet_def)
 
     def list_static_subnets(self, ip_pool_id,
                             tenant=constants.POLICY_INFRA_TENANT):
@@ -3296,7 +3306,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             domain_id=domain_id,
             map_id=map_id,
             tenant=tenant)
-        self.policy_api.delete(map_def)
+        self._delete_with_retry(map_def)
 
     def delete_entry(self, domain_id, map_id, entry_id,
                      tenant=constants.POLICY_INFRA_TENANT):
@@ -3305,7 +3315,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             map_id=map_id,
             entry_id=entry_id,
             tenant=tenant)
-        self.policy_api.delete(entry_def)
+        self._delete_with_retry(entry_def)
 
     def get(self, domain_id, map_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -3598,7 +3608,7 @@ class NsxPolicyEnforcementPointApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         ep_def = core_defs.EnforcementPointDef(
             ep_id=ep_id, tenant=tenant)
-        self.policy_api.delete(ep_def)
+        self._delete_with_retry(ep_def)
 
     def get(self, ep_id,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -3865,7 +3875,7 @@ class NsxPolicyDeploymentMapApi(NsxPolicyResourceBase):
 
         map_def = core_defs.DeploymentMapDef(
             map_id=map_id, domain_id=domain_id, tenant=tenant)
-        self.policy_api.delete(map_def)
+        self._delete_with_retry(map_def)
 
     def get(self, map_id, domain_id=None,
             tenant=constants.POLICY_INFRA_TENANT, silent=False):
@@ -3920,7 +3930,7 @@ class NsxSegmentProfileBaseApi(NsxPolicyResourceBase):
     def delete(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        self.policy_api.delete(profile_def)
+        self._delete_with_retry(profile_def)
 
     def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -4153,7 +4163,7 @@ class NsxIpv6NdraProfileApi(NsxPolicyResourceBase):
     def delete(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        self.policy_api.delete(profile_def)
+        self._delete_with_retry(profile_def)
 
     def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(profile_id=profile_id,
@@ -4207,7 +4217,7 @@ class NsxDhcpRelayConfigApi(NsxPolicyResourceBase):
 
     def delete(self, config_id, tenant=constants.POLICY_INFRA_TENANT):
         config_def = self.entry_def(config_id=config_id, tenant=tenant)
-        self.policy_api.delete(config_def)
+        self._delete_with_retry(config_def)
 
     def get(self, config_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -4260,7 +4270,7 @@ class NsxDhcpServerConfigApi(NsxPolicyResourceBase):
 
     def delete(self, config_id, tenant=constants.POLICY_INFRA_TENANT):
         config_def = self.entry_def(config_id=config_id, tenant=tenant)
-        self.policy_api.delete(config_def)
+        self._delete_with_retry(config_def)
 
     def get(self, config_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -4319,7 +4329,7 @@ class NsxPolicyCertApi(NsxPolicyResourceBase):
                tenant=constants.POLICY_INFRA_TENANT):
         certificate_def = self.entry_def(certificate_id=certificate_id,
                                          tenant=tenant)
-        self.policy_api.delete(certificate_def)
+        self._delete_with_retry(certificate_def)
 
     def get(self, certificate_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
@@ -4421,7 +4431,7 @@ class NsxPolicyTier0RouteMapApi(NsxPolicyResourceBase):
         route_map_def = self.entry_def(tier0_id=tier0_id,
                                        route_map_id=route_map_id,
                                        tenant=tenant)
-        self.policy_api.delete(route_map_def)
+        self._delete_with_retry(route_map_def)
 
     def get(self, tier0_id, route_map_id,
             tenant=constants.POLICY_INFRA_TENANT):
@@ -4492,7 +4502,7 @@ class NsxPolicyTier0PrefixListApi(NsxPolicyResourceBase):
         prefix_list_def = self.entry_def(tier0_id=tier0_id,
                                          prefix_list_id=prefix_list_id,
                                          tenant=tenant)
-        self.policy_api.delete(prefix_list_def)
+        self._delete_with_retry(prefix_list_def)
 
     def get(self, tier0_id, prefix_list_id,
             tenant=constants.POLICY_INFRA_TENANT):
