@@ -766,7 +766,8 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
 
     def create(self, display_name, tags, edge_cluster_uuid=None, tier_0=False,
                description=None, transport_zone_id=None,
-               allocation_pool=None, enable_standby_relocation=False):
+               allocation_pool=None, enable_standby_relocation=False,
+               failover_mode=None):
         # TODO(salv-orlando): If possible do not manage edge clusters
         # in the main plugin logic.
         router_type = (nsx_constants.ROUTER_TYPE_TIER0 if tier_0 else
@@ -781,6 +782,8 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         if transport_zone_id:
             body['advanced_config'] = {
                 'transport_zone_id': transport_zone_id}
+        if failover_mode:
+            body['failover_mode'] = failover_mode
         allocation_profile = {}
         if allocation_pool:
             allocation_profile['allocation_pool'] = allocation_pool
