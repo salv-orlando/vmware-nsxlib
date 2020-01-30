@@ -153,7 +153,8 @@ class RESTClient(object):
         error = http_error_to_exception(status_code, error_code)
         raise error(manager='', operation=operation, details=result_msg,
                     error_code=error_code,
-                    related_error_codes=related_error_codes)
+                    related_error_codes=related_error_codes,
+                    status_code=status_code)
 
     def _validate_result(self, result, expected, operation, silent=False):
         if result.status_code not in expected:
@@ -318,7 +319,8 @@ class NSX3Client(JSONRESTClient):
                     operation=operation,
                     details=result_msg,
                     error_code=error_code,
-                    related_error_codes=related_error_codes)
+                    related_error_codes=related_error_codes,
+                    status_code=status_code)
 
     def _rest_call(self, url, **kwargs):
         if kwargs.get('with_retries', True):

@@ -273,18 +273,16 @@ class NsxV3RESTClientTestCase(nsxlib_testcase.NsxClientTestCase):
         for verb in ['get', 'post', 'put', 'delete']:
             for code in client.RESTClient._VERB_RESP_CODES.get(verb):
                 _verb_response_code(verb, code)
-            self.assertRaises(
-                nsxlib_exc.ManagerError,
-                _verb_response_code, verb,
-                requests.codes.INTERNAL_SERVER_ERROR)
-            self.assertRaises(
-                nsxlib_exc.ResourceNotFound,
-                _verb_response_code, verb,
-                requests.codes.NOT_FOUND)
-            self.assertRaises(
-                nsxlib_exc.BackendResourceNotFound,
-                _verb_response_code, verb,
-                requests.codes.NOT_FOUND, 202)
+            with self.assertRaises(nsxlib_exc.ManagerError) as e:
+                _verb_response_code(verb, requests.codes.INTERNAL_SERVER_ERROR)
+            self.assertEqual(e.exception.status_code,
+                             requests.codes.INTERNAL_SERVER_ERROR)
+            with self.assertRaises(nsxlib_exc.ResourceNotFound) as e:
+                _verb_response_code(verb, requests.codes.NOT_FOUND)
+            self.assertEqual(e.exception.status_code, requests.codes.NOT_FOUND)
+            with self.assertRaises(nsxlib_exc.BackendResourceNotFound) as e:
+                _verb_response_code(verb, requests.codes.NOT_FOUND, 202)
+            self.assertEqual(e.exception.status_code, requests.codes.NOT_FOUND)
 
     def test_inject_headers_callback(self):
 
@@ -361,6 +359,13 @@ class NsxV3APIClientTestCase(nsxlib_testcase.NsxClientTestCase):
         assert_json_call(
             'get', api,
             'https://1.2.3.4/api/v1/ports')
+
+    def test_raise_error(self):
+        api = self.new_mocked_client(client.NSX3Client)
+        with self.assertRaises(nsxlib_exc.ManagerError) as e:
+            api._raise_error(requests.codes.INTERNAL_SERVER_ERROR, 'GET', '')
+        self.assertEqual(e.exception.status_code,
+                         requests.codes.INTERNAL_SERVER_ERROR)
 
 
 # NOTE(boden): remove this when tmp brigding removed
