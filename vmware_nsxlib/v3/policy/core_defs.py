@@ -377,13 +377,19 @@ class RouterDef(ResourceDef):
                                         value=paths)
 
         if self.has_attr('ipv6_ndra_profile_id'):
-            paths = ""
             if self.get_attr('ipv6_ndra_profile_id'):
                 ndra_profile = Ipv6NdraProfileDef(
                     profile_id=self.get_attr('ipv6_ndra_profile_id'),
                     tenant=self.get_tenant())
-                paths = [ndra_profile.get_resource_full_path()]
+            else:
+                # Set it to the default profile
+                # This will allow removing the old profile,
+                # as the NSX does not support empty value.
+                ndra_profile = Ipv6NdraProfileDef(
+                    profile_id=Ipv6NdraProfileDef.default_profile(),
+                    tenant=self.get_tenant())
 
+            paths = [ndra_profile.get_resource_full_path()]
             self._set_attr_if_specified(body, 'ipv6_ndra_profile_id',
                                         body_attr='ipv6_profile_paths',
                                         value=paths)
@@ -594,13 +600,19 @@ class Tier1InterfaceDef(ResourceDef):
                                         value=path)
 
         if self.has_attr('ipv6_ndra_profile_id'):
-            paths = ""
             if self.get_attr('ipv6_ndra_profile_id'):
                 ndra_profile = Ipv6NdraProfileDef(
                     profile_id=self.get_attr('ipv6_ndra_profile_id'),
                     tenant=self.get_tenant())
-                paths = [ndra_profile.get_resource_full_path()]
+            else:
+                # Set it to the default profile
+                # This will allow removing the old profile,
+                # as the NSX does not support empty value.
+                ndra_profile = Ipv6NdraProfileDef(
+                    profile_id=Ipv6NdraProfileDef.default_profile(),
+                    tenant=self.get_tenant())
 
+            paths = [ndra_profile.get_resource_full_path()]
             self._set_attr_if_specified(body, 'ipv6_ndra_profile_id',
                                         body_attr='ipv6_profile_paths',
                                         value=paths)
@@ -2108,6 +2120,10 @@ class Ipv6NdraProfileDef(ResourceDef):
     @staticmethod
     def resource_type():
         return 'Ipv6NdraProfile'
+
+    @staticmethod
+    def default_profile():
+        return 'default'
 
     def path_defs(self):
         return (TenantDef,)

@@ -2561,6 +2561,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
         route_adv = self.resourceApi.build_route_advertisement(
             lb_vip=True,
             lb_snat=True)
+        ipv6_profile_id = '222'
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
@@ -2570,6 +2571,7 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 force_whitelisting=True,
                 route_advertisement=route_adv,
                 pool_allocation=pool_alloc_type,
+                ipv6_ndra_profile_id=ipv6_profile_id,
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.Tier1Def(
@@ -2582,6 +2584,42 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 failover_mode=constants.NON_PREEMPTIVE,
                 route_advertisement=route_adv,
                 pool_allocation=pool_alloc_type,
+                ipv6_ndra_profile_id=ipv6_profile_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_create_no_ipv6_profile(self):
+        name = 'test'
+        description = 'desc'
+        tier0_id = '111'
+        pool_alloc_type = 'LB_SMALL'
+        route_adv = self.resourceApi.build_route_advertisement(
+            lb_vip=True,
+            lb_snat=True)
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, description=description,
+                tier0=tier0_id,
+                force_whitelisting=True,
+                route_advertisement=route_adv,
+                pool_allocation=pool_alloc_type,
+                ipv6_ndra_profile_id=None,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                nsx_version=self.policy_lib.get_version(),
+                tier1_id=mock.ANY,
+                name=name,
+                description=description,
+                tier0=tier0_id,
+                force_whitelisting=True,
+                failover_mode=constants.NON_PREEMPTIVE,
+                route_advertisement=route_adv,
+                pool_allocation=pool_alloc_type,
+                ipv6_ndra_profile_id=None,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)

@@ -366,17 +366,52 @@ class TestPolicyTier1(policy_testcase.TestPolicyApi):
                                               nat=True,
                                               lb_vip=False,
                                               lb_snat=False)
+        ipv6_ndra_profile_id = '111'
         tier1_def = policy.Tier1Def(
             tier1_id=tier1_id,
             name=name, description=description,
             route_advertisement=route_adv,
-            tier0=tier0_id)
+            tier0=tier0_id,
+            ipv6_ndra_profile_id=ipv6_ndra_profile_id)
         expected_data = {"id": "%s" % tier1_id,
                          "resource_type": "Tier1",
                          "description": "%s" % description,
                          "display_name": "%s" % name,
                          "tier0_path": "/infra/tier-0s/%s" % tier0_id,
-                         "route_advertisement_types": route_adv.get_obj_dict()}
+                         "route_advertisement_types": route_adv.get_obj_dict(),
+                         "ipv6_profile_paths": ["/infra/ipv6-ndra-profiles/"
+                                                "%s" % ipv6_ndra_profile_id]}
+        self.policy_api.create_or_update(tier1_def)
+        tier1_path = tier1_def.get_resource_path()
+        self.assert_json_call('PATCH', self.client,
+                              tier1_path,
+                              data=expected_data)
+
+    def test_create_no_ipv6_profile(self):
+        name = 'test'
+        description = 'desc'
+        tier0_id = '000'
+        tier1_id = '111'
+        route_adv = policy.RouteAdvertisement(static_routes=True,
+                                              subnets=True,
+                                              nat=True,
+                                              lb_vip=False,
+                                              lb_snat=False)
+        ipv6_ndra_profile_id = None
+        tier1_def = policy.Tier1Def(
+            tier1_id=tier1_id,
+            name=name, description=description,
+            route_advertisement=route_adv,
+            tier0=tier0_id,
+            ipv6_ndra_profile_id=ipv6_ndra_profile_id)
+        expected_data = {"id": "%s" % tier1_id,
+                         "resource_type": "Tier1",
+                         "description": "%s" % description,
+                         "display_name": "%s" % name,
+                         "tier0_path": "/infra/tier-0s/%s" % tier0_id,
+                         "route_advertisement_types": route_adv.get_obj_dict(),
+                         "ipv6_profile_paths": ["/infra/ipv6-ndra-profiles/"
+                                                "default"]}
         self.policy_api.create_or_update(tier1_def)
         tier1_path = tier1_def.get_resource_path()
         self.assert_json_call('PATCH', self.client,
