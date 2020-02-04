@@ -229,12 +229,23 @@ class ResourceDef(object):
         for attr in attr_list:
             self._set_attr_if_supported(body, attr)
 
+    @property
+    def version_dependant_attr_map(self):
+        """Specify version depenand attributes and supporting NSX version
+
+        Resources that contain version dependant attributes should specify
+        attribute name and first supporting version in map returned from
+        this call.
+        """
+        return {}
+
     def _version_dependant_attr_supported(self, attr):
         """Check if a version dependent attr is supported on current NSX
 
         For each resource def, there could be some attributes which only exist
-        on NSX after certain versions. This abstract method provides a skeleton
-        to define version requirements of version-dependent attributes.
+        on NSX after certain versions. These attrs should be defined on def
+        level via version_dependant_attr_map, where map value indicates NSX
+        version that first exposes the support.
 
         By design, Devs should use _set_attr_if_supported() to add any attrs
         that are only known to NSX after a certain version. This method works
@@ -246,6 +257,21 @@ class ResourceDef(object):
         any version dependent attr unknown to this lib should be excluded
         for security and safety reasons.
         """
+        supporting_version = self.version_dependant_attr_map.get(attr)
+        if not supporting_version:
+            LOG.warning("Supporting version not defined for attr %s. Assuming "
+                        "no support", attr)
+            return False
+
+        if (version.LooseVersion(self.nsx_version) >=
+            version.LooseVersion(supporting_version)):
+            return True
+
+        LOG.warning(
+            "Ignoring %s for %s %s: this feature is not supported."
+            "Current NSX version: %s. Minimum supported version: %s",
+            attr, self.resource_type, self.attrs.get('name', ''),
+            self.nsx_version, supporting_version)
         return False
 
     @classmethod
@@ -472,19 +498,9 @@ class Tier1Def(RouterDef):
             route_adv.set_obj_dict(obj_dict['route_advertisement_types'])
         return route_adv
 
-    def _version_dependant_attr_supported(self, attr):
-        # Attributes supported after 3.0.0
-        if attr in ['pool_allocation']:
-            if (version.LooseVersion(self.nsx_version) >=
-                    version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-                return True
-            else:
-                LOG.warning(
-                    "Attribute %s is not supported. Current NSX version %s, "
-                    "minimum supported version %s",
-                    attr, self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-                return False
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'pool_allocation': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class RouterLocaleServiceDef(ResourceDef):
@@ -509,6 +525,10 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
     def path_ids(self):
         return ('tenant', 'tier0_id', 'service_id')
 
+    @property
+    def version_dependant_attr_map(self):
+        return {'route_redistribution_config': nsx_constants.NSX_VERSION_3_0_0}
+
     def path_defs(self):
         return (TenantDef, Tier0Def)
 
@@ -524,19 +544,6 @@ class Tier0LocaleServiceDef(RouterLocaleServiceDef):
                 if isinstance(config, Tier0RouteRedistributionConfig)
                 else config)
         return body
-
-    def _version_dependant_attr_supported(self, attr):
-        if (version.LooseVersion(self.nsx_version) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr == 'route_redistribution_config':
-                return True
-
-        LOG.warning(
-            "Ignoring %s for %s %s: this feature is not supported."
-            "Current NSX version: %s. Minimum supported version: %s",
-            attr, self.resource_type, self.attrs.get('name', ''),
-            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-        return False
 
 
 class Tier1LocaleServiceDef(RouterLocaleServiceDef):
@@ -914,22 +921,11 @@ class SegmentDef(BaseSegmentDef):
     def path_defs(self):
         return (TenantDef,)
 
-    def _version_dependant_attr_supported(self, attr):
-        if (version.LooseVersion(self.nsx_version) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr in ('metadata_proxy_id',
-                        'dhcp_server_config_id',
-                        'admin_state'):
-                return True
-        else:
-            LOG.warning(
-                "Ignoring %s for %s %s: this feature is not supported."
-                "Current NSX version: %s. Minimum supported version: %s",
-                attr, self.resource_type, self.attrs.get('name', ''),
-                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-            return False
-
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'metadata_proxy_id': nsx_constants.NSX_VERSION_3_0_0,
+                'dhcp_server_config_id': nsx_constants.NSX_VERSION_3_0_0,
+                'admin_state': nsx_constants.NSX_VERSION_3_0_0}
 
     def get_obj_dict(self):
         body = super(SegmentDef, self).get_obj_dict()
@@ -1134,20 +1130,10 @@ class SegmentPortDef(ResourceDef):
 
         return body
 
-    def _version_dependant_attr_supported(self, attr):
-        if (version.LooseVersion(self.nsx_version) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr == 'hyperbus_mode':
-                return True
-            if attr == 'admin_state':
-                return True
-
-        LOG.warning(
-            "Ignoring %s for %s %s: this feature is not supported."
-            "Current NSX version: %s. Minimum supported version: %s",
-            attr, self.resource_type, self.attrs.get('name', ''),
-            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'hyperbus_mode': nsx_constants.NSX_VERSION_3_0_0,
+                'admin_state': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class SegmentBindingMapDefBase(ResourceDef):
@@ -1443,18 +1429,9 @@ class IpPoolBlockSubnetDef(IpPoolSubnetDef):
         self._set_attr_if_supported(body, 'start_ip')
         return body
 
-    def _version_dependant_attr_supported(self, attr):
-        if (version.LooseVersion(self.nsx_version) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr == 'start_ip':
-                return True
-
-        LOG.warning(
-            "Ignoring %s for %s %s: this feature is not supported."
-            "Current NSX version: %s. Minimum supported version: %s",
-            attr, self.resource_type, self.attrs.get('name', ''),
-            self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'start_ip': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class IpPoolStaticSubnetDef(IpPoolSubnetDef):
@@ -1762,18 +1739,9 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
         rule_def.set_obj_dict(rule_dict)
         return rule_def
 
-    def _version_dependant_attr_supported(self, attr):
-        if attr == 'service_entries':
-            if (version.LooseVersion(self.nsx_version) >=
-                    version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-                return True
-            LOG.warning(
-                "Ignoring %s for %s %s: this feature is not supported."
-                "Current NSX version: %s. Minimum supported version: %s",
-                attr, self.resource_type, self.attrs.get('name', ''),
-                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-            return False
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'service_entries': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class CommunicationMapEntryDef(SecurityPolicyRuleBaseDef):
