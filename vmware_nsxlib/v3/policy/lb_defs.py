@@ -14,8 +14,6 @@
 #    under the License.
 #
 
-from distutils import version
-
 from oslo_log import log as logging
 from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3.policy import constants
@@ -388,20 +386,9 @@ class LBServiceDef(ResourceDef):
         self._set_attrs_if_supported(body, ['relax_scale_validation'])
         return body
 
-    def _version_dependant_attr_supported(self, attr):
-        if (version.LooseVersion(self.nsx_version) >=
-            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            if attr == 'relax_scale_validation':
-                return True
-        else:
-            LOG.warning(
-                "Ignoring %s for %s %s: this feature is not supported."
-                "Current NSX version: %s. Minimum supported version: %s",
-                attr, self.resource_type, self.attrs.get('name', ''),
-                self.nsx_version, nsx_constants.NSX_VERSION_3_0_0)
-            return False
-
-        return False
+    @property
+    def version_dependant_attr_map(self):
+        return {'relax_scale_validation': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class LBServiceStatisticsDef(ResourceDef):
