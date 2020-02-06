@@ -138,7 +138,7 @@ class NsxLibBase(object):
     # TODO(abhiraut): Revisit this method to generate complex boolean
     #                 queries to search resources.
     def search_by_tags(self, tags, resource_type=None, cursor=None,
-                       page_size=None):
+                       page_size=None, **extra_attrs):
         """Return the list of resources searched based on tags.
 
         Currently the query only supports AND boolean operator.
@@ -150,6 +150,8 @@ class NsxLibBase(object):
         :param cursor: Opaque cursor to be used for getting next page of
                        records (supplied by current result page).
         :param page_size: Maximum number of results to return in this page.
+        :param extra_attrs: Support querying by user specified attributes.
+                            Multiple attributes will be ANDed.
         """
         if not tags:
             reason = _("Missing required argument 'tags'")
@@ -161,6 +163,9 @@ class NsxLibBase(object):
             query += " AND %s" % query_tags
         else:
             query = query_tags
+        if extra_attrs:
+            query += " AND %s" % " AND ".join(
+                ['%s:%s' % (k, v) for (k, v) in extra_attrs.items()])
         url = self._add_pagination_parameters(self._get_search_url() % query,
                                               cursor, page_size)
 
@@ -209,13 +214,14 @@ class NsxLibBase(object):
 
         return do_search(url)
 
-    def search_all_by_tags(self, tags, resource_type=None):
+    def search_all_by_tags(self, tags, resource_type=None, **extra_attrs):
         """Return all the results searched based on tags."""
         results = []
         cursor = 0
         while True:
-            response = self.search_by_tags(resource_type=resource_type,
-                                           tags=tags, cursor=cursor)
+            response = self.search_by_tags(
+                resource_type=resource_type, tags=tags, cursor=cursor,
+                **extra_attrs)
             if not response['results']:
                 return results
             results.extend(response['results'])

@@ -1792,6 +1792,25 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.search_by_tags(tags=user_tags)
             search.assert_called_with(self.search_path % query)
 
+    def test_nsx_search_tags_with_extra_attribute(self):
+        """Test search of resource with specified tags and one attribute."""
+        with mock.patch.object(self.nsxlib.client, 'url_get') as search:
+            user_tags = [{'tag': 'k8s'}]
+            query = "%s AND %s" % (self.nsxlib._build_query(tags=user_tags),
+                                   'marked_for_delete:False')
+            self.nsxlib.search_by_tags(tags=user_tags, marked_for_delete=False)
+            search.assert_called_with(self.search_path % query)
+
+    def test_nsx_search_tags_with_multi_attributes(self):
+        """Test search of resource with tags and multiple attributes."""
+        with mock.patch.object(self.nsxlib.client, 'url_get') as search:
+            user_tags = [{'tag': 'k8s'}]
+            query = "%s AND %s" % (self.nsxlib._build_query(tags=user_tags),
+                                   'tea:boo AND coffee:False')
+            self.nsxlib.search_by_tags(
+                tags=user_tags, tea='boo', coffee=False)
+            search.assert_called_with(self.search_path % query)
+
     def test_nsx_search_by_resouce_type_and_attributes(self):
         with mock.patch.object(self.nsxlib.client, 'url_get') as search:
             resource_type = 'HorseWithNoName'
