@@ -221,8 +221,12 @@ class NsxOverlapVlan(NsxLibInvalidInput):
                 "physical devices resulting in a conflict")
 
 
-class APITransactionAborted(ServerBusy):
+class APITransactionAborted(ManagerError):
     message = _("API transaction aborted as MP cluster is reconfiguring")
+
+
+class CannotConnectToServer(ManagerError):
+    message = _("Cannot connect to server")
 
 
 class ResourceInUse(ManagerError):
