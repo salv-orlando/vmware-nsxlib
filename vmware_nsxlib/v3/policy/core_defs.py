@@ -1011,14 +1011,6 @@ class DhcpV6StaticBindingConfig(DhcpV4StaticBindingConfig):
                                       'ip_addresses',
                                       'sntp_servers',
                                       'preferred_time'])
-        if (self.has_attr('admin_state') and
-            self._version_dependant_attr_supported('admin_state')):
-            if self.get_attr('admin_state'):
-                admin_state = nsx_constants.ADMIN_STATE_UP
-            else:
-                admin_state = nsx_constants.ADMIN_STATE_DOWN
-            self._set_attr_if_specified(body, 'admin_state',
-                                        value=admin_state)
 
         return body
 
