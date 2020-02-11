@@ -792,7 +792,8 @@ class Subnet(object):
         if self.dhcp_config is not None:
             body['dhcp_config'] = (
                 self.dhcp_config.get_obj_dict()
-                if isinstance(self.dhcp_config, SegmentDhcpConfig)
+                if (isinstance(self.dhcp_config, SegmentDhcpConfigV4) or
+                    isinstance(self.dhcp_config, SegmentDhcpConfigV6))
                 else self.dhcp_config)
         elif (version.LooseVersion(nsx_version) >=
               version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
@@ -801,14 +802,10 @@ class Subnet(object):
         return body
 
 
-class SegmentDhcpConfig(object):
+class SegmentDhcpConfigV4(object):
     def __init__(self, server_address=None, dns_servers=None,
-                 lease_time=None, options=None, is_ipv6=False):
-        if is_ipv6:
-            self.resource_type = 'SegmentDhcpV6Config'
-        else:
-            self.resource_type = 'SegmentDhcpV4Config'
-
+                 lease_time=None, options=None):
+        self.resource_type = 'SegmentDhcpV4Config'
         self.server_address = server_address
         self.dns_servers = dns_servers
         self.lease_time = lease_time
@@ -827,7 +824,37 @@ class SegmentDhcpConfig(object):
                 self.options.get_obj_dict()
                 if isinstance(self.options, DhcpOptions)
                 else self.options)
+        return body
 
+
+class SegmentDhcpConfig(SegmentDhcpConfigV4):
+    # alias to SegmentDhcpConfigV4, for backwards compatibility
+    def __init__(self, server_address=None, dns_servers=None,
+                 lease_time=None, options=None, is_ipv6=False):
+        super(SegmentDhcpConfig, self).__init__(
+            server_address=server_address, dns_servers=dns_servers,
+            lease_time=lease_time, options=options)
+
+
+class SegmentDhcpConfigV6(object):
+    def __init__(self, server_address=None, dns_servers=None,
+                 lease_time=None, domain_names=None):
+        self.resource_type = 'SegmentDhcpV6Config'
+        self.server_address = server_address
+        self.dns_servers = dns_servers
+        self.lease_time = lease_time
+        self.domain_names = domain_names
+
+    def get_obj_dict(self):
+        body = {'resource_type': self.resource_type}
+        if self.server_address:
+            body['server_address'] = self.server_address
+        if self.dns_servers:
+            body['dns_servers'] = self.dns_servers
+        if self.lease_time:
+            body['lease_time'] = self.lease_time
+        if self.domain_names:
+            body['domain_names'] = self.domain_names
         return body
 
 
@@ -1022,7 +1049,6 @@ class DhcpV4StaticBindingConfig(ResourceDef):
 
     def get_obj_dict(self):
         body = super(DhcpV4StaticBindingConfig, self).get_obj_dict()
-        # TODO(asarfaty): add object or v4/6 options
         self._set_attrs_if_specified(body,
                                      ['gateway_address',
                                       'host_name',
@@ -1039,9 +1065,6 @@ class DhcpV6StaticBindingConfig(DhcpV4StaticBindingConfig):
     def resource_type():
         return 'DhcpV6StaticBindingConfig'
 
-    def path_defs(self):
-        return (TenantDef, SegmentDef)
-
     def get_obj_dict(self):
         body = super(DhcpV6StaticBindingConfig, self).get_obj_dict()
         self._set_attrs_if_specified(body,
@@ -1049,8 +1072,8 @@ class DhcpV6StaticBindingConfig(DhcpV4StaticBindingConfig):
                                       'dns_nameservers',
                                       'ip_addresses',
                                       'sntp_servers',
-                                      'preferred_time'])
-
+                                      'preferred_time',
+                                      'options'])
         return body
 
 
