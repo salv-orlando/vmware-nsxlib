@@ -224,7 +224,8 @@ class RESTClient(object):
         if not silent:
 
             LOG.debug("REST call: %s %s. Headers: %s. Body: %s",
-                      method, request_url, request_headers,
+                      method, request_url,
+                      utils.censor_headers(request_headers),
                       self._mask_password(body))
 
         ts = time.time()
