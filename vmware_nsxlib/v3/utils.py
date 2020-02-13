@@ -62,6 +62,18 @@ def set_inject_headers_callback(callback):
     INJECT_HEADERS_CALLBACK = callback
 
 
+def censor_headers(headers):
+    censored_headers = ['authorization']
+    result = {}
+    for name, value in headers.items():
+        if name.lower() in censored_headers:
+            result[name] = '--- CENSORED ---'
+        else:
+            result[name] = value
+
+    return result
+
+
 def _update_resource_length(length):
     global MAX_RESOURCE_TYPE_LEN
     MAX_RESOURCE_TYPE_LEN = length

@@ -323,7 +323,9 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                             resp.headers[header_name])
                 LOG.info("Session create succeeded for endpoint %(url)s with "
                          "headers %(hdr)s",
-                         {'url': provider.url, 'hdr': session.default_headers})
+                         {'url': provider.url,
+                          'hdr':
+                          utils.censor_headers(session.default_headers)})
 
 
 class NSXHTTPAdapter(adapters.HTTPAdapter):
