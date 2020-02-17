@@ -196,10 +196,10 @@ class ResourceDef(object):
     # Helper to set attr in body if user specified it
     # Can be used if body name is different than attr name
     # If value is different than self.get_attr(attr), it can be set in arg
-    def _set_attr_if_specified(self, body, attr,
-                               body_attr=None, value=None):
+    def _set_attr_if_specified(self, body, attr, body_attr=None, **kwargs):
         if self.has_attr(attr):
-            value = value if value is not None else self.get_attr(attr)
+            value = (kwargs['value'] if 'value' in kwargs
+                     else self.get_attr(attr))
             if body_attr:
                 # Body attr is different that attr exposed by resource def
                 body[body_attr] = value
@@ -929,7 +929,8 @@ class SegmentDef(BaseSegmentDef):
 
         if (self.has_attr('metadata_proxy_id') and
             self._version_dependant_attr_supported('metadata_proxy_id')):
-            paths = ""
+            # To remove the metadata proxy, paths must be set to None
+            paths = None
             if self.get_attr('metadata_proxy_id'):
                 mdproxy = MetadataProxyDef(
                     mdproxy_id=self.get_attr('metadata_proxy_id'),
@@ -942,7 +943,8 @@ class SegmentDef(BaseSegmentDef):
         # TODO(asarfaty): Also support relay config here
         if (self.has_attr('dhcp_server_config_id') and
             self._version_dependant_attr_supported('dhcp_server_config_id')):
-            path = ""
+            # To remove the dhcp config, path must be set to None
+            path = None
             if self.get_attr('dhcp_server_config_id'):
                 dhcp_config = DhcpServerConfigDef(
                     config_id=self.get_attr('dhcp_server_config_id'),
