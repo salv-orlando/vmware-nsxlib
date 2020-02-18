@@ -297,6 +297,24 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
 
+    def test_create_with_empty_condition(self):
+        domain_id = '111'
+        name = 'g1'
+        description = 'desc'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, domain_id, description=description,
+                tenant=TEST_TENANT)
+            expected_def = core_defs.GroupDef(domain_id=domain_id,
+                                              group_id=mock.ANY,
+                                              name=name,
+                                              description=description,
+                                              conditions=[],
+                                              tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
     def test_create_with_simple_condition(self):
         domain_id = '111'
         name = 'g1'

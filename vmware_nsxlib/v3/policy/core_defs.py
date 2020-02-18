@@ -1516,11 +1516,13 @@ class GroupDef(ResourceDef):
     def get_obj_dict(self):
         body = super(GroupDef, self).get_obj_dict()
         conds = self.get_attr('conditions')
-        if conds:
+        # If conditions were IGNORE, conds would be None here.
+        # Otherwise, conds could be an empty list which denotes
+        # updating group expression to empty list.
+        if conds is not None:
             conds = conds if isinstance(conds, list) else [conds]
-            if conds:
-                body['expression'] = [condition.get_obj_dict()
-                                      for condition in conds]
+            body['expression'] = [condition.get_obj_dict()
+                                  for condition in conds]
         return body
 
 

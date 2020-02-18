@@ -77,15 +77,15 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
         g1 = {'resource_type': 'Group', 'id': 'group1',
               'display_name': 'g1',
               'description': 'first group',
-              'tags': None}
+              'tags': None, 'expression': []}
         g2 = {'resource_type': 'Group', 'id': 'group2',
               'description': 'second group',
               'display_name': 'g2',
-              'tags': tags}
+              'tags': tags, 'expression': []}
         g3 = {'resource_type': 'Group', 'id': 'group3',
               'display_name': 'g3',
               'description': 'third group',
-              'tags': None}
+              'tags': None, 'expression': []}
         d1 = {'resource_type': 'Domain', 'id': 'domain1',
               'display_name': 'd1', 'description': 'first domain',
               'tags': tags}
@@ -168,10 +168,10 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
 
         g1 = {'resource_type': 'Group', 'id': 'group1',
               'display_name': 'g1',
-              'description': 'first group'}
+              'description': 'first group', 'expression': []}
         g2 = {'resource_type': 'Group', 'id': 'group2',
               'description': 'second group',
-              'display_name': 'g2'}
+              'display_name': 'g2', 'expression': []}
         d1 = {'resource_type': 'Domain', 'id': 'domain1'}
 
         d2 = {'resource_type': 'Domain', 'id': 'domain2'}
