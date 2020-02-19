@@ -711,15 +711,20 @@ class Subnet(object):
         self.dhcp_ranges = dhcp_ranges
         self.dhcp_config = dhcp_config
 
-    def get_obj_dict(self):
+    def get_obj_dict(self, nsx_version):
         body = {'gateway_address': self.gateway_address}
+
         if self.dhcp_ranges:
             body['dhcp_ranges'] = self.dhcp_ranges
-        if self.dhcp_config:
+
+        if self.dhcp_config is not None:
             body['dhcp_config'] = (
                 self.dhcp_config.get_obj_dict()
                 if isinstance(self.dhcp_config, SegmentDhcpConfig)
                 else self.dhcp_config)
+        elif (version.LooseVersion(nsx_version) >=
+              version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
+            body['dhcp_config'] = None
 
         return body
 
@@ -792,7 +797,7 @@ class BaseSegmentDef(ResourceDef):
         if self.has_attr('subnets'):
             subnets = []
             if self.get_attr('subnets'):
-                subnets = [subnet.get_obj_dict()
+                subnets = [subnet.get_obj_dict(self.nsx_version)
                            for subnet in self.get_attr('subnets')]
             self._set_attr_if_specified(body, 'subnets', value=subnets)
 
