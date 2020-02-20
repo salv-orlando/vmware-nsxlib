@@ -948,9 +948,11 @@ class NsxLibTransportNode(utils.NsxLibApiBase):
                 return []
 
             host_switches = tn.get('host_switch_spec').get('host_switches', [])
-
-            return [ep.get('transport_zone_id') for ep in
-                    host_switches[0].get('transport_zone_endpoints', [])]
+            tzs = []
+            for host_switch in host_switches:
+                tzs.extend([ep.get('transport_zone_id') for ep in
+                            host_switch.get('transport_zone_endpoints', [])])
+            return tzs
         else:
             return [ep.get('transport_zone_id') for ep in
                     tn.get('transport_zone_endpoints', [])]
