@@ -244,7 +244,7 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
 
     def delete(self, nsgroup_id):
         try:
-            return self.client.delete(
+            return self._delete_by_path_with_retry(
                 '%s?force=true' % self.get_path(nsgroup_id))
         # FIXME(roeyc): Should only except NotFound error.
         except Exception:
