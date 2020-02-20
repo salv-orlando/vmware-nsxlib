@@ -1908,11 +1908,13 @@ class TransportNode(BaseTestResource):
         tn = self.get_mocked_resource()
         self.nsxlib.feature_supported = mock.MagicMock()
         with mock.patch.object(tn.client, 'url_get', return_value=fake_tn):
+            # Test the api with its 2 versions
             self.nsxlib.feature_supported.side_effect = [False, True]
             tzs = tn.get_transport_zones(fake_tn['id'])
             self.assertEqual([test_constants.FAKE_TZ_UUID], tzs)
             tzs = tn.get_transport_zones(fake_tn['id'])
-            self.assertEqual([test_constants.FAKE_TZ_EP_UUID], tzs)
+            self.assertEqual([test_constants.FAKE_TZ_EP_UUID,
+                              test_constants.FAKE_TZ_EP_UUID2], tzs)
 
 
 class MetadataProxy(BaseTestResource):
