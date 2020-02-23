@@ -31,11 +31,6 @@ from vmware_nsxlib.v3 import utils
 
 LOG = logging.getLogger(__name__)
 
-# Sentitel object to indicate unspecified attribute value
-# None value in attribute would indicate "unset" functionality,
-# while "ignore" means that the value not be present in request
-# body
-
 
 class NsxPolicyLBAppProfileBase(NsxPolicyResourceBase):
     """NSX Policy LB app profile"""
@@ -616,9 +611,18 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             lb_service_id=lb_service_id, tenant=tenant)
         return self.policy_api.get(lb_service_def, silent=silent)
 
-    def list(self, tenant=constants.POLICY_INFRA_TENANT):
+    def list(self, tenant=constants.POLICY_INFRA_TENANT, silent=False,
+             silent_if_empty=False):
+        if not silent and silent_if_empty:
+            # Log only non-empty results
+            silent = True
         lb_service_def = lb_defs.LBServiceDef(tenant=tenant)
-        return self.policy_api.list(lb_service_def)['results']
+        list_results = self.policy_api.list(lb_service_def, silent=silent)
+        if silent_if_empty and list_results.get('results'):
+            LOG.debug("REST call: GET %s. Response: %s",
+                      lb_service_def.get_section_path(), list_results)
+
+        return list_results['results']
 
     def update(self, lb_service_id, name=IGNORE,
                description=IGNORE, tags=IGNORE,
