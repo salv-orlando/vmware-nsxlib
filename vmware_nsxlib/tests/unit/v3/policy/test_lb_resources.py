@@ -847,14 +847,25 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
-    def test_list(self):
+    def _test_list(self, silent=False, silent_if_empty=False):
+        s1 = {'id': 'xxx', 'display_name': 'yyy'}
         with mock.patch.object(self.policy_api, "list",
-                               return_value={'results': []}) as api_call:
-            result = self.resourceApi.list(tenant=TEST_TENANT)
+                               return_value={'results': [s1]}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT, silent=silent,
+                                           silent_if_empty=silent_if_empty)
             expected_def = lb_defs.LBServiceDef(
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
-            self.assertEqual([], result)
+            self.assertEqual([s1], result)
+
+    def test_list(self):
+        self._test_list()
+
+    def test_list_total_silence(self):
+        self._test_list(silent=True)
+
+    def test_list_silent_if_empty(self):
+        self._test_list(silent_if_empty=True)
 
     def test_update(self):
         obj_id = '111'
