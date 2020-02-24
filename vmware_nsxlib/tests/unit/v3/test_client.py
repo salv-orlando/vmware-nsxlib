@@ -363,7 +363,7 @@ class NsxV3APIClientTestCase(nsxlib_testcase.NsxClientTestCase):
     def test_raise_error(self):
         api = self.new_mocked_client(client.NSX3Client)
         with self.assertRaises(nsxlib_exc.ManagerError) as e:
-            api._raise_error(requests.codes.INTERNAL_SERVER_ERROR, 'GET', '')
+            api._raise_error('GET', requests.codes.INTERNAL_SERVER_ERROR, '')
         self.assertEqual(e.exception.status_code,
                          requests.codes.INTERNAL_SERVER_ERROR)
 

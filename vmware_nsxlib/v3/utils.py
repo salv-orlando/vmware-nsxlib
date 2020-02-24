@@ -26,7 +26,7 @@ from tenacity import _utils as tenacity_utils
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import constants
-from vmware_nsxlib.v3 import exceptions as nsxlib_exceptions
+from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3 import nsx_constants
 
 LOG = log.getLogger(__name__)
@@ -105,7 +105,7 @@ def update_tag_limits(limits):
 def _validate_resource_type_length(resource_type):
     # Add in a validation to ensure that we catch this at build time
     if len(resource_type) > MAX_RESOURCE_TYPE_LEN:
-        raise nsxlib_exceptions.NsxLibInvalidInput(
+        raise nsxlib_exc.NsxLibInvalidInput(
             error_message=(_('Resource type cannot exceed %(max_len)s '
                              'characters: %(resource_type)s') %
                            {'max_len': MAX_RESOURCE_TYPE_LEN,
@@ -210,6 +210,26 @@ def retry_upon_none_result(max_attempts, delay=0.5, max_delay=10,
             multiplier=delay, max=max_delay)
     return tenacity.retry(reraise=True,
                           retry=tenacity.retry_if_result(lambda x: x is None),
+                          wait=wait_func,
+                          stop=tenacity.stop_after_attempt(max_attempts),
+                          before=_log_before_retry, after=_log_after_retry)
+
+
+class RetryAttemptsExceeded(tenacity.RetryError):
+    def reraise(self):
+        raise self.last_attempt.result()
+
+
+# Retry when exception is returned by decorated function.
+# If retry attempts are exceeded, reraise the last exception.
+# This is achieved by overriding reraise method of RetryAttemptsExceeded
+def retry_random_upon_exception_result(max_attempts, delay=0.5, max_delay=10):
+    wait_func = tenacity.wait_random_exponential(
+        multiplier=delay, max=max_delay)
+    return tenacity.retry(reraise=True,
+                          retry_error_cls=RetryAttemptsExceeded,
+                          retry=tenacity.retry_if_result(
+                              lambda x: isinstance(x, Exception)),
                           wait=wait_func,
                           stop=tenacity.stop_after_attempt(max_attempts),
                           before=_log_before_retry, after=_log_after_retry)
@@ -432,7 +452,7 @@ class NsxLibApiBase(object):
             # NSX has, we will get a 412: Precondition Failed.
             # In that case we need to re-fetch, patch the response and send
             # it again with the new revision_id
-            @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+            @retry_upon_exception(nsxlib_exc.StaleRevision,
                                   max_attempts=self.max_attempts)
             def do_update():
                 return self._internal_update_resource(
@@ -458,7 +478,7 @@ class NsxLibApiBase(object):
 
     def _delete_by_path_with_retry(self, path):
         # Using internal method so we can access max_attempts in the decorator
-        @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+        @retry_upon_exception(nsxlib_exc.StaleRevision,
                               max_attempts=self.max_attempts)
         def _do_delete():
             self.client.delete(path)
@@ -467,7 +487,7 @@ class NsxLibApiBase(object):
 
     def _create_with_retry(self, resource, body=None, headers=None):
         # Using internal method so we can access max_attempts in the decorator
-        @retry_upon_exception(nsxlib_exceptions.StaleRevision,
+        @retry_upon_exception(nsxlib_exc.StaleRevision,
                               max_attempts=self.max_attempts)
         def _do_create():
             return self.client.create(resource, body, headers=headers)
@@ -489,11 +509,11 @@ class NsxLibApiBase(object):
         if len(matched_results) == 0:
             err_msg = (_("Could not find %(resource)s %(name)s") %
                        {'name': name_or_id, 'resource': resource})
-            raise nsxlib_exceptions.ManagerError(details=err_msg)
+            raise nsxlib_exc.ManagerError(details=err_msg)
         elif len(matched_results) > 1:
             err_msg = (_("Found multiple %(resource)s named %(name)s") %
                        {'name': name_or_id, 'resource': resource})
-            raise nsxlib_exceptions.ManagerError(details=err_msg)
+            raise nsxlib_exc.ManagerError(details=err_msg)
 
         return matched_results[0].get('id')
 
@@ -579,24 +599,24 @@ def validate_icmp_params(icmp_type, icmp_code, icmp_version=4, strict=False):
     if icmp_type:
         if (strict and icmp_type not in
                 constants.IPV4_ICMP_STRICT_TYPES):
-            raise nsxlib_exceptions.InvalidInput(
+            raise nsxlib_exc.InvalidInput(
                 operation='create_rule',
                 arg_val=icmp_type,
                 arg_name='icmp_type')
         if icmp_type not in constants.IPV4_ICMP_TYPES:
-            raise nsxlib_exceptions.InvalidInput(
+            raise nsxlib_exc.InvalidInput(
                 operation='create_rule',
                 arg_val=icmp_type,
                 arg_name='icmp_type')
         if (icmp_code and strict and icmp_code not in
                 constants.IPV4_ICMP_STRICT_TYPES[icmp_type]):
-            raise nsxlib_exceptions.InvalidInput(
+            raise nsxlib_exc.InvalidInput(
                 operation='create_rule',
                 arg_val=icmp_code,
                 arg_name='icmp_code for this icmp_type')
         if (icmp_code and icmp_code not in
                 constants.IPV4_ICMP_TYPES[icmp_type]):
-            raise nsxlib_exceptions.InvalidInput(
+            raise nsxlib_exc.InvalidInput(
                 operation='create_rule',
                 arg_val=icmp_code,
                 arg_name='icmp_code for this icmp_type')
@@ -610,7 +630,7 @@ def get_l4_protocol_name(protocol_number):
     try:
         protocol_number = int(protocol_number)
     except ValueError:
-        raise nsxlib_exceptions.InvalidInput(
+        raise nsxlib_exc.InvalidInput(
             operation='create_rule',
             arg_val=protocol_number,
             arg_name='protocol')

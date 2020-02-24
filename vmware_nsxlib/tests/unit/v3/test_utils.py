@@ -305,6 +305,43 @@ class TestNsxV3Utils(nsxlib_testcase.NsxClientTestCase):
         self.assertRaises(exceptions.NsxLibInvalidInput, func_to_fail, 99)
         self.assertEqual(max_retries, total_count['val'])
 
+    def test_retry_random_upon_exception_result_retry(self):
+        total_count = {'val': 0}
+        max_retries = 3
+
+        @utils.retry_random_upon_exception_result(max_retries)
+        def func_to_fail():
+            total_count['val'] = total_count['val'] + 1
+            return exceptions.NsxLibInvalidInput(error_message='foo')
+
+        self.assertRaises(exceptions.NsxLibInvalidInput, func_to_fail)
+        self.assertEqual(max_retries, total_count['val'])
+
+    def test_retry_random_upon_exception_result_no_retry(self):
+        total_count = {'val': 0}
+
+        @utils.retry_random_upon_exception_result(3)
+        def func_to_fail():
+            total_count['val'] = total_count['val'] + 1
+            raise exceptions.NsxLibInvalidInput(error_message='foo')
+
+        self.assertRaises(exceptions.NsxLibInvalidInput, func_to_fail)
+        # should not retry since exception is raised, and not returned
+        self.assertEqual(1, total_count['val'])
+
+    def test_retry_random_upon_exception_result_no_retry2(self):
+        total_count = {'val': 0}
+        ret_val = 42
+
+        @utils.retry_random_upon_exception_result(3)
+        def func_to_fail():
+            total_count['val'] = total_count['val'] + 1
+            return ret_val
+
+        self.assertEqual(ret_val, func_to_fail())
+        # should not retry since no exception is returned
+        self.assertEqual(1, total_count['val'])
+
     @mock.patch.object(utils, '_update_max_nsgroups_criteria_tags')
     @mock.patch.object(utils, '_update_max_tags')
     @mock.patch.object(utils, '_update_tag_length')

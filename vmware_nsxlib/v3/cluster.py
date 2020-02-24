@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+
 import abc
 import contextlib
 import copy
@@ -31,7 +32,6 @@ from oslo_log import log
 from oslo_service import loopingcall
 import requests
 from requests import adapters
-from requests import exceptions as requests_exceptions
 import six
 import six.moves.urllib.parse as urlparse
 import urllib3
@@ -77,20 +77,6 @@ class AbstractHTTPProvider(object):
         requests.Session http methods (get(), put(), etc.).
         """
         pass
-
-    @abc.abstractmethod
-    def is_connection_exception(self, exception):
-        """Determine if the given exception is related to connection failure.
-
-        Return True if it's a connection exception and False otherwise.
-        """
-
-    @abc.abstractmethod
-    def is_timeout_exception(self, exception):
-        """Determine if the given exception is related to timeout.
-
-        Return True if it's a timeout exception and False otherwise.
-        """
 
 
 class TimeoutSession(requests.Session):
@@ -244,15 +230,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                                  config.token_provider)
 
         return session
-
-    def is_connection_exception(self, exception):
-        return isinstance(exception, requests_exceptions.ConnectionError)
-
-    def is_timeout_exception(self, exception):
-        return isinstance(exception, requests_exceptions.Timeout)
-
-    def is_conn_open_exception(self, exception):
-        return isinstance(exception, requests_exceptions.ConnectTimeout)
 
     def get_default_headers(self, session, provider, allow_overwrite_header,
                             token_provider=None):
@@ -586,7 +563,12 @@ class ClusteredAPI(object):
             # regenerate connection pool based on token
             endpoint.regenerate_pool()
         except Exception as e:
-            endpoint.set_state(EndpointState.DOWN)
+            if self.nsxlib_config.exception_config.should_retry(e):
+                LOG.info("Exception is retriable, endpoint stays UP")
+                endpoint.set_state(EndpointState.UP)
+            else:
+                endpoint.set_state(EndpointState.DOWN)
+
             LOG.warning("Failed to validate API cluster endpoint "
                         "'%(ep)s' due to: %(err)s",
                         {'ep': endpoint, 'err': e})
@@ -667,6 +649,20 @@ class ClusteredAPI(object):
                 # slow rate at once per 33 seconds by default.
                 yield EndpointConnection(endpoint, conn, conn_wait, rate_wait)
 
+    def _raise_http_exception_if_needed(self, response):
+        # We need to inspect http codes to understand whether
+        # this error is relevant for endpoint-level decisions, such
+        # as ground endpoint or retry with next endpoint
+        exc = nsx_client.init_http_exception_from_response(response)
+        if not exc:
+            # This exception is irrelevant for endpoint decisions
+            return
+
+        exc_config = self.nsxlib_config.exception_config
+        if (exc_config.should_ground_endpoint(exc) or
+            exc_config.should_retry(exc)):
+            raise exc
+
     def _proxy_stub(self, proxy_for):
         def _call_proxy(url, *args, **kwargs):
             return self._proxy(proxy_for, url, *args, **kwargs)
@@ -674,7 +670,8 @@ class ClusteredAPI(object):
 
     def _proxy(self, proxy_for, uri, *args, **kwargs):
 
-        @utils.retry_upon_none_result(self.nsxlib_config.max_attempts)
+        @utils.retry_random_upon_exception_result(
+            max_attempts=self.nsxlib_config.max_attempts)
         def _proxy_internal(proxy_for, uri, *args, **kwargs):
             # proxy http request call to an avail endpoint
             with self.endpoint_connection() as conn_data:
@@ -702,22 +699,29 @@ class ClusteredAPI(object):
                     response = do_request(url, *args, **kwargs)
                     endpoint.set_state(EndpointState.UP)
 
+                    # for some status codes, we need to bring the cluster
+                    # down or retry API call
+                    self._raise_http_exception_if_needed(response)
+
                     return response
                 except Exception as e:
                     LOG.warning("Request failed due to: %s", e)
-                    if (not self._http_provider.is_connection_exception(e) and
-                        not self._http_provider.is_timeout_exception(e)):
-                        # only trap and retry connection & timeout errors
-                        raise e
-                    if self._http_provider.is_conn_open_exception(e):
-                        # unable to establish new connection - endpoint is
-                        # inaccessible
+                    exc_config = self.nsxlib_config.exception_config
+                    if exc_config.should_ground_endpoint(e):
+                        # consider endpoint inaccessible and move to next
+                        # endpoint
                         endpoint.set_state(EndpointState.DOWN)
 
-                    LOG.info("Connection to %s failed, checking additional "
-                             "connections and endpoints" % url)
-                    # this might be a result of server closing connection
-                    # return None so it will retry upto max_attempts.
+                    elif not exc_config.should_retry(e):
+                        LOG.info("Exception %s is configured as not retriable",
+                                 e)
+                        raise e
+
+                    # Returning the exception instead of raising it will cause
+                    # decarator to retry. If retry attempts is exceeded, this
+                    # same exception will be raised due to overriden reraise
+                    # method of RetryAttemptsExceeded
+                    return e
 
         return _proxy_internal(proxy_for, uri, *args, **kwargs)
 

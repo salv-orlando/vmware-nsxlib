@@ -16,7 +16,43 @@
 from oslo_log import log
 from oslo_log import versionutils
 
+from requests import exceptions as requests_exceptions
+
+from vmware_nsxlib.v3 import exceptions as v3_exceptions
+
 LOG = log.getLogger(__name__)
+
+
+class ExceptionConfig(object):
+
+    def __init__(self):
+        # When hit during API call, these exceptions will mark
+        # endpoint as DOWN immediately
+        # This setting has no effect on keepalive validation
+        self.ground_triggers = [requests_exceptions.ConnectionError,
+                                requests_exceptions.Timeout]
+
+        # When hit during API call, these exceptions will be
+        # retried with next available endpoint
+        # When hit during validation, these exception will not
+        # mark endpoint as DOWN
+        self.retriables = [v3_exceptions.APITransactionAborted,
+                           v3_exceptions.CannotConnectToServer,
+                           v3_exceptions.ServerBusy]
+
+    def should_ground_endpoint(self, ex):
+        for exception in self.ground_triggers:
+            if isinstance(ex, exception):
+                return True
+
+        return False
+
+    def should_retry(self, ex):
+        for exception in self.retriables:
+            if isinstance(ex, exception):
+                return True
+
+        return False
 
 
 class NsxLibConfig(object):
@@ -135,7 +171,8 @@ class NsxLibConfig(object):
                  allow_passthrough=False,
                  realization_max_attempts=50,
                  realization_wait_sec=1.0,
-                 api_rate_limit_per_endpoint=None):
+                 api_rate_limit_per_endpoint=None,
+                 exception_config=None):
 
         self.nsx_api_managers = nsx_api_managers
         self._username = username
@@ -164,6 +201,7 @@ class NsxLibConfig(object):
         self.realization_max_attempts = realization_max_attempts
         self.realization_wait_sec = realization_wait_sec
         self.api_rate_limit_per_endpoint = api_rate_limit_per_endpoint
+        self.exception_config = exception_config or ExceptionConfig()
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
             LOG.warning("When only one endpoint is provided, keepalive probes"
