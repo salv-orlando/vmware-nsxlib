@@ -457,6 +457,7 @@ class ClusteredAPI(object):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
+        self._print_keepalive = 0
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers,
@@ -508,13 +509,18 @@ class ClusteredAPI(object):
                 break
             eventlet.sleep(0.5)
 
-        for endpoint in self._endpoints.values():
-            # dynamic loop for each endpoint to ensure connectivity
-            loop = loopingcall.DynamicLoopingCall(
-                self._endpoint_keepalive, endpoint)
-            loop.start(initial_delay=self._keepalive_interval,
-                       periodic_interval_max=self._keepalive_interval,
-                       stop_on_exception=False)
+        if len(self._endpoints) > 1:
+            # We don't monitor connectivity when one endpoint is available,
+            # since there is no alternative to querying this single backend
+            # If endpoint was down, we can tolerate extra roundtrip to
+            # validate connectivity
+            for endpoint in self._endpoints.values():
+                # dynamic loop for each endpoint to ensure connectivity
+                loop = loopingcall.DynamicLoopingCall(
+                    self._endpoint_keepalive, endpoint)
+                loop.start(initial_delay=self._keepalive_interval,
+                           periodic_interval_max=self._keepalive_interval,
+                           stop_on_exception=False)
 
         LOG.debug("Done initializing API endpoint(s). "
                   "API cluster health: %s", self.health)
@@ -523,6 +529,13 @@ class ClusteredAPI(object):
         delta = datetime.datetime.now() - endpoint.last_updated
         if delta.seconds >= self._keepalive_interval:
             # TODO(boden): backoff on validation failure
+            if self._print_keepalive % 10 == 0:
+                # Print keepalive debug message once every 10 probes
+                LOG.debug("Running keepalive probe for cluster endpoint "
+                          "'%(ep)s' ",
+                          {'ep': endpoint})
+            self._print_keepalive += 1
+
             self._validate(endpoint)
             return self._keepalive_interval
         return self._keepalive_interval - delta.seconds
