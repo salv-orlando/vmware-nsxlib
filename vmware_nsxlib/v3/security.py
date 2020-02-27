@@ -471,19 +471,19 @@ class NsxLibFirewallSection(utils.NsxLibApiBase):
     def add_rule(self, rule, section_id, operation=consts.FW_INSERT_BOTTOM):
         @utils.retry_upon_exception(exceptions.StaleRevision,
                                     max_attempts=self.client.max_attempts)
-        def do_add_rule():
+        def _do_add_rule():
             resource = '%s/rules' % self.get_path(section_id)
             params = '?operation=%s' % operation
             if (version.LooseVersion(self.nsxlib.get_version()) >=
                 version.LooseVersion(consts.NSX_VERSION_2_4_0)):
                 rule['_revision'] = self.get(section_id)['_revision']
-            return self._create_with_retry(resource + params, rule)
-        return do_add_rule()
+            return self.client.create(resource + params, rule)
+        return _do_add_rule()
 
     def add_rules(self, rules, section_id, operation=consts.FW_INSERT_BOTTOM):
         @utils.retry_upon_exception(exceptions.StaleRevision,
                                     max_attempts=self.client.max_attempts)
-        def do_add_rules():
+        def _do_add_rules():
             resource = '%s/rules' % self.get_path(section_id)
             params = '?action=create_multiple&operation=%s' % operation
             if (version.LooseVersion(self.nsxlib.get_version()) >=
@@ -491,8 +491,8 @@ class NsxLibFirewallSection(utils.NsxLibApiBase):
                 rev_id = self.get(section_id)['_revision']
                 for rule in rules:
                     rule['_revision'] = rev_id
-            return self._create_with_retry(resource + params, {'rules': rules})
-        return do_add_rules()
+            return self.client.create(resource + params, {'rules': rules})
+        return _do_add_rules()
 
     def delete_rule(self, section_id, rule_id):
         resource = '%s/rules/%s' % (section_id, rule_id)

@@ -299,6 +299,44 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
                 data = {'tags': fws_tags}
                 update.assert_called_with(resource, data, headers=None)
 
+    def test_create_rules_using_add_rules(self):
+        revision = 5
+        with mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
+                        return_value='2.5.0'),\
+            mock.patch.object(self.nsxlib.client, 'get',
+                              return_value={'_revision': revision}),\
+            mock.patch.object(self.nsxlib.client, 'create') as create:
+            rule_id = uuidutils.generate_uuid()
+            rule = {'id': rule_id,
+                    'ethertype': 'IPv4',
+                    'protocol': 'ipip',
+                    'direction': 'ingress',
+                    'remote_ip_prefix': None}
+            rules = [rule]
+            section_id = 'section-id'
+            group_id = 'nsgroup-id'
+            target_id = 'dummy'
+            self.nsxlib.firewall_section.create_rules(
+                None, section_id, group_id, False,
+                "ALLOW", rules, {rule_id: target_id})
+            expected_rule = {'display_name': mock.ANY,
+                             'ip_protocol': 'IPV4',
+                             'direction': 'IN',
+                             'services': [{'service': {
+                                 'resource_type': 'IPProtocolNSService',
+                                 'protocol_number': 4}}],
+                             '_revision': revision,
+                             'disabled': False,
+                             'sources': [{'target_id': target_id,
+                                          'target_type': 'NSGroup'}],
+                             'destinations': [{'target_id': group_id,
+                                               'target_type': 'NSGroup'}],
+                             'logged': False, 'action': 'ALLOW'}
+            create.assert_called_once_with(
+                'firewall/sections/%s/rules?action=create_multiple&'
+                'operation=insert_bottom' % section_id,
+                {'rules': [expected_rule]})
+
 
 class TestNsxLibIPSet(nsxlib_testcase.NsxClientTestCase):
     """Tests for vmware_nsxlib.v3.security.NsxLibIPSet"""
