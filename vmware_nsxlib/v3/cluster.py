@@ -198,14 +198,17 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
 
         # If keeplive section returns a list, it is assumed to be non-empty
         keepalive_section = cluster_api.nsxlib_config.keepalive_section
-        result = client.get(keepalive_section, silent=True)
-        if not result or result.get('result_count', 1) <= 0:
-            msg = _("No %(section)s found "
-                    "for '%(url)s'") % {'section': keepalive_section,
-                                        'url': endpoint.provider.url}
-            LOG.warning(msg)
-            raise exceptions.ResourceNotFound(
-                manager=endpoint.provider.url, operation=msg)
+        # When validate connection also has the effect of keep-alive,
+        # keepalive_section can be disabled by passing in an empty value
+        if keepalive_section:
+            result = client.get(keepalive_section, silent=True)
+            if not result or result.get('result_count', 1) <= 0:
+                msg = _("No %(section)s found "
+                        "for '%(url)s'") % {'section': keepalive_section,
+                                            'url': endpoint.provider.url}
+                LOG.warning(msg)
+                raise exceptions.ResourceNotFound(
+                    manager=endpoint.provider.url, operation=msg)
 
     def new_connection(self, cluster_api, provider):
         config = cluster_api.nsxlib_config

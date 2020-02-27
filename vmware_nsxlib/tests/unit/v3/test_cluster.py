@@ -184,6 +184,21 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
                                return_value={'result_count': 1}):
             provider.validate_connection(mock_cluster, mock_ep, mock_conn)
 
+    def test_validate_connection_no_keep_alive(self):
+        mock_conn = mocks.MockRequestSessionApi()
+        mock_conn.default_headers = {}
+        mock_ep = mock.Mock()
+        mock_ep.provider.url = 'https://1.2.3.4'
+        mock_cluster = mock.Mock()
+        mock_cluster.nsxlib_config = mock.Mock()
+        mock_cluster.nsxlib_config.url_base = 'abc'
+        mock_cluster.nsxlib_config.keepalive_section = None
+        provider = cluster.NSXRequestsHTTPProvider()
+
+        with mock.patch.object(client.JSONRESTClient, "get") as mock_get:
+            provider.validate_connection(mock_cluster, mock_ep, mock_conn)
+            mock_get.assert_not_called()
+
     def _validate_con_mocks(self, nsx_version):
         nsxlib_config = nsxlib_testcase.get_default_nsxlib_config()
         nsxlib = v3.NsxLib(nsxlib_config)
