@@ -56,17 +56,6 @@ def _mock_nsxlib():
     def _return_id_key(*args, **kwargs):
         return {'id': uuidutils.generate_uuid()}
 
-    def _mock_add_rules_in_section(*args):
-        # NOTE(arosen): the code in the neutron plugin expects the
-        # neutron rule id as the display_name.
-        rules = args[0]
-        return {
-            'rules': [
-                {'display_name': rule['display_name'],
-                 'id': uuidutils.generate_uuid()}
-                for rule in rules
-            ]}
-
     def _mock_limits(*args):
         return utils.TagLimits(20, 40, 15)
 
@@ -89,10 +78,6 @@ def _mock_nsxlib():
 
     mocking.append(mock.patch(
         "vmware_nsxlib.v3.security.NsxLibNsGroup.list"))
-
-    mocking.append(mock.patch(
-        "vmware_nsxlib.v3.security.NsxLibFirewallSection.add_rules",
-        side_effect=_mock_add_rules_in_section))
 
     mocking.append(mock.patch(
         ("vmware_nsxlib.v3.core_resources."
