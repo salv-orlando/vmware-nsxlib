@@ -215,20 +215,7 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         mock_cluster.nsxlib_config = conf
         return (mock_cluster, mock_ep, mock_conn)
 
-    def test_validate_connection_method_v1(self):
-        mock_cluster, mock_ep, mock_conn = self._validate_con_mocks('2.3.0')
-        provider = cluster.NSXRequestsHTTPProvider()
-        with mock.patch.object(client.JSONRESTClient, "get",
-                               return_value={'application_status': 'DOWN'}):
-            self.assertRaises(nsxlib_exc.ResourceNotFound,
-                              provider.validate_connection,
-                              mock_cluster, mock_ep, mock_conn)
-
-        with mock.patch.object(client.JSONRESTClient, "get",
-                               return_value={'application_status': 'WORKING'}):
-            provider.validate_connection(mock_cluster, mock_ep, mock_conn)
-
-    def test_validate_connection_method_v2(self):
+    def test_validate_connection_method(self):
         mock_cluster, mock_ep, mock_conn = self._validate_con_mocks('2.4.0')
         provider = cluster.NSXRequestsHTTPProvider()
         with mock.patch.object(client.JSONRESTClient, "get",
