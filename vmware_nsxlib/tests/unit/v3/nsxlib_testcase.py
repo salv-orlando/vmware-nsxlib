@@ -239,7 +239,8 @@ class NsxClientTestCase(NsxLibTestCase):
                 nsx_api_managers=nsx_api_managers or [NSX_MANAGER],
                 plugin_scope=PLUGIN_SCOPE,
                 plugin_tag=PLUGIN_TAG,
-                plugin_ver=PLUGIN_VER)
+                plugin_ver=PLUGIN_VER,
+                cluster_unavailable_retry=True)
 
             super(NsxClientTestCase.MockNSXClusteredAPI, self).__init__(
                 nsxlib_config)

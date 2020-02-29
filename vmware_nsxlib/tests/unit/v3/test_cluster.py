@@ -392,6 +392,7 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         max_attempts = 3
         api = self.mock_nsx_clustered_api(nsx_api_managers=conf_managers,
                                           max_attempts=max_attempts)
+        api.nsxlib_config.cluster_unavailable_retry = False
         api._validate = mock.Mock()
         eps = list(api._endpoints.values())
 

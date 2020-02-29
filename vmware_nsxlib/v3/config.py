@@ -85,7 +85,11 @@ class NsxLibConfig(object):
     :param cluster_unavailable_retry: If True, skip fatal errors when no
                                       endpoint in the NSX management cluster is
                                       available to serve a request, and retry
-                                      the request instead.
+                                      the request instead. This setting can
+                                      not be False if single endpoint is
+                                      configured in the cluster, since there
+                                      will be no keepalive probes in this
+                                      case.
 
     -- Additional parameters which are relevant only for the Policy manager:
     :param allow_passthrough: If True, use nsx manager api for cases which are
@@ -151,6 +155,13 @@ class NsxLibConfig(object):
         self.allow_passthrough = allow_passthrough
         self.realization_max_attempts = realization_max_attempts
         self.realization_wait_sec = realization_wait_sec
+
+        if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
+            LOG.warning("When only one endpoint is provided, keepalive probes "
+                        " are disabled. For the system to be able to recover "
+                        " from DOWN state, cluster_unavailable_retry is set "
+                        " to True, overriding provided configuration")
+            self.cluster_unavailable_retry = True
 
         if dhcp_profile_uuid:
             # this is deprecated, and never used.
