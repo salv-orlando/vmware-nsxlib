@@ -147,6 +147,7 @@ NSX_VERSION_2_3_0 = '2.3.0'
 NSX_VERSION_2_4_0 = '2.4.0'
 NSX_VERSION_2_5_0 = '2.5.0'
 NSX_VERSION_3_0_0 = '3.0.0'
+NSX_VERSION_3_1_0 = '3.1.0'
 
 # Features available depending on the NSX Manager backend version
 FEATURE_MAC_LEARNING = 'MAC Learning'
@@ -172,6 +173,9 @@ FEATURE_PARTIAL_UPDATES = 'Partial Update with PATCH'
 FEATURE_RELAX_SCALE_VALIDATION = 'Relax Scale Validation for LbService'
 FEATURE_SWITCH_HYPERBUS_MODE = 'Switch hyperbus mode with policy API'
 FEATURE_GET_TZ_FROM_SWITCH = 'Get TZ endpoints from host switch'
+FEATURE_CONTAINER_CLUSTER_INVENTORY = 'Container Cluster Inventory'
+FEATURE_IPV6 = 'IPV6 Forwarding and Address Allocation'
+FEATURE_MP2P_MIGRATION = 'MP to Policy Migration'
 
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'
@@ -180,8 +184,3 @@ FEATURE_NSX_POLICY_MDPROXY = 'NSX Policy Metadata Proxy'
 FEATURE_NSX_POLICY_DHCP = 'NSX Policy DHCP'
 FEATURE_NSX_POLICY_GLOBAL_CONFIG = 'NSX Policy Global Config'
 FEATURE_NSX_POLICY_ADMIN_STATE = 'NSX Policy Segment admin state'
-
-# FEATURE available depending on Inventory service backend version
-FEATURE_CONTAINER_CLUSTER_INVENTORY = 'Container Cluster Inventory'
-
-FEATURE_IPV6 = 'IPV6 Forwarding and Address Allocation'

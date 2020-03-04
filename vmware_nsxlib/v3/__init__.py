@@ -168,6 +168,12 @@ class NsxLib(lib.NsxLibBase):
 
     def feature_supported(self, feature):
         if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_1_0)):
+            # features available since 3.1.0
+            if (feature == nsx_constants.FEATURE_MP2P_MIGRATION):
+                return True
+
+        if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
             # features available since 3.0.0
             if (feature == nsx_constants.FEATURE_GET_TZ_FROM_SWITCH):
