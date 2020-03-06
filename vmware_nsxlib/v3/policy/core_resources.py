@@ -498,12 +498,19 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
 
     def build_union_condition(self, operator=constants.CONDITION_OP_OR,
                               conditions=None):
+        # NSX don't allow duplicate expressions in expression list
+        # of a group -> (ERROR: Duplicate expressions specified)
+        # Members of input conditions is either instance of Condition
+        # or NestedExpression class.
         expressions = []
-        for cond in conditions:
-            if len(expressions):
-                expressions.append(core_defs.ConjunctionOperator(
-                    operator=operator))
-            expressions.append(cond)
+        if conditions:
+            conditions = list(set(conditions))
+            expressions = []
+            for cond in conditions:
+                if len(expressions):
+                    expressions.append(core_defs.ConjunctionOperator(
+                        operator=operator))
+                expressions.append(cond)
         return expressions
 
     def build_nested_condition(

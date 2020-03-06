@@ -384,8 +384,16 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
             cond_op=cond_op,
             cond_member_type=cond_member_type,
             cond_key=cond_key)
-        union_cond = self.resourceApi.build_union_condition(
+        cond1_dup = self.resourceApi.build_condition(
+            cond_val=cond_val1,
+            cond_op=cond_op,
+            cond_member_type=cond_member_type,
+            cond_key=cond_key)
+
+        union_cond_no_dup = self.resourceApi.build_union_condition(
             conditions=[cond1, cond2])
+        union_cond_dup = self.resourceApi.build_union_condition(
+            conditions=[cond1, cond1_dup])
 
         exp_cond1 = core_defs.Condition(value=cond_val1,
                                         key=cond_key,
@@ -397,8 +405,10 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
                                         member_type=cond_member_type)
         or_cond = core_defs.ConjunctionOperator(
             operator=constants.CONDITION_OP_OR)
-        exp_cond = [exp_cond1, or_cond, exp_cond2]
-        self._test_create_with_condition(union_cond, exp_cond)
+        exp_cond = list(set([exp_cond1, exp_cond2]))
+        exp_cond.insert(1, or_cond)
+        self._test_create_with_condition(union_cond_no_dup, exp_cond)
+        self._test_create_with_condition(union_cond_dup, [exp_cond1])
 
     def test_create_with_nested_condition(self):
         cond_val1 = '123'
@@ -429,9 +439,48 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
                                         operator=cond_op,
                                         member_type=cond_member_type)
         and_cond = core_defs.ConjunctionOperator()
-        exp_cond = core_defs.NestedExpression(
-            expressions=[exp_cond1, and_cond, exp_cond2])
+        expressions = list(set([exp_cond1, exp_cond2]))
+        expressions.insert(1, and_cond)
+        exp_cond = core_defs.NestedExpression(expressions=expressions)
         self._test_create_with_condition(nested, exp_cond)
+
+    def test_create_with_dup_nested_condition(self):
+        cond_val1 = '123'
+        cond_val2 = '456'
+        cond_op = constants.CONDITION_OP_EQUALS
+        cond_member_type = constants.CONDITION_MEMBER_VM
+        cond_key = constants.CONDITION_KEY_TAG
+
+        cond1 = self.resourceApi.build_condition(
+            cond_val=cond_val1,
+            cond_op=cond_op,
+            cond_member_type=cond_member_type,
+            cond_key=cond_key)
+        cond2 = self.resourceApi.build_condition(
+            cond_val=cond_val2,
+            cond_op=cond_op,
+            cond_member_type=cond_member_type,
+            cond_key=cond_key)
+        nested = self.resourceApi.build_nested_condition(
+            conditions=[cond1, cond2])
+
+        cond1_dup = self.resourceApi.build_condition(
+            cond_val=cond_val1,
+            cond_op=cond_op,
+            cond_member_type=cond_member_type,
+            cond_key=cond_key)
+        cond2_dup = self.resourceApi.build_condition(
+            cond_val=cond_val2,
+            cond_op=cond_op,
+            cond_member_type=cond_member_type,
+            cond_key=cond_key)
+        nested_dup = self.resourceApi.build_nested_condition(
+            conditions=[cond1_dup, cond2_dup])
+
+        double_nested = self.resourceApi.build_nested_condition(
+            conditions=[nested, nested_dup])
+        exp_cond = core_defs.NestedExpression(expressions=[nested])
+        self._test_create_with_condition(double_nested, exp_cond)
 
     def test_create_with_ip_expression(self):
         domain_id = '111'

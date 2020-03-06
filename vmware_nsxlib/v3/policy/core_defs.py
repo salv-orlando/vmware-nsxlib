@@ -1485,6 +1485,14 @@ class Condition(object):
                 'value': self.value,
                 'operator': self.operator}
 
+    def __eq__(self, other):
+        if isinstance(other, Condition):
+            return self.get_obj_dict() == other.get_obj_dict()
+        return False
+
+    def __hash__(self):
+        return hash(tuple(self.get_obj_dict().values()))
+
 
 class IPAddressExpression(object):
     def __init__(self, ip_addresses):
@@ -1520,6 +1528,46 @@ class NestedExpression(object):
     def get_obj_dict(self):
         return {'resource_type': 'NestedExpression',
                 'expressions': [ex.get_obj_dict() for ex in self.expressions]}
+
+    def _get_unique_expressions(self):
+        """Only AND operator is supported in a nested expression.
+
+        When comparing two nested expressions, only checking the Conditions
+        in the expression list will suffice since all ConjunctionOperators
+        will be the same.
+        """
+        expr_list = self.get_obj_dict()['expressions']
+        unique_exprs = [expr for expr in expr_list
+                        if expr.get('resource_type') != 'ConjunctionOperator']
+        return unique_exprs
+
+    def __eq__(self, other):
+
+        def expr_identifier(expr):
+            return expr.get('member_type'), expr.get('value')
+
+        if not isinstance(other, NestedExpression):
+            return False
+        self_expr_list = self._get_unique_expressions()
+        other_expr_list = other._get_unique_expressions()
+        if len(self_expr_list) != len(other_expr_list):
+            return False
+        # Each expression dict in the list should be uniquely identified by
+        # (expr.member_type, expr.value pair). In case of segment expressions,
+        # the identifier will be of format ("Segment", "tag_scope|tag_value")
+        self_sorted = sorted(self_expr_list, key=expr_identifier)
+        other_sorted = sorted(other_expr_list, key=expr_identifier)
+        for i in range(len(self_sorted)):
+            if not all(item in other_sorted[i].items()
+                       for item in self_sorted[i].items()):
+                return False
+        return True
+
+    def __hash__(self):
+        # List is not hashable in python
+        value_list = [tuple(expr.values())
+                      for expr in self._get_unique_expressions()]
+        return hash(tuple(value_list))
 
 
 class GroupDef(ResourceDef):
