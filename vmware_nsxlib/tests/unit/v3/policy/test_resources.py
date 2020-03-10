@@ -2161,6 +2161,75 @@ class TestPolicyGatewayPolicy(TestPolicyCommunicationMap):
         self.resource_type = 'GatewayPolicy'
         self.path_name = 'gateway-policies'
 
+    def test_build_entry(self):
+        domain_id = '111'
+        map_id = '222'
+        name = 'rule1'
+        desc = 'desc'
+        dest_group = 'g1'
+        service_id = 's1'
+        policy_id = 'policy1'
+        ip_protocol = nsx_constants.IPV4
+        rule_id = 1
+        entry1 = self.resourceApi.build_entry(
+            name, domain_id, map_id, entry_id=rule_id, description=desc,
+            sequence_number=rule_id, service_ids=[service_id],
+            action=constants.ACTION_DENY,
+            scope=policy_id,
+            source_groups=None, dest_groups=[dest_group],
+            direction=nsx_constants.IN,
+            ip_protocol=ip_protocol)
+        expected_dict1 = {
+            'display_name': 'rule1',
+            'id': 1,
+            'description': 'desc',
+            'resource_type': 'Rule',
+            'scope': 'policy1',
+            'ip_protocol': 'IPV4',
+            'sequence_number': 1,
+            'action': 'DROP',
+            'source_groups': ['ANY'],
+            'destination_groups': ['/infra/domains/111/groups/g1'],
+            'direction': 'IN',
+            'logged': False,
+            'services': ['/infra/services/s1'],
+            'tag': None}
+        self.assertEqual(entry1.get_obj_dict(), expected_dict1)
+
+        entry2 = self.resourceApi.build_entry(
+            name, domain_id, map_id, entry_id=rule_id, description=desc,
+            sequence_number=rule_id, service_ids=[service_id],
+            action=constants.ACTION_DENY,
+            scope=policy_id,
+            dest_groups=[dest_group],
+            direction=nsx_constants.IN,
+            ip_protocol=ip_protocol,
+            plain_groups=True)
+        expected_dict2 = {
+            'display_name': 'rule1',
+            'id': 1,
+            'description': 'desc',
+            'resource_type': 'Rule',
+            'scope': 'policy1',
+            'ip_protocol': 'IPV4',
+            'sequence_number': 1,
+            'action': 'DROP',
+            'source_groups': ['ANY'],
+            'destination_groups': ['g1'],
+            'direction': 'IN',
+            'logged': False,
+            'services': ['/infra/services/s1'],
+            'tag': None}
+        self.assertEqual(entry2.get_obj_dict(), expected_dict2)
+
+        with mock.patch.object(self.resourceApi, 'version', '0.0.0'):
+            self.assertRaises(nsxlib_exc.NsxLibInvalidInput,
+                              self.resourceApi.build_entry,
+                              name, domain_id, map_id, entry_id=rule_id,
+                              description=desc, sequence_number=rule_id,
+                              service_ids=[service_id], scope=policy_id,
+                              dest_groups=[dest_group], plain_groups=True)
+
 
 class TestPolicyEnforcementPoint(NsxPolicyLibTestCase):
 
