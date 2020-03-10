@@ -3336,8 +3336,19 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                     source_groups=None, dest_groups=None,
                     direction=nsx_constants.IN_OUT, logged=False, tag=None,
                     ip_protocol=nsx_constants.IPV4_IPV6,
-                    tenant=constants.POLICY_INFRA_TENANT):
-        """Get the definition of a single map entry"""
+                    tenant=constants.POLICY_INFRA_TENANT,
+                    plain_groups=False):
+        """Get the definition of a single map entry.
+
+        plain_groups should be True if source_groups/dest_groups is a list
+        of group paths and IP addresses. IP address support from NSX 3.0.0.
+        """
+        if (version.LooseVersion(self.version) <
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0) and
+            plain_groups):
+            err_msg = _("plain_groups support is from NSX 3.0.0")
+            raise exceptions.NsxLibInvalidInput(error_message=err_msg)
+
         entry_id = self._init_obj_uuid(entry_id)
         return self._init_def(domain_id=domain_id,
                               map_id=map_id,
@@ -3354,7 +3365,8 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                               ip_protocol=ip_protocol,
                               logged=logged,
                               tag=tag,
-                              tenant=tenant)
+                              tenant=tenant,
+                              plain_groups=plain_groups)
 
     def create_with_entries(
         self, name, domain_id, map_id=None,

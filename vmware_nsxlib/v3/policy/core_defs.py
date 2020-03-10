@@ -1768,12 +1768,19 @@ class SecurityPolicyRuleBaseDef(ResourceDef):
     def get_obj_dict(self):
         body = super(SecurityPolicyRuleBaseDef, self).get_obj_dict()
         domain_id = self.get_attr('domain_id')
+
+        plain_groups = False
+        if self.has_attr('plain_groups'):
+            plain_groups = self.get_attr('plain_groups')
+
         if self.has_attr('source_groups'):
-            body['source_groups'] = self.get_groups_path(
-                domain_id, self.get_attr('source_groups'))
+            body['source_groups'] = (self.get_groups_path(
+                domain_id, self.get_attr('source_groups')) if not plain_groups
+                else (self.get_attr('source_groups') or [constants.ANY_GROUP]))
         if self.has_attr('dest_groups'):
-            body['destination_groups'] = self.get_groups_path(
-                domain_id, self.get_attr('dest_groups'))
+            body['destination_groups'] = (self.get_groups_path(
+                domain_id, self.get_attr('dest_groups')) if not plain_groups
+                else (self.get_attr('dest_groups') or [constants.ANY_GROUP]))
 
         self._set_attrs_if_specified(body, ['sequence_number', 'scope',
                                             'action', 'direction', 'logged',
