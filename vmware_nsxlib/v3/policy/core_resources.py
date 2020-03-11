@@ -2131,14 +2131,22 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
 
     def detach(self, segment_id, port_id, tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
+        # Due to platform limitation, PUT should be used here and not PATCH
+        port_def = self.entry_def(
+            segment_id=segment_id,
+            port_id=port_id,
+            tenant=tenant)
+        path = port_def.get_resource_path()
 
-        port_def = self.entry_def(segment_id=segment_id,
-                                  port_id=port_id,
-                                  vif_id=None,
-                                  attachment_type=None,
-                                  tags=tags,
-                                  tenant=tenant)
-        self.policy_api.create_or_update(port_def)
+        @utils.retry_upon_exception(
+            exceptions.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _detach():
+            port = self.policy_api.get(port_def)
+            port['attachment'] = None
+            self.policy_api.client.update(path, port)
+
+        _detach()
 
     def attach(self, segment_id, port_id,
                attachment_type,
