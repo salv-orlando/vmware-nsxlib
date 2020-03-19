@@ -33,7 +33,6 @@ from requests import adapters
 from requests import exceptions as requests_exceptions
 import six
 import six.moves.urllib.parse as urlparse
-import tenacity
 import urllib3
 
 from vmware_nsxlib._i18n import _
@@ -186,22 +185,32 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         return "%s-%s" % (requests.__title__, requests.__version__)
 
     def validate_connection(self, cluster_api, endpoint, conn):
+        # We don't need to retry with different endpoint during validation,
+        # thus limit max_attempts to 1
+        # on connection level, validation will be retried according to
+        # nsxlib 'retries' and 'http_timeout' parameters.
         client = nsx_client.NSX3Client(
             conn, url_prefix=endpoint.provider.url,
             url_path_base=cluster_api.nsxlib_config.url_base,
-            default_headers=conn.default_headers)
+            default_headers=conn.default_headers,
+            max_attempts=1)
 
+        validation_done = False
         # Check the manager state directly
         if cluster_api.nsxlib_config.validate_connection_method:
             cluster_api.nsxlib_config.validate_connection_method(
                 client, endpoint.provider.url)
+            validation_done = True
 
         # If keeplive section returns a list, it is assumed to be non-empty
         keepalive_section = cluster_api.nsxlib_config.keepalive_section
         # When validate connection also has the effect of keep-alive,
         # keepalive_section can be disabled by passing in an empty value
         if keepalive_section:
-            result = client.get(keepalive_section, silent=True)
+            result = client.get(keepalive_section,
+                                silent=True,
+                                with_retries=False)
+            validation_done = True
             if not result or result.get('result_count', 1) <= 0:
                 msg = _("No %(section)s found "
                         "for '%(url)s'") % {'section': keepalive_section,
@@ -209,6 +218,8 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                 LOG.warning(msg)
                 raise exceptions.ResourceNotFound(
                     manager=endpoint.provider.url, operation=msg)
+
+        return validation_done
 
     def new_connection(self, cluster_api, provider):
         config = cluster_api.nsxlib_config
@@ -574,8 +585,12 @@ class ClusteredAPI(object):
     def _validate(self, endpoint):
         try:
             with endpoint.pool.item() as conn:
-                self._http_provider.validate_connection(self, endpoint, conn)
-                endpoint.set_state(EndpointState.UP)
+                # with some configurations, validation will be skipped
+                result = self._http_provider.validate_connection(self,
+                                                                 endpoint,
+                                                                 conn)
+                if result:
+                    endpoint.set_state(EndpointState.UP)
         except exceptions.ClientCertificateNotTrusted:
             LOG.warning("Failed to validate API cluster endpoint "
                         "'%(ep)s' due to untrusted client certificate",
@@ -612,22 +627,13 @@ class ClusteredAPI(object):
                     return endpoint
                 seen += 1
 
-        @utils.retry_upon_none_result(self.nsxlib_config.max_attempts)
-        def _select_endpoint_internal_with_retry():
-            # redo endpoint selection with refreshing states
-            return _select_endpoint_internal(refresh=True)
-
         # First attempt to get an UP endpoint
         endpoint = _select_endpoint_internal()
         if endpoint or not self.nsxlib_config.cluster_unavailable_retry:
             return endpoint
 
         # Retry the selection while refreshing the endpoints state
-        try:
-            return _select_endpoint_internal_with_retry()
-        except tenacity.RetryError:
-            # exhausted number of retries
-            return None
+        return _select_endpoint_internal(refresh=True)
 
     def endpoint_for_connection(self, conn):
         # check all endpoint pools

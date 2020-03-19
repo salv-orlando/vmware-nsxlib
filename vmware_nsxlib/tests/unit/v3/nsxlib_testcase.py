@@ -175,7 +175,7 @@ class MemoryMockAPIProvider(nsx_cluster.AbstractHTTPProvider):
         return "Memory mock API"
 
     def validate_connection(self, cluster_api, endpoint, conn):
-        return
+        return True
 
     def new_connection(self, cluster_api, provider):
         # all callers use the same backing
@@ -335,6 +335,7 @@ class NsxClientTestCase(NsxLibTestCase):
 
         def validate_connection(self, cluster_api, endpoint, conn):
             assert conn is not None
+            return True
 
     def mock_nsx_clustered_api(self, session_response=None, **kwargs):
         orig_request = nsx_cluster.TimeoutSession.request

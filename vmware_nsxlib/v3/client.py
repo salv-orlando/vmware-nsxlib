@@ -215,6 +215,7 @@ class RESTClient(object):
                    silent=False, expected_results=None, **kwargs):
         request_headers = headers.copy() if headers else {}
         request_headers.update(self._default_headers)
+
         if utils.INJECT_HEADERS_CALLBACK:
             inject_headers = utils.INJECT_HEADERS_CALLBACK()
             request_headers.update(inject_headers)
