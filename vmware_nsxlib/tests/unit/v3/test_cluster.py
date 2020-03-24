@@ -30,7 +30,7 @@ from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 
 
 def _validate_conn_up(*args, **kwargs):
-    return
+    return True
 
 
 def _validate_conn_down(*args, **kwargs):
@@ -312,6 +312,8 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
             if endpoint.provider.id == '8.9.10.11':
                 raise Exception()
 
+            return True
+
         self._test_health(_validate, cluster.ClusterHealth.ORANGE)
 
     def test_green_health(self):
@@ -415,8 +417,7 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         # until retries have been exhausted
         api.nsxlib_config.cluster_unavailable_retry = True
         self.assertEqual(api._select_endpoint(), None)
-        self.assertEqual(api._validate.call_count,
-                         api.nsxlib_config.max_attempts * len(eps))
+        self.assertEqual(api._validate.call_count, len(eps))
 
         # simulate the case where 1 endpoint finally goes up
         self.validate_count = 0
