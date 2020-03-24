@@ -4696,7 +4696,25 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
             api_get.assert_called_once()
             api_put.assert_called_once_with(
                 "%s/segments/%s/ports/%s" % (TEST_TENANT, segment_id, port_id),
-                {'attachment': None})
+                {'attachment': None, 'tags': tags})
+
+    def test_detach_with_vif(self):
+        segment_id = "segment"
+        port_id = "port"
+        vif_id = "abc"
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        with mock.patch.object(self.policy_api.client,
+                               "get", return_value={}) as api_get,\
+            mock.patch.object(self.policy_api.client,
+                              "update") as api_put:
+            self.resourceApi.detach(
+                segment_id, port_id, tags=tags, vif_id=vif_id,
+                tenant=TEST_TENANT)
+
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                "%s/segments/%s/ports/%s" % (TEST_TENANT, segment_id, port_id),
+                {'attachment': {'id': vif_id}, 'tags': tags})
 
 
 class TestPolicySegmentProfileBase(NsxPolicyLibTestCase):
