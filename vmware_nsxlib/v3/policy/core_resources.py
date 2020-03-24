@@ -2071,8 +2071,9 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      tags=tags,
                      tenant=tenant)
 
-    def detach(self, segment_id, port_id, tags=IGNORE,
+    def detach(self, segment_id, port_id, vif_id=None, tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
+        """Reset the attachment with or without a vif_id"""
         # Due to platform limitation, PUT should be used here and not PATCH
         port_def = self.entry_def(
             segment_id=segment_id,
@@ -2085,7 +2086,12 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
             max_attempts=self.policy_api.client.max_attempts)
         def _detach():
             port = self.policy_api.get(port_def)
-            port['attachment'] = None
+            if vif_id:
+                port['attachment'] = {'id': vif_id}
+            else:
+                port['attachment'] = None
+            if tags != IGNORE:
+                port['tags'] = tags
             self.policy_api.client.update(path, port)
 
         _detach()
@@ -2100,18 +2106,16 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
-        port_def = self.entry_def(segment_id=segment_id,
-                                  port_id=port_id,
-                                  attachment_type=attachment_type,
-                                  allocate_addresses=allocate_addresses,
-                                  vif_id=vif_id,
-                                  app_id=app_id,
-                                  context_id=context_id,
-                                  traffic_tag=traffic_tag,
-                                  tags=tags,
-                                  tenant=tenant)
-
-        self.policy_api.create_or_update(port_def)
+        self._update(segment_id=segment_id,
+                     port_id=port_id,
+                     attachment_type=attachment_type,
+                     allocate_addresses=allocate_addresses,
+                     vif_id=vif_id,
+                     app_id=app_id,
+                     context_id=context_id,
+                     traffic_tag=traffic_tag,
+                     tags=tags,
+                     tenant=tenant)
 
     def get_realized_state(self, segment_id, port_id, entity_type=None,
                            tenant=constants.POLICY_INFRA_TENANT,
