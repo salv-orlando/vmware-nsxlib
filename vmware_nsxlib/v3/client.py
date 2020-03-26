@@ -284,6 +284,12 @@ class NSX3Client(JSONRESTClient):
     NSX_V1_API_PREFIX = 'api/v1/'
     NSX_POLICY_V1_API_PREFIX = 'policy/api/v1/'
 
+    # NOTE: For user-facing client, NsxClusteredAPI instance
+    # will be passed as connection parameter below, thus all
+    # requests on this client will pass via cluster code to
+    # determine endpoint
+    # For validation client, TimeoutSession with specific
+    # endpoint parameters will be passed as connection.
     def __init__(self, connection, url_prefix=None,
                  default_headers=None,
                  nsx_api_managers=None,

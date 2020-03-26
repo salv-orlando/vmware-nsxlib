@@ -199,7 +199,8 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             provider.validate_connection(mock_cluster, mock_ep, mock_conn)
             mock_get.assert_not_called()
 
-    def _validate_con_mocks(self, nsx_version):
+    def _validate_con_mocks(self, nsx_version,
+                            keepalive_section='transport-zones'):
         nsxlib_config = nsxlib_testcase.get_default_nsxlib_config()
         nsxlib = v3.NsxLib(nsxlib_config)
         nsxlib.nsx_version = nsx_version
@@ -209,7 +210,7 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         mock_ep.provider.url = 'https://1.2.3.4'
         conf = mock.Mock()
         conf.url_base = 'abc'
-        conf.keepalive_section = 'transport-zones'
+        conf.keepalive_section = keepalive_section
         conf.validate_connection_method = nsxlib.validate_connection_method
         mock_cluster = mock.Mock()
         mock_cluster.nsxlib_config = conf
