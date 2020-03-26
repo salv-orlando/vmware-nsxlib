@@ -589,7 +589,10 @@ class ClusteredAPI(object):
                 result = self._http_provider.validate_connection(self,
                                                                  endpoint,
                                                                  conn)
-                if result:
+                if result or endpoint.state == EndpointState.INITIALIZED:
+                    # If no endpoint validation is configured, we assume
+                    # endpoint is UP on startup, but we shouldn't move it
+                    # to UP from DOWN state
                     endpoint.set_state(EndpointState.UP)
         except exceptions.ClientCertificateNotTrusted:
             LOG.warning("Failed to validate API cluster endpoint "
