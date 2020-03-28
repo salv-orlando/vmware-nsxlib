@@ -39,6 +39,11 @@ class ExceptionConfig(object):
                            v3_exceptions.CannotConnectToServer,
                            v3_exceptions.ServerBusy]
 
+        # When hit during API call, these exceptions will be retried
+        # after the endpoints are regenerated with up-to-date auth
+        # credentials / tokens
+        self.regenerate_triggers = [v3_exceptions.InvalidCredentials]
+
     def should_ground_endpoint(self, ex):
         for exception in self.ground_triggers:
             if isinstance(ex, exception):
@@ -48,6 +53,13 @@ class ExceptionConfig(object):
 
     def should_retry(self, ex):
         for exception in self.retriables:
+            if isinstance(ex, exception):
+                return True
+
+        return False
+
+    def should_regenerate(self, ex):
+        for exception in self.regenerate_triggers:
             if isinstance(ex, exception):
                 return True
 

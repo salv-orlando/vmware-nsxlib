@@ -151,6 +151,10 @@ class BadXSRFToken(ManagerError):
     message = _("Bad or expired XSRF token")
 
 
+class InvalidCredentials(ManagerError):
+    message = _("Failed to authenticate with NSX: %(msg)s")
+
+
 class BadJSONWebTokenProviderRequest(NsxLibException):
     message = _("Bad or expired JSON web token request from provider: %(msg)s")
 

@@ -88,7 +88,8 @@ def http_error_to_exception(status_code, error_code):
              '99': exceptions.ClientCertificateNotTrusted,
              '607': exceptions.APITransactionAborted},
         requests.codes.FORBIDDEN:
-            {'98': exceptions.BadXSRFToken},
+            {'98': exceptions.BadXSRFToken,
+             '403': exceptions.InvalidCredentials},
         requests.codes.TOO_MANY_REQUESTS: exceptions.TooManyRequests,
         requests.codes.SERVICE_UNAVAILABLE: exceptions.ServiceUnavailable}
 
