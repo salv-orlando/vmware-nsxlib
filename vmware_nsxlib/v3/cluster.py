@@ -697,12 +697,12 @@ class ClusteredAPI(object):
                     uri = "/%s" % uri
                 url = "%s%s" % (endpoint.provider.url, uri)
                 try:
-                    LOG.debug("API cluster proxy %s %s to %s",
-                              proxy_for.upper(), uri, url)
                     # Add the connection default headers
                     if conn.default_headers:
                         kwargs['headers'] = kwargs.get('headers', {})
                         kwargs['headers'].update(conn.default_headers)
+                    LOG.debug("API cluster proxy %s %s to %s with %s",
+                              proxy_for.upper(), uri, url, kwargs)
 
                     # call the actual connection method to do the
                     # http request/response over the wire
