@@ -33,6 +33,7 @@ def http_error_to_exception(status_code, error_code):
     errors = {
         requests.codes.NOT_FOUND:
             {'202': exceptions.BackendResourceNotFound,
+             '500090': exceptions.StaleRevision,
              'default': exceptions.ResourceNotFound},
         requests.codes.BAD_REQUEST:
             {'60508': exceptions.NsxIndexingInProgress,
@@ -41,7 +42,6 @@ def http_error_to_exception(status_code, error_code):
              '8327': exceptions.NsxOverlapVlan,
              '500045': exceptions.NsxPendingDelete,
              '500030': exceptions.ResourceInUse,
-             '500090': exceptions.StaleRevision,
              '500105': exceptions.NsxOverlapAddresses,
              '503040': exceptions.NsxSegemntWithVM,
              '100148': exceptions.StaleRevision},
