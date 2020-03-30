@@ -185,8 +185,8 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         return "%s-%s" % (requests.__title__, requests.__version__)
 
     def validate_connection(self, cluster_api, endpoint, conn):
-        # We don't need to retry with different endpoint during validation,
-        # thus limit max_attempts to 1
+        # Retry during validation can cause retry storm, thus limit
+        # max_attempts to 1
         # on connection level, validation will be retried according to
         # nsxlib 'retries' and 'http_timeout' parameters.
         client = nsx_client.NSX3Client(
@@ -195,12 +195,9 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
             default_headers=conn.default_headers,
             max_attempts=1)
 
-        validation_done = False
-        # Check the manager state directly
         if cluster_api.nsxlib_config.validate_connection_method:
             cluster_api.nsxlib_config.validate_connection_method(
                 client, endpoint.provider.url)
-            validation_done = True
 
         # If keeplive section returns a list, it is assumed to be non-empty
         keepalive_section = cluster_api.nsxlib_config.keepalive_section
@@ -210,7 +207,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
             result = client.get(keepalive_section,
                                 silent=True,
                                 with_retries=False)
-            validation_done = True
             if not result or result.get('result_count', 1) <= 0:
                 msg = _("No %(section)s found "
                         "for '%(url)s'") % {'section': keepalive_section,
@@ -218,8 +214,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                 LOG.warning(msg)
                 raise exceptions.ResourceNotFound(
                     manager=endpoint.provider.url, operation=msg)
-
-        return validation_done
 
     def new_connection(self, cluster_api, provider):
         config = cluster_api.nsxlib_config
@@ -586,14 +580,10 @@ class ClusteredAPI(object):
         try:
             with endpoint.pool.item() as conn:
                 # with some configurations, validation will be skipped
-                result = self._http_provider.validate_connection(self,
-                                                                 endpoint,
-                                                                 conn)
-                if result or endpoint.state == EndpointState.INITIALIZED:
-                    # If no endpoint validation is configured, we assume
-                    # endpoint is UP on startup, but we shouldn't move it
-                    # to UP from DOWN state
-                    endpoint.set_state(EndpointState.UP)
+                self._http_provider.validate_connection(self,
+                                                        endpoint,
+                                                        conn)
+                endpoint.set_state(EndpointState.UP)
         except exceptions.ClientCertificateNotTrusted:
             LOG.warning("Failed to validate API cluster endpoint "
                         "'%(ep)s' due to untrusted client certificate",
