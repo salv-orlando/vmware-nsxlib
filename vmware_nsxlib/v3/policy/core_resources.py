@@ -358,10 +358,10 @@ class NsxPolicyResourceBase(object):
                 transaction.store_def(child_def, self.policy_api.client)
         else:
             # No transaction - apply now
-            # in case the same object was just deleted, create may need to
-            # be retried
+            # In case the same object was just deleted, or depends on another
+            # resource, create may need to be retried.
             @utils.retry_upon_exception(
-                exceptions.NsxPendingDelete,
+                (exceptions.NsxPendingDelete, exceptions.StaleRevision),
                 max_attempts=self.policy_api.client.max_attempts)
             def _do_create_with_retry():
                 if child_def:

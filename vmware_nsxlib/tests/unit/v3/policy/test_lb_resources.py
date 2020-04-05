@@ -16,6 +16,7 @@
 
 import mock
 
+from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3.policy import test_resources
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3.policy import constants
@@ -1217,6 +1218,60 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
+
+    def test_create_with_retry_stale_revision(self):
+        name = 'd1'
+        description = 'desc'
+        obj_id = '111'
+        members = [
+            lb_defs.LBPoolMemberDef(ip_address='10.0.0.1')]
+        algorithm = 'algo'
+        active_monitor_paths = 'path1'
+        member_group = 'group1'
+        snat_translation = False
+        with mock.patch.object(self.policy_api, "create_or_update",
+                               side_effect=nsxlib_exc.StaleRevision
+                               ) as api_call:
+            with self.assertRaises(nsxlib_exc.StaleRevision):
+                self.resourceApi.create_or_overwrite(
+                    name,
+                    lb_pool_id=obj_id,
+                    description=description,
+                    members=members,
+                    active_monitor_paths=active_monitor_paths,
+                    algorithm=algorithm,
+                    member_group=member_group,
+                    snat_translation=snat_translation,
+                    tenant=TEST_TENANT)
+                self.assertEqual(nsxlib_testcase.NSX_MAX_ATTEMPTS,
+                                 api_call.call_count)
+
+    def test_create_with_retry_pending_delete(self):
+        name = 'd1'
+        description = 'desc'
+        obj_id = '111'
+        members = [
+            lb_defs.LBPoolMemberDef(ip_address='10.0.0.1')]
+        algorithm = 'algo'
+        active_monitor_paths = 'path1'
+        member_group = 'group1'
+        snat_translation = False
+        with mock.patch.object(self.policy_api, "create_or_update",
+                               side_effect=nsxlib_exc.NsxPendingDelete
+                               ) as api_call:
+            with self.assertRaises(nsxlib_exc.NsxPendingDelete):
+                self.resourceApi.create_or_overwrite(
+                    name,
+                    lb_pool_id=obj_id,
+                    description=description,
+                    members=members,
+                    active_monitor_paths=active_monitor_paths,
+                    algorithm=algorithm,
+                    member_group=member_group,
+                    snat_translation=snat_translation,
+                    tenant=TEST_TENANT)
+                self.assertEqual(nsxlib_testcase.NSX_MAX_ATTEMPTS,
+                                 api_call.call_count)
 
     def test_delete(self):
         obj_id = '111'
