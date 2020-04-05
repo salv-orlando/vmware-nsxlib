@@ -180,6 +180,7 @@ def _log_after_retry(retry_state):
 
 def retry_upon_exception(exc, delay=0.5, max_delay=2,
                          max_attempts=DEFAULT_MAX_ATTEMPTS):
+    # exc can be a single exception or a tuple of exceptions
     return tenacity.retry(reraise=True,
                           retry=tenacity.retry_if_exception_type(exc),
                           wait=tenacity.wait_exponential(
