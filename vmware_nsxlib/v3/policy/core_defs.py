@@ -914,6 +914,8 @@ class BaseSegmentDef(ResourceDef):
         return 'Segment'
 
     def _get_adv_config(self, ip_pool_id):
+        if ip_pool_id is None:
+            return {'address_pool_paths': []}
         ip_pool_def = IpPoolDef(ip_pool_id=ip_pool_id)
         ip_pool_path = ip_pool_def.get_resource_full_path()
         return {'address_pool_paths': [ip_pool_path]}

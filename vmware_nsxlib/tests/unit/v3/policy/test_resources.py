@@ -4024,13 +4024,14 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         self.resourceApi = self.policy_lib.segment
 
     def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
-                     dhcp_server=None, admin_state=None):
+                     dhcp_server=None, admin_state=None,
+                     ip_pool_id='external-ip-pool'):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
         kwargs = {'description': description,
                   'subnets': subnets,
-                  'ip_pool_id': 'external-ip-pool',
+                  'ip_pool_id': ip_pool_id,
                   'tenant': TEST_TENANT}
         if tier1_id:
             kwargs['tier1_id'] = tier1_id
@@ -4060,6 +4061,15 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
+            if ip_pool_id is None:
+                expected_advanced_config = {'address_pool_paths': []}
+            else:
+                ip_pool_def = core_defs.IpPoolDef(ip_pool_id=ip_pool_id)
+                ip_pool_path = ip_pool_def.get_resource_full_path()
+                expected_advanced_config = {
+                    'address_pool_paths': [ip_pool_path]}
+            self.assertEqual(expected_def.get_obj_dict()['advanced_config'],
+                             expected_advanced_config)
 
     def test_create_with_t1(self):
         self._test_create(tier1_id='111')
@@ -4083,6 +4093,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_with_admin_state_down(self):
         self._test_create(admin_state=False)
+
+    def test_create_without_ip_pool(self):
+        self._test_create(ip_pool_id=None)
 
     def test_delete(self):
         segment_id = '111'
