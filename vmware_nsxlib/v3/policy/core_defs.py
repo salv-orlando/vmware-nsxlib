@@ -2365,7 +2365,8 @@ class NsxPolicyApi(object):
     def partial_updates_supported(self):
         return self.partial_updates
 
-    def create_or_update(self, resource_def, partial_updates=False):
+    def create_or_update(self, resource_def, partial_updates=False,
+                         force=False):
         """Create or update a policy object.
 
         This api will update an existing object, or create a new one if it
@@ -2380,6 +2381,11 @@ class NsxPolicyApi(object):
         headers = None
         if partial_updates:
             headers = {'nsx-enable-partial-patch': 'true'}
+        if force:
+            if headers:
+                headers['X-Allow-Overwrite'] = 'true'
+            else:
+                headers = {'X-Allow-Overwrite': 'true'}
         self.client.patch(path, body, headers=headers)
 
     def create_with_parent(self, parent_def, resource_def):

@@ -5881,14 +5881,15 @@ class TestPolicyTier0RouteMap(NsxPolicyLibTestCase):
         with self.mock_get(tier0_id, name), \
             self.mock_create_update() as update_call:
             self.resourceApi.update(name, tier0_id, route_map_id, entries,
-                                    tenant=TEST_TENANT)
+                                    tenant=TEST_TENANT, force=True)
             expected_def = core_defs.Tier0RouteMapDef(
                 tier0_id=tier0_id,
                 route_map_id=route_map_id,
                 name=name,
                 entries=entries,
                 tenant=TEST_TENANT)
-
+            update_call.assert_called_with(mock.ANY, partial_updates=True,
+                                           force=True)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_build_route_map_entry(self):

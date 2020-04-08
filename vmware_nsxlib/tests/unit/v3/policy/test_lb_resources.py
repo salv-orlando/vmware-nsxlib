@@ -1115,7 +1115,8 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 virtual_server_id=obj_id, name=vs_name,
                 max_concurrent_connections=None,
                 tenant=TEST_TENANT)
-            update_call.assert_called_with(mock.ANY, partial_updates=False)
+            update_call.assert_called_with(mock.ANY, partial_updates=False,
+                                           force=False)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_add_lb_rule(self):

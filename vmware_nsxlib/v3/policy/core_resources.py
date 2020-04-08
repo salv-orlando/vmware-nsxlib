@@ -143,7 +143,7 @@ class NsxPolicyResourceBase(object):
 
         return resource_def
 
-    def _update(self, allow_partial_updates=True, **kwargs):
+    def _update(self, allow_partial_updates=True, force=False, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
         if (allow_partial_updates and
                 self.policy_api.partial_updates_supported()):
@@ -157,7 +157,7 @@ class NsxPolicyResourceBase(object):
             # Nothing to update - only keys provided in kwargs
             return
         self.policy_api.create_or_update(
-            policy_def, partial_updates=partial_updates)
+            policy_def, partial_updates=partial_updates, force=force)
 
     @staticmethod
     def _init_obj_uuid(obj_uuid):
@@ -4480,14 +4480,16 @@ class NsxPolicyTier0RouteMapApi(NsxPolicyResourceBase):
                entries,
                description=IGNORE,
                tags=IGNORE,
-               tenant=constants.POLICY_INFRA_TENANT):
+               tenant=constants.POLICY_INFRA_TENANT,
+               force=False):
         self._update(tier0_id=tier0_id,
                      route_map_id=route_map_id,
                      name=name,
                      entries=entries,
                      description=description,
                      tags=tags,
-                     tenant=tenant)
+                     tenant=tenant,
+                     force=force)
 
     def build_route_map_entry(self, action, community_list_matches=None,
                               prefix_list_matches=None, entry_set=None):
