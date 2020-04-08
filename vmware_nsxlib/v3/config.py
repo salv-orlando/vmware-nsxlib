@@ -157,9 +157,9 @@ class NsxLibConfig(object):
         self.realization_wait_sec = realization_wait_sec
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
-            LOG.warning("When only one endpoint is provided, keepalive probes "
-                        " are disabled. For the system to be able to recover "
-                        " from DOWN state, cluster_unavailable_retry is set "
+            LOG.warning("When only one endpoint is provided, keepalive probes"
+                        " are disabled. For the system to be able to recover"
+                        " from DOWN state, cluster_unavailable_retry is set"
                         " to True, overriding provided configuration")
             self.cluster_unavailable_retry = True
 
@@ -172,9 +172,11 @@ class NsxLibConfig(object):
 
     def extend(self, keepalive_section, validate_connection_method=None,
                url_base=None):
-        """Called by library code to initialize application-specific data"""
-        self.keepalive_section = keepalive_section
-        self.validate_connection_method = validate_connection_method
+        if keepalive_section or validate_connection_method:
+            LOG.warning("keepalive_section and validate_connection_method are"
+                        " no longer used to conduct keepalive probes. For"
+                        " most efficient keepalive roundtrip, proxy health"
+                        " API is always used.")
         self.url_base = url_base
 
     def _attribute_by_index(self, scalar_or_list, index):

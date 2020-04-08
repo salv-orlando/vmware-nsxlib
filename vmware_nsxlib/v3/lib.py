@@ -61,10 +61,7 @@ class NsxLibBase(object):
     def set_config(self, nsxlib_config):
         """Set config user provided and extend it according to application"""
         self.nsxlib_config = nsxlib_config
-        self.nsxlib_config.extend(
-            keepalive_section=self.keepalive_section,
-            validate_connection_method=self.validate_connection_method,
-            url_base=self.client_url_prefix)
+        self.nsxlib_config.extend(None, url_base=self.client_url_prefix)
 
     def set_default_headers(self, nsxlib_config):
         """Set the default headers with token information"""
@@ -80,14 +77,6 @@ class NsxLibBase(object):
 
     @abc.abstractproperty
     def client_url_prefix(self):
-        pass
-
-    @abc.abstractproperty
-    def keepalive_section(self):
-        pass
-
-    @abc.abstractproperty
-    def validate_connection_method(self):
         pass
 
     @abc.abstractmethod

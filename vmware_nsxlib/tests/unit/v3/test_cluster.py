@@ -171,7 +171,6 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         mock_cluster = mock.Mock()
         mock_cluster.nsxlib_config = mock.Mock()
         mock_cluster.nsxlib_config.url_base = 'abc'
-        mock_cluster.nsxlib_config.keepalive_section = 'transport-zones'
         provider = cluster.NSXRequestsHTTPProvider()
 
         with mock.patch.object(client.JSONRESTClient, "get",
@@ -181,26 +180,10 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
                               mock_cluster, mock_ep, mock_conn)
 
         with mock.patch.object(client.JSONRESTClient, "get",
-                               return_value={'result_count': 1}):
+                               return_value={'healthy': True}):
             provider.validate_connection(mock_cluster, mock_ep, mock_conn)
 
-    def test_validate_connection_no_keep_alive(self):
-        mock_conn = mocks.MockRequestSessionApi()
-        mock_conn.default_headers = {}
-        mock_ep = mock.Mock()
-        mock_ep.provider.url = 'https://1.2.3.4'
-        mock_cluster = mock.Mock()
-        mock_cluster.nsxlib_config = mock.Mock()
-        mock_cluster.nsxlib_config.url_base = 'abc'
-        mock_cluster.nsxlib_config.keepalive_section = None
-        provider = cluster.NSXRequestsHTTPProvider()
-
-        with mock.patch.object(client.JSONRESTClient, "get") as mock_get:
-            provider.validate_connection(mock_cluster, mock_ep, mock_conn)
-            mock_get.assert_not_called()
-
-    def _validate_con_mocks(self, nsx_version,
-                            keepalive_section='transport-zones'):
+    def _validate_con_mocks(self, nsx_version):
         nsxlib_config = nsxlib_testcase.get_default_nsxlib_config()
         nsxlib = v3.NsxLib(nsxlib_config)
         nsxlib.nsx_version = nsx_version
@@ -210,8 +193,6 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
         mock_ep.provider.url = 'https://1.2.3.4'
         conf = mock.Mock()
         conf.url_base = 'abc'
-        conf.keepalive_section = keepalive_section
-        conf.validate_connection_method = nsxlib.validate_connection_method
         mock_cluster = mock.Mock()
         mock_cluster.nsxlib_config = conf
         return (mock_cluster, mock_ep, mock_conn)

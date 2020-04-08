@@ -68,11 +68,6 @@ class AbstractHTTPProvider(object):
         pass
 
     @abc.abstractmethod
-    def validate_connection(self, cluster_api, endpoint, conn):
-        """Validate the said connection for the given endpoint and cluster."""
-        pass
-
-    @abc.abstractmethod
     def new_connection(self, cluster_api, provider):
         """Create a new http connection.
 
@@ -191,29 +186,18 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         # nsxlib 'retries' and 'http_timeout' parameters.
         client = nsx_client.NSX3Client(
             conn, url_prefix=endpoint.provider.url,
-            url_path_base=cluster_api.nsxlib_config.url_base,
+            url_path_base=nsx_client.NSX3Client.NSX_V1_API_PREFIX,
             default_headers=conn.default_headers,
             max_attempts=1)
 
-        if cluster_api.nsxlib_config.validate_connection_method:
-            cluster_api.nsxlib_config.validate_connection_method(
-                client, endpoint.provider.url)
-
-        # If keeplive section returns a list, it is assumed to be non-empty
-        keepalive_section = cluster_api.nsxlib_config.keepalive_section
-        # When validate connection also has the effect of keep-alive,
-        # keepalive_section can be disabled by passing in an empty value
-        if keepalive_section:
-            result = client.get(keepalive_section,
-                                silent=True,
-                                with_retries=False)
-            if not result or result.get('result_count', 1) <= 0:
-                msg = _("No %(section)s found "
-                        "for '%(url)s'") % {'section': keepalive_section,
-                                            'url': endpoint.provider.url}
-                LOG.warning(msg)
-                raise exceptions.ResourceNotFound(
-                    manager=endpoint.provider.url, operation=msg)
+        # Try to get the status silently and with no retries
+        status = client.get('reverse-proxy/node/health',
+                            silent=True, with_retries=False)
+        if not status or not status.get('healthy', False):
+            msg = _("NSX Node is not healthy, reported status: %s") % status
+            LOG.warning(msg)
+            raise exceptions.ResourceNotFound(
+                manager=endpoint.provider.url, operation=msg)
 
     def new_connection(self, cluster_api, provider):
         config = cluster_api.nsxlib_config

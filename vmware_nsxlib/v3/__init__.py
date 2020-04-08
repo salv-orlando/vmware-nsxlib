@@ -119,10 +119,6 @@ class NsxLib(lib.NsxLibBase):
         utils.update_tag_limits(self.tag_limits)
 
     @property
-    def keepalive_section(self):
-        return 'transport-zones'
-
-    @property
     def validate_connection_method(self):
         """Return a method that will validate the NSX manager status"""
 

@@ -132,26 +132,6 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.ipsec_vpn = ipsec_vpn_resources.NsxPolicyIpsecVpnApi(*args)
         self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
 
-    @property
-    def keepalive_section(self):
-        return 'infra'
-
-    @property
-    def validate_connection_method(self):
-        """Return a method that will validate the NSX policy status"""
-
-        def check_policy_status(client, url):
-            # Try to get the status silently and with no retries
-            infra = client.get('infra',
-                               silent=True, with_retries=False)
-            if not infra or not infra.get('id'):
-                msg = _("Policy health check failed")
-                LOG.warning(msg)
-                raise exceptions.ResourceNotFound(
-                    manager=url, operation=msg)
-
-        return check_policy_status
-
     def get_version(self):
         """Get the NSX Policy manager version
 
