@@ -3852,6 +3852,18 @@ class TestPolicySegment(NsxPolicyLibTestCase):
                 '%s/segments/%s' % (TEST_TENANT, segment_id),
                 {'id': segment_id, 'connectivity_path': None, 'subnets': None})
 
+    def test_remove_connectivity_path(self):
+        segment_id = '111'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': segment_id}) as api_get,\
+            mock.patch.object(self.policy_api.client, "update") as api_put:
+            self.resourceApi.remove_connectivity_path(
+                segment_id, tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            api_put.assert_called_once_with(
+                '%s/segments/%s' % (TEST_TENANT, segment_id),
+                {'id': segment_id, 'connectivity_path': None})
+
     def test_build_subnet(self):
         gateway_address = "10.0.0.1/24"
         dhcp_ranges = None
