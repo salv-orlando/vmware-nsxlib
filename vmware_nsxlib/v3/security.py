@@ -82,6 +82,7 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
         return '%(name)s - %(id)s' % security_group
 
     def get_lport_tags(self, secgroups):
+        # TODO(asarfaty): This api should move to vmware_nsx
         if len(secgroups) > utils.MAX_NSGROUPS_CRITERIA_TAGS:
             raise exceptions.NumberOfNsgroupCriteriaTagsReached(
                 max_num=utils.MAX_NSGROUPS_CRITERIA_TAGS)

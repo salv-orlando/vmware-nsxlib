@@ -3,3 +3,4 @@
       - openstack-lower-constraints-jobs
       - openstack-python3-ussuri-jobs
       - check-requirements
+      - openstack-cover-jobs
