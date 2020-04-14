@@ -90,6 +90,13 @@ class NsxLibConfig(object):
                                       configured in the cluster, since there
                                       will be no keepalive probes in this
                                       case.
+    :param api_rate_limit_per_endpoint: If set to positive integer, API calls
+                                        sent to each endpoint will be limited
+                                        to a max rate of this value per second.
+                                        The rate limit is not enforced on
+                                        connection validations. This option
+                                        defaults to None, which disables rate
+                                        limit.
 
     -- Additional parameters which are relevant only for the Policy manager:
     :param allow_passthrough: If True, use nsx manager api for cases which are
@@ -127,7 +134,8 @@ class NsxLibConfig(object):
                  cluster_unavailable_retry=False,
                  allow_passthrough=False,
                  realization_max_attempts=50,
-                 realization_wait_sec=1.0):
+                 realization_wait_sec=1.0,
+                 api_rate_limit_per_endpoint=None):
 
         self.nsx_api_managers = nsx_api_managers
         self._username = username
@@ -155,6 +163,7 @@ class NsxLibConfig(object):
         self.allow_passthrough = allow_passthrough
         self.realization_max_attempts = realization_max_attempts
         self.realization_wait_sec = realization_wait_sec
+        self.api_rate_limit_per_endpoint = api_rate_limit_per_endpoint
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
             LOG.warning("When only one endpoint is provided, keepalive probes"

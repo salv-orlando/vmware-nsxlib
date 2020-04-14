@@ -17,6 +17,7 @@ import abc
 import collections
 import inspect
 import re
+from threading import Lock
 import time
 
 from oslo_log import log
@@ -667,3 +668,44 @@ def get_dhcp_opt_code(name):
         'reboot-time': 211,
     }
     return _supported_options.get(name)
+
+
+class APIRateLimiter(object):
+    def __init__(self, max_calls, period=1.0):
+        self._enabled = max_calls is not None
+        if not self._enabled:
+            return
+        if period <= 0 or int(max_calls) <= 0:
+            raise ValueError('period and max_calls should be positive')
+        self._period = period
+        self._max_calls = int(max_calls)
+        self._call_time = collections.deque()
+        self._lock = Lock()
+
+    def __enter__(self):
+        if not self._enabled:
+            return 0
+        with self._lock:
+            wait_time = self._calc_wait_time()
+            if wait_time:
+                time.sleep(wait_time)
+            # assume api call happens immediately after entering context
+            self._call_time.append(time.time())
+            return wait_time
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def _calc_wait_time(self):
+        now = time.time()
+        # remove timestamps out of current window
+        while self._call_time and now - self._period > self._call_time[0]:
+            self._call_time.popleft()
+        current_rate = len(self._call_time)
+        if current_rate < self._max_calls:
+            return 0
+        # call_time contains at least #max_rate timestamps.
+        # earliest possible time to get below rate limit is at
+        # T = self.call_time[-self.max_calls] + self.period
+        # Thus need to wait T - now
+        return self._call_time[-self._max_calls] + self._period - now

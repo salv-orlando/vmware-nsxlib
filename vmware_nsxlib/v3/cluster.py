@@ -21,6 +21,7 @@ import inspect
 import itertools
 import logging
 import re
+import time
 
 import eventlet
 from eventlet import greenpool
@@ -383,11 +384,12 @@ class Endpoint(object):
     to the underlying connections.
     """
 
-    def __init__(self, provider, pool):
+    def __init__(self, provider, pool, api_rate_limit=None):
         self.provider = provider
         self.pool = pool
         self._state = EndpointState.INITIALIZED
         self._last_updated = datetime.datetime.now()
+        self.rate_limiter = utils.APIRateLimiter(api_rate_limit)
 
     def regenerate_pool(self):
         self.pool = pools.Pool(min_size=self.pool.min_size,
@@ -427,9 +429,11 @@ class EndpointConnection(object):
     Which contains an endpoint and a connection for that endpoint.
     """
 
-    def __init__(self, endpoint, connection):
+    def __init__(self, endpoint, connection, conn_wait, rate_wait):
         self.endpoint = endpoint
         self.connection = connection
+        self.conn_wait = conn_wait
+        self.rate_wait = rate_wait
 
 
 class ClusteredAPI(object):
@@ -445,15 +449,16 @@ class ClusteredAPI(object):
                  http_provider,
                  min_conns_per_pool=0,
                  max_conns_per_pool=20,
-                 keepalive_interval=33):
+                 keepalive_interval=33,
+                 api_rate_limit=None):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
         self._print_keepalive = 0
 
         def _init_cluster(*args, **kwargs):
-            self._init_endpoints(providers,
-                                 min_conns_per_pool, max_conns_per_pool)
+            self._init_endpoints(providers, min_conns_per_pool,
+                                 max_conns_per_pool, api_rate_limit)
 
         _init_cluster()
 
@@ -462,8 +467,8 @@ class ClusteredAPI(object):
         # loops + state
         self._reinit_cluster = _init_cluster
 
-    def _init_endpoints(self, providers,
-                        min_conns_per_pool, max_conns_per_pool):
+    def _init_endpoints(self, providers, min_conns_per_pool,
+                        max_conns_per_pool, api_rate_limit):
         LOG.debug("Initializing API endpoints")
 
         def _create_conn(p):
@@ -480,7 +485,7 @@ class ClusteredAPI(object):
                 order_as_stack=True,
                 create=_create_conn(provider))
 
-            endpoint = Endpoint(provider, pool)
+            endpoint = Endpoint(provider, pool, api_rate_limit)
             self._endpoints[provider.id] = endpoint
 
         # service requests using round robin
@@ -646,9 +651,21 @@ class ClusteredAPI(object):
                      {'ep': endpoint,
                       'max': endpoint.pool.max_size,
                       'waiting': endpoint.pool.waiting()})
+            conn_wait_start = time.time()
+        else:
+            conn_wait_start = None
         # pool.item() will wait if pool has 0 free
         with endpoint.pool.item() as conn:
-            yield EndpointConnection(endpoint, conn)
+            if conn_wait_start:
+                conn_wait = time.time() - conn_wait_start
+            else:
+                conn_wait = 0
+            with endpoint.rate_limiter as rate_wait:
+                # Connection validation calls are not currently rate-limited
+                # by this context manager.
+                # This should be fine as validation api calls are sent in a
+                # slow rate at once per 33 seconds by default.
+                yield EndpointConnection(endpoint, conn, conn_wait, rate_wait)
 
     def _proxy_stub(self, proxy_for):
         def _call_proxy(url, *args, **kwargs):
@@ -675,8 +692,10 @@ class ClusteredAPI(object):
                     if conn.default_headers:
                         kwargs['headers'] = kwargs.get('headers', {})
                         kwargs['headers'].update(conn.default_headers)
-                    LOG.debug("API cluster proxy %s %s to %s with %s",
-                              proxy_for.upper(), uri, url, kwargs)
+                    LOG.debug("API cluster proxy %s %s to %s with %s. "
+                              "Waited conn: %2.4f, rate: %2.4f",
+                              proxy_for.upper(), uri, url, kwargs,
+                              conn_data.conn_wait, conn_data.rate_wait)
 
                     # call the actual connection method to do the
                     # http request/response over the wire
@@ -716,7 +735,8 @@ class NSXClusteredAPI(ClusteredAPI):
             self._build_conf_providers(),
             self._http_provider,
             max_conns_per_pool=self.nsxlib_config.concurrent_connections,
-            keepalive_interval=self.nsxlib_config.conn_idle_timeout)
+            keepalive_interval=self.nsxlib_config.conn_idle_timeout,
+            api_rate_limit=self.nsxlib_config.api_rate_limit_per_endpoint)
 
         LOG.debug("Created NSX clustered API with '%s' "
                   "provider", self._http_provider.provider_id)

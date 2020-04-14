@@ -340,3 +340,74 @@ class NsxFeaturesTestCase(nsxlib_testcase.NsxLibTestCase):
             nsx_constants.FEATURE_EXCLUDE_PORT_BY_TAG))
         self.assertTrue(self.nsxlib.feature_supported(
             nsx_constants.FEATURE_MAC_LEARNING))
+
+
+class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
+    @mock.patch('time.time')
+    def test_calc_wait_time_no_wait(self, mock_time):
+        mock_time.return_value = 2.0
+        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        # no wait when no prev calls
+        self.assertEqual(rate_limiter._calc_wait_time(), 0)
+        # no wait when prev call in period window is less than max_calls
+        rate_limiter._call_time.append(0.9)
+        rate_limiter._call_time.append(1.5)
+        self.assertEqual(rate_limiter._calc_wait_time(), 0)
+        # timestamps out of current window should be removed
+        self.assertListEqual(list(rate_limiter._call_time), [1.5])
+
+    @mock.patch('time.time')
+    def test_calc_wait_time_need_wait(self, mock_time):
+        mock_time.return_value = 2.0
+
+        # At rate limit
+        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter._call_time.append(0.9)
+        rate_limiter._call_time.append(1.2)
+        rate_limiter._call_time.append(1.5)
+        self.assertAlmostEqual(rate_limiter._calc_wait_time(), 0.2)
+        # timestamps out of current window should be removed
+        self.assertListEqual(list(rate_limiter._call_time), [1.2, 1.5])
+
+        # Over rate limit. Enforce no compensation wait.
+        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter._call_time.append(0.9)
+        rate_limiter._call_time.append(1.2)
+        rate_limiter._call_time.append(1.5)
+        rate_limiter._call_time.append(1.8)
+        self.assertAlmostEqual(rate_limiter._calc_wait_time(), 0.5)
+        # timestamps out of current window should be removed
+        self.assertListEqual(list(rate_limiter._call_time), [1.2, 1.5, 1.8])
+
+    @mock.patch('vmware_nsxlib.v3.utils.APIRateLimiter._calc_wait_time')
+    @mock.patch('time.sleep')
+    @mock.patch('time.time')
+    def test_context_manager_no_wait(self, mock_time, mock_sleep, mock_calc):
+        mock_time.return_value = 2.0
+        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        mock_calc.return_value = 0
+        with rate_limiter as wait_time:
+            self.assertEqual(wait_time, 0)
+            mock_sleep.assert_not_called()
+        self.assertListEqual(list(rate_limiter._call_time), [2.0])
+
+    @mock.patch('vmware_nsxlib.v3.utils.APIRateLimiter._calc_wait_time')
+    @mock.patch('time.sleep')
+    def test_context_manager_disabled(self, mock_sleep, mock_calc):
+        rate_limiter = utils.APIRateLimiter(max_calls=None)
+        with rate_limiter as wait_time:
+            self.assertEqual(wait_time, 0)
+            mock_sleep.assert_not_called()
+            mock_calc.assert_not_called()
+
+    @mock.patch('vmware_nsxlib.v3.utils.APIRateLimiter._calc_wait_time')
+    @mock.patch('time.sleep')
+    @mock.patch('time.time')
+    def test_context_manager_need_wait(self, mock_time, mock_sleep, mock_calc):
+        mock_time.return_value = 2.0
+        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        mock_calc.return_value = 0.5
+        with rate_limiter as wait_time:
+            self.assertEqual(wait_time, 0.5)
+            mock_sleep.assert_called_once_with(wait_time)
+        self.assertListEqual(list(rate_limiter._call_time), [2.0])
