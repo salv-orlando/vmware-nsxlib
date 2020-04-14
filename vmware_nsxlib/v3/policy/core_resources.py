@@ -1917,6 +1917,21 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
 
         self.policy_api.client.update(path, segment)
 
+    def remove_connectivity_path(self, segment_id,
+                                 tenant=constants.POLICY_INFRA_TENANT):
+        """Disconnect a segment from a router.
+
+        PATCH does not support this action so PUT is used for this
+        """
+        # Get the current segment and update it
+        segment = self.get(segment_id)
+        segment['connectivity_path'] = None
+
+        segment_def = self.entry_def(segment_id=segment_id, tenant=tenant)
+        path = segment_def.get_resource_path()
+
+        self.policy_api.client.update(path, segment)
+
     def get_realized_state(self, segment_id, entity_type=None,
                            tenant=constants.POLICY_INFRA_TENANT,
                            realization_info=None):
