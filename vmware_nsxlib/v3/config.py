@@ -206,6 +206,12 @@ class NsxLibConfig(object):
                         " to True, overriding provided configuration")
             self.cluster_unavailable_retry = True
 
+        if len(nsx_api_managers) > self.max_attempts:
+            LOG.warning("max_attempts setting (%d) is lower than amount of"
+                        " endpoints (%d), which means that not all endpoints"
+                        " will be probed in case of retriable error",
+                        self.max_attempts, len(nsx_api_managers))
+
     def extend(self, keepalive_section, validate_connection_method=None,
                url_base=None):
         if keepalive_section or validate_connection_method:

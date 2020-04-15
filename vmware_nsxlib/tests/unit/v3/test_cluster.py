@@ -428,6 +428,24 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         api.get('api/v1/transport-zones')
         self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
 
+    def test_exception_translation_on_ground_error(self):
+
+        def server_error():
+            raise requests_exceptions.ConnectionError()
+
+        conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
+        exceptions = config.ExceptionConfig()
+        max_attempts = 4
+        api = self.mock_nsx_clustered_api(
+            nsx_api_managers=conf_managers,
+            max_attempts=max_attempts,
+            session_response=[server_error for i in range(0, max_attempts)])
+        api.nsxlib_config.exception_config = exceptions
+
+        self.assertRaises(nsxlib_exc.ServiceClusterUnavailable,
+                          api.get, 'api/v1/transport-zones')
+        self.assertEqual(cluster.ClusterHealth.RED, api.health)
+
     def test_cluster_proxy_connection_establish_error(self):
 
         def connect_timeout():

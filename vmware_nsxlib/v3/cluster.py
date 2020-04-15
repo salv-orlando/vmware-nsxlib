@@ -665,7 +665,21 @@ class ClusteredAPI(object):
 
     def _proxy_stub(self, proxy_for):
         def _call_proxy(url, *args, **kwargs):
-            return self._proxy(proxy_for, url, *args, **kwargs)
+            try:
+                return self._proxy(proxy_for, url, *args, **kwargs)
+            except Exception as ex:
+                # If this was exception that grounded the cluster,
+                # we want to translate this exception to
+                # ServiceClusterUnavailable. This is in order to
+                # provide unified "cluster down" experience for
+                # the client
+                exc_config = self.nsxlib_config.exception_config
+                if exc_config.should_ground_endpoint(ex):
+                    raise exceptions.ServiceClusterUnavailable(
+                        cluster_id=self.cluster_id)
+
+                raise ex
+
         return _call_proxy
 
     def _proxy(self, proxy_for, uri, *args, **kwargs):
