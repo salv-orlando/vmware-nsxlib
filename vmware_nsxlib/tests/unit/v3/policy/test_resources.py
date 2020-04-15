@@ -4161,6 +4161,42 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         self.assertEqual(gateway_address, subnet.gateway_address)
         self.assertEqual(dhcp_ranges, subnet.dhcp_ranges)
 
+    def test_get_tz_id(self):
+        segment_id = '111'
+        tz_id = '222'
+        tz_path = 'dummy-path/%s' % tz_id
+        with mock.patch.object(
+            self.policy_api, "get",
+            return_value={'id': segment_id,
+                          'transport_zone_path': tz_path}) as api_get:
+            result = self.resourceApi.get_transport_zone_id(
+                segment_id, tenant=TEST_TENANT)
+            api_get.assert_called_once()
+            self.assertEqual(tz_id, result)
+
+    def test_set_admin_state(self):
+        # NSX version 3 & up
+        segment_id = '111'
+        with mock.patch.object(self.policy_api.client, "patch") as api_patch:
+            self.resourceApi.set_admin_state(
+                segment_id, False, tenant=TEST_TENANT)
+            api_patch.assert_called_once_with(
+                '%s/segments/%s' % (TEST_TENANT, segment_id),
+                {'id': segment_id, 'admin_state': 'DOWN',
+                 'resource_type': 'Segment'},
+                headers={'nsx-enable-partial-patch': 'true'})
+
+    def test_set_admin_state_old(self):
+        # NSX version before 3
+        segment_id = '111'
+        with mock.patch.object(self.resourceApi, 'version', '2.5.0'),\
+            mock.patch.object(self.resourceApi, 'wait_until_realized'),\
+            mock.patch.object(self.resourceApi.nsx_api.logical_switch,
+                              "update") as ls_update:
+            self.resourceApi.set_admin_state(
+                segment_id, True, tenant=TEST_TENANT)
+            ls_update.assert_called_once_with(mock.ANY, admin_state=True)
+
 
 class TestPolicyIpPool(NsxPolicyLibTestCase):
 
@@ -4728,6 +4764,32 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
             api_put.assert_called_once_with(
                 "%s/segments/%s/ports/%s" % (TEST_TENANT, segment_id, port_id),
                 {'attachment': {'id': vif_id}, 'tags': tags})
+
+    def test_set_admin_state(self):
+        # NSX version 3 & up
+        segment_id = '111'
+        port_id = '222'
+        with mock.patch.object(self.policy_api.client, "patch") as api_patch:
+            self.resourceApi.set_admin_state(
+                segment_id, port_id, False, tenant=TEST_TENANT)
+            api_patch.assert_called_once_with(
+                '%s/segments/%s/ports/%s' % (TEST_TENANT, segment_id, port_id),
+                {'resource_type': 'SegmentPort', 'id': port_id,
+                 'admin_state': 'DOWN'},
+                headers={'nsx-enable-partial-patch': 'true'})
+
+    def test_set_admin_state_old(self):
+        # NSX version before 3
+        segment_id = '111'
+        port_id = '222'
+        with mock.patch.object(self.resourceApi, 'version', '2.5.0'),\
+            mock.patch.object(self.resourceApi, 'wait_until_realized'),\
+            mock.patch.object(self.resourceApi.nsx_api.logical_port,
+                              "update") as lp_update:
+            self.resourceApi.set_admin_state(
+                segment_id, port_id, True, tenant=TEST_TENANT)
+            lp_update.assert_called_once_with(
+                mock.ANY, False, admin_state=True)
 
 
 class TestPolicySegmentProfileBase(NsxPolicyLibTestCase):

@@ -283,10 +283,46 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
                 '&action=create_with_rules'
             create.assert_called_with(resource, expected_body, headers=None)
 
+    def test_set_rule_logging(self):
+        section_id = '111'
+        rule_id = 1
+        orig_rule = {'id': rule_id, 'logged': False}
+        with mock.patch.object(self.nsxlib.firewall_section, 'get_rules',
+                               return_value={'results': [orig_rule]}),\
+            mock.patch.object(self.nsxlib.client, 'get', return_value={}),\
+            mock.patch.object(self.nsxlib.client, 'create') as update:
+            self.nsxlib.firewall_section.set_rule_logging(section_id, True)
+            update.assert_called_once_with(
+                'firewall/sections/111?action=update_with_rules',
+                {'rules': [{'id': 1, 'logged': True}]}, headers=None)
+
     def test_get_excludelist(self):
         with mock.patch.object(self.nsxlib.client, 'list') as clist:
             self.nsxlib.firewall_section.get_excludelist()
             clist.assert_called_with('firewall/excludelist')
+
+    def test_add_to_excludelist(self):
+        target_id = '111'
+        target_type = const.NSGROUP
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            self.nsxlib.firewall_section.add_member_to_fw_exclude_list(
+                target_id, target_type)
+            create.assert_called_once_with(
+                'firewall/excludelist?action=add_member',
+                {'target_id': target_id, 'target_type': target_type},
+                headers=None)
+
+    def test_del_from_excludelist(self):
+        target_id = '111'
+        target_type = const.NSGROUP
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            self.nsxlib.firewall_section.remove_member_from_fw_exclude_list(
+                target_id, target_type)
+            create.assert_called_once_with(
+                'firewall/excludelist?action=remove_member&'
+                'object_id=%s' % target_id,
+                None,
+                headers=None)
 
     def test_update(self):
         fws_tags = [{"scope": "name", "tag": "new_name"}]
@@ -472,6 +508,26 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
             mock.patch.object(self.nsxlib.client, 'get') as get_mock:
             self.nsxlib.ns_group.update_nsgroup_and_section(
                 security_group, nsgroup_id, section_id,
+                log_sg_allowed_traffic)
+            # updating the nsgroup and the section
+            self.assertEqual(2, update_mock.call_count)
+            # getting the rules, and get before each update
+            self.assertEqual(3, get_mock.call_count)
+
+    def test_update_on_backend(self):
+        security_group = {
+            'name': 'name',
+            'id': uuidutils.generate_uuid(),
+            'description': None,
+            'logging': False}
+        nsgroup_id = uuidutils.generate_uuid()
+        section_id = uuidutils.generate_uuid()
+        log_sg_allowed_traffic = True
+
+        with mock.patch.object(self.nsxlib.client, 'update') as update_mock,\
+            mock.patch.object(self.nsxlib.client, 'get') as get_mock:
+            self.nsxlib.ns_group.update_on_backend(
+                None, security_group, nsgroup_id, section_id,
                 log_sg_allowed_traffic)
             # updating the nsgroup and the section
             self.assertEqual(2, update_mock.call_count)
