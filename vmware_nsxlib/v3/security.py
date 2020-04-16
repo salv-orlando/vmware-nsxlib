@@ -21,7 +21,6 @@ NSX-V3 Plugin security & Distributed Firewall integration module
 from distutils import version
 
 from oslo_log import log
-from oslo_log import versionutils
 from oslo_utils import excutils
 
 from vmware_nsxlib.v3 import exceptions
@@ -62,19 +61,6 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
         self.update(nsgroup_id, name, description)
         self.firewall_section.update(section_id, name, description,
                                      rules=rules)
-
-    def update_on_backend(self, context, security_group,
-                          nsgroup_id, section_id,
-                          log_sg_allowed_traffic):
-        # This api is deprecated because of the irrelevant context arg
-        versionutils.report_deprecated_feature(
-            LOG,
-            'security.NsxLibNsGroup.update_on_backend is deprecated. '
-            'Please use security.NsxLibNsGroup.update_nsgroup_and_section '
-            'instead.')
-        return self.update_nsgroup_and_section(security_group, nsgroup_id,
-                                               section_id,
-                                               log_sg_allowed_traffic)
 
     def get_name(self, security_group):
         # NOTE(roeyc): We add the security-group id to the NSGroup name,
@@ -119,14 +105,6 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
         for nsgroup_id in removed:
             self.remove_member(
                 nsgroup_id, consts.TARGET_TYPE_LOGICAL_PORT, lport_id)
-
-    def update_lport(self, context, lport_id, original, updated):
-        # This api is deprecated because of the irrelevant context arg
-        versionutils.report_deprecated_feature(
-            LOG,
-            'security.NsxLibNsGroup.update_lport is deprecated. '
-            'Please use security.NsxLibNsGroup.update_lport_nsgroups instead.')
-        return self.update_lport_nsgroups(lport_id, original, updated)
 
     def get_nsservice(self, resource_type, **properties):
         service = {'resource_type': resource_type}
@@ -560,20 +538,6 @@ class NsxLibFirewallSection(utils.NsxLibApiBase):
 
             firewall_rules.append(fw_rule)
         return self.add_rules(firewall_rules, section_id)
-
-    def create_rules(self, context, section_id, nsgroup_id,
-                     logging_enabled, action, security_group_rules,
-                     ruleid_2_remote_nsgroup_map):
-        # This api is deprecated because of the irrelevant context arg
-        versionutils.report_deprecated_feature(
-            LOG,
-            'security.NsxLibFirewallSection.create_rules is deprecated. '
-            'Please use security.NsxLibFirewallSection.create_section_rules '
-            'instead.')
-        return self.create_section_rules(
-            section_id, nsgroup_id,
-            logging_enabled, action, security_group_rules,
-            ruleid_2_remote_nsgroup_map)
 
     def set_rule_logging(self, section_id, logging):
         rules = self._process_rules_logging_for_update(

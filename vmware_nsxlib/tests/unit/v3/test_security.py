@@ -73,8 +73,8 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
             section_id = 'section-id'
             group_id = 'nsgroup-id'
             target_id = 'dummy'
-            self.nsxlib.firewall_section.create_rules(
-                None, section_id, group_id, False,
+            self.nsxlib.firewall_section.create_section_rules(
+                section_id, group_id, False,
                 "ALLOW", rules, {rule_id: target_id})
             add_rules.assert_called_once_with([
                 {'display_name': mock.ANY,
@@ -105,8 +105,8 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
             section_id = 'section-id'
             group_id = 'nsgroup-id'
             target_id = 'dummy'
-            self.nsxlib.firewall_section.create_rules(
-                None, section_id, group_id, False,
+            self.nsxlib.firewall_section.create_section_rules(
+                section_id, group_id, False,
                 "ALLOW", rules, {rule_id: target_id})
             add_rules.assert_called_once_with([
                 {'display_name': mock.ANY,
@@ -139,8 +139,8 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
             section_id = 'section-id'
             group_id = 'nsgroup-id'
             target_id = 'dummy'
-            self.nsxlib.firewall_section.create_rules(
-                None, section_id, group_id, False,
+            self.nsxlib.firewall_section.create_section_rules(
+                section_id, group_id, False,
                 "ALLOW", rules, {rule_id: target_id})
             add_rules.assert_called_once_with([
                 {'display_name': mock.ANY,
@@ -190,8 +190,8 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
                     section_id = 'section-id'
                     group_id = 'nsgroup-id'
                     target_id = 'dummy'
-                    self.nsxlib.firewall_section.create_rules(
-                        None, section_id, group_id, False,
+                    self.nsxlib.firewall_section.create_section_rules(
+                        section_id, group_id, False,
                         "ALLOW", rules, {rule_id: target_id})
                     add_rules.assert_called_once_with([
                         {'display_name': mock.ANY,
@@ -224,16 +224,18 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
         target_id = 'dummy'
         with mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
                         return_value="2.3.0"):
-            self.assertRaises(nsxlib_exc.InvalidInput,
-                              self.nsxlib.firewall_section.create_rules,
-                              None, section_id, group_id, False,
-                              "ALLOW", rules, {rule_id: target_id})
+            self.assertRaises(
+                nsxlib_exc.InvalidInput,
+                self.nsxlib.firewall_section.create_section_rules,
+                section_id, group_id, False,
+                "ALLOW", rules, {rule_id: target_id})
         with mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
                         return_value="2.4.0"):
-            self.assertRaises(nsxlib_exc.InvalidInput,
-                              self.nsxlib.firewall_section.create_rules,
-                              None, section_id, group_id, False,
-                              "ALLOW", rules, {rule_id: target_id})
+            self.assertRaises(
+                nsxlib_exc.InvalidInput,
+                self.nsxlib.firewall_section.create_section_rules,
+                section_id, group_id, False,
+                "ALLOW", rules, {rule_id: target_id})
 
     def test_create_rule_with_illegal_icmp_2_4(self):
         rule_id = uuidutils.generate_uuid()
@@ -250,10 +252,11 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
         target_id = 'dummy'
         with mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
                         return_value="2.4.0"):
-            self.assertRaises(nsxlib_exc.InvalidInput,
-                              self.nsxlib.firewall_section.create_rules,
-                              None, section_id, group_id, False,
-                              "ALLOW", rules, {rule_id: target_id})
+            self.assertRaises(
+                nsxlib_exc.InvalidInput,
+                self.nsxlib.firewall_section.create_section_rules,
+                section_id, group_id, False,
+                "ALLOW", rules, {rule_id: target_id})
 
     def test_create_with_rules(self):
         expected_body = {
@@ -352,8 +355,8 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
             section_id = 'section-id'
             group_id = 'nsgroup-id'
             target_id = 'dummy'
-            self.nsxlib.firewall_section.create_rules(
-                None, section_id, group_id, False,
+            self.nsxlib.firewall_section.create_section_rules(
+                section_id, group_id, False,
                 "ALLOW", rules, {rule_id: target_id})
             expected_rule = {'display_name': mock.ANY,
                              'ip_protocol': 'IPV4',
@@ -508,26 +511,6 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
             mock.patch.object(self.nsxlib.client, 'get') as get_mock:
             self.nsxlib.ns_group.update_nsgroup_and_section(
                 security_group, nsgroup_id, section_id,
-                log_sg_allowed_traffic)
-            # updating the nsgroup and the section
-            self.assertEqual(2, update_mock.call_count)
-            # getting the rules, and get before each update
-            self.assertEqual(3, get_mock.call_count)
-
-    def test_update_on_backend(self):
-        security_group = {
-            'name': 'name',
-            'id': uuidutils.generate_uuid(),
-            'description': None,
-            'logging': False}
-        nsgroup_id = uuidutils.generate_uuid()
-        section_id = uuidutils.generate_uuid()
-        log_sg_allowed_traffic = True
-
-        with mock.patch.object(self.nsxlib.client, 'update') as update_mock,\
-            mock.patch.object(self.nsxlib.client, 'get') as get_mock:
-            self.nsxlib.ns_group.update_on_backend(
-                None, security_group, nsgroup_id, section_id,
                 log_sg_allowed_traffic)
             # updating the nsgroup and the section
             self.assertEqual(2, update_mock.call_count)

@@ -14,11 +14,8 @@
 #    under the License.
 
 import netaddr
-import six
 
 from oslo_log import log
-from oslo_log import versionutils
-
 from vmware_nsxlib.v3 import constants
 from vmware_nsxlib.v3 import utils
 
@@ -52,24 +49,6 @@ class NsxLibNativeDhcp(utils.NsxLibApiBase):
 
     def build_server_name(self, net_name, net_id):
         return utils.get_name_and_uuid(net_name or 'dhcpserver', net_id)
-
-    def build_server_domain_name(self, net_dns_domain, default_dns_domain):
-        versionutils.report_deprecated_feature(
-            LOG,
-            'NsxLibQosNativeDhcp.build_server_domain_name is deprecated.')
-
-        if net_dns_domain:
-            if isinstance(net_dns_domain, six.string_types):
-                domain_name = net_dns_domain
-            else:
-                domain_name = net_dns_domain['dns_domain']
-        else:
-            # use the default one, or the globally configured one
-            if default_dns_domain is not None:
-                domain_name = default_dns_domain
-            else:
-                domain_name = self.nsxlib_config.dns_domain
-        return domain_name
 
     def build_server(self, name, ip_address, cidr, gateway_ip,
                      dns_domain=None, dns_nameservers=None,
@@ -107,39 +86,3 @@ class NsxLibNativeDhcp(utils.NsxLibApiBase):
             body['dhcp_profile_id'] = dhcp_profile_id
 
         return body
-
-    def build_server_config(self, network, subnet, port, tags,
-                            default_dns_nameservers=None,
-                            default_dns_domain=None):
-
-        versionutils.report_deprecated_feature(
-            LOG,
-            'NsxLibQosNativeDhcp.build_server_config is deprecated. '
-            'Please use build_server instead')
-
-        # Prepare the configuration for a new logical DHCP server.
-        server_ip = "%s/%u" % (port['fixed_ips'][0]['ip_address'],
-                               netaddr.IPNetwork(subnet['cidr']).prefixlen)
-        dns_nameservers = subnet['dns_nameservers']
-        if not dns_nameservers or not utils.is_attr_set(dns_nameservers):
-            # use the default one , or the globally configured one
-            if default_dns_nameservers is not None:
-                dns_nameservers = default_dns_nameservers
-            else:
-                dns_nameservers = self.nsxlib_config.dns_nameservers
-        gateway_ip = subnet['gateway_ip']
-        if not utils.is_attr_set(gateway_ip):
-            gateway_ip = None
-        static_routes, gateway_ip = self.build_static_routes(
-            gateway_ip, subnet['cidr'], subnet['host_routes'])
-        options = {'option121': {'static_routes': static_routes}}
-        name = self.build_server_name(network['name'], network['id'])
-        domain_name = self.build_server_domain_name(network.get('dns_domain'),
-                                                    default_dns_domain)
-        return {'name': name,
-                'server_ip': server_ip,
-                'dns_nameservers': dns_nameservers,
-                'domain_name': domain_name,
-                'gateway_ip': gateway_ip,
-                'options': options,
-                'tags': tags}

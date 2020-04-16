@@ -14,7 +14,6 @@
 #    under the License.
 
 from oslo_log import log
-from oslo_log import versionutils
 
 LOG = log.getLogger(__name__)
 
@@ -74,8 +73,6 @@ class NsxLibConfig(object):
                             binding entries. These will be used if there are
                             no nameservers defined on the subnet.
     :param dns_domain: Domain to use for building the hostnames.
-    :param dhcp_profile_uuid: Currently unused and deprecated.
-                              Kept for backward compatibility.
     :param allow_overwrite_header: If True, a default header of
                                    X-Allow-Overwrite:true will be added to all
                                    the requests, to allow admin user to update/
@@ -128,7 +125,6 @@ class NsxLibConfig(object):
                  plugin_ver=None,
                  dns_nameservers=None,
                  dns_domain='openstacklocal',
-                 dhcp_profile_uuid=None,
                  allow_overwrite_header=False,
                  rate_limit_retry=True,
                  cluster_unavailable_retry=False,
@@ -171,13 +167,6 @@ class NsxLibConfig(object):
                         " from DOWN state, cluster_unavailable_retry is set"
                         " to True, overriding provided configuration")
             self.cluster_unavailable_retry = True
-
-        if dhcp_profile_uuid:
-            # this is deprecated, and never used.
-            versionutils.report_deprecated_feature(
-                LOG,
-                'dhcp_profile_uuid is not used by the nsxlib, and will '
-                'be removed from its configuration in the future.')
 
     def extend(self, keepalive_section, validate_connection_method=None,
                url_base=None):
