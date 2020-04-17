@@ -16,9 +16,12 @@
 import unittest
 
 import mock
+from requests import codes
 from requests import exceptions as requests_exceptions
 from requests import models
 import six.moves.urllib.parse as urlparse
+
+from oslo_serialization import jsonutils
 
 from vmware_nsxlib.tests.unit.v3 import mocks
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
@@ -26,6 +29,7 @@ from vmware_nsxlib import v3
 from vmware_nsxlib.v3 import client
 from vmware_nsxlib.v3 import client_cert
 from vmware_nsxlib.v3 import cluster
+from vmware_nsxlib.v3 import config
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 
 
@@ -35,6 +39,10 @@ def _validate_conn_up(*args, **kwargs):
 
 def _validate_conn_down(*args, **kwargs):
     raise requests_exceptions.ConnectionError()
+
+
+def _validate_server_busy(*args, **kwargs):
+    raise nsxlib_exc.ServerBusy(details="Test")
 
 
 def get_sess_create_resp():
@@ -282,9 +290,10 @@ class NsxV3ClusteredAPIWithClientCertTestCase(NsxV3ClusteredAPITestCase):
 
 class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
 
-    def _test_health(self, validate_fn, expected_health):
+    def _test_health(self, validate_fn, expected_health, exceptions=None):
         conf_managers = ['8.9.10.11', '9.10.11.12']
-        api = self.new_mocked_cluster(conf_managers, validate_fn)
+        api = self.new_mocked_cluster(conf_managers, validate_fn,
+                                      exceptions=exceptions)
 
         self.assertEqual(expected_health, api.health)
 
@@ -312,6 +321,16 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         self.assertRaises(nsxlib_exc.ServiceClusterUnavailable,
                           api.get, 'api/v1/transport-zones')
 
+    def test_cluster_validate_with_exception_retry(self):
+        self._test_health(_validate_server_busy, cluster.ClusterHealth.GREEN)
+
+    def test_cluster_validate_with_exception_no_retry(self):
+        exceptions = config.ExceptionConfig()
+        exceptions.retriables = []
+        self._test_health(_validate_server_busy,
+                          cluster.ClusterHealth.RED,
+                          exceptions)
+
     def test_cluster_proxy_stale_revision(self):
 
         def stale_revision():
@@ -321,6 +340,93 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         api = self.mock_nsx_clustered_api(session_response=stale_revision)
         self.assertRaises(nsxlib_exc.StaleRevision,
                           api.get, 'api/v1/transport-zones')
+
+    def test_cluster_down_and_retry_on_server_error(self):
+
+        def server_error():
+            return mocks.MockRequestsResponse(
+                codes.INTERNAL_SERVER_ERROR,
+                jsonutils.dumps({'error_message': 'test', 'error_code': 98}))
+
+        def all_well():
+            return mocks.MockRequestsResponse(
+                codes.OK,
+                jsonutils.dumps({'id': 'test'}))
+
+        conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
+        exceptions = config.ExceptionConfig()
+        exceptions.ground_triggers.append(nsxlib_exc.CannotConnectToServer)
+        api = self.mock_nsx_clustered_api(
+            nsx_api_managers=conf_managers,
+            session_response=[server_error, all_well])
+        api.nsxlib_config.exception_config = exceptions
+
+        api.get('api/v1/transport-zones')
+        # first manager should go down, second one is confirmed as UP
+        # after retry
+        self.assertEqual(cluster.ClusterHealth.ORANGE, api.health)
+
+    def test_max_retry_attempts_on_server_error(self):
+
+        def server_error():
+            return mocks.MockRequestsResponse(
+                codes.INTERNAL_SERVER_ERROR,
+                jsonutils.dumps({'error_message': 'test', 'error_code': 98}))
+
+        conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
+        exceptions = config.ExceptionConfig()
+        exceptions.ground_triggers.append(nsxlib_exc.CannotConnectToServer)
+        max_attempts = 4
+        api = self.mock_nsx_clustered_api(
+            nsx_api_managers=conf_managers,
+            max_attempts=max_attempts,
+            session_response=[server_error for i in range(0, max_attempts)])
+        api.nsxlib_config.cluster_unavailable_retry = False
+        api.nsxlib_config.exception_config = exceptions
+
+        self.assertRaises(nsxlib_exc.ServiceClusterUnavailable,
+                          api.get, 'api/v1/transport-zones')
+        self.assertEqual(cluster.ClusterHealth.RED, api.health)
+
+    def test_max_retry_attempts_on_retriable_error(self):
+
+        def server_error():
+            return mocks.MockRequestsResponse(
+                codes.INTERNAL_SERVER_ERROR,
+                jsonutils.dumps({'error_message': 'test', 'error_code': 98}))
+
+        conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
+        exceptions = config.ExceptionConfig()
+        max_attempts = 2
+        api = self.mock_nsx_clustered_api(
+            nsx_api_managers=conf_managers,
+            max_attempts=max_attempts,
+            session_response=[server_error for i in range(0, max_attempts)])
+        api.nsxlib_config.exception_config = exceptions
+
+        self.assertRaises(nsxlib_exc.CannotConnectToServer,
+                          api.get, 'api/v1/transport-zones')
+        # This exception does not ground endpoint
+        self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
+
+    def test_non_retriable_error(self):
+
+        def server_error():
+            return mocks.MockRequestsResponse(
+                codes.INTERNAL_SERVER_ERROR,
+                jsonutils.dumps({'error_message': 'test', 'error_code': 99}))
+
+        conf_managers = ['8.9.10.11', '9.10.11.12', '10.11.12.13']
+        exceptions = config.ExceptionConfig()
+        max_attempts = 2
+        api = self.mock_nsx_clustered_api(
+            nsx_api_managers=conf_managers,
+            max_attempts=max_attempts,
+            session_response=[server_error for i in range(0, max_attempts)])
+        api.nsxlib_config.exception_config = exceptions
+
+        api.get('api/v1/transport-zones')
+        self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
 
     def test_cluster_proxy_connection_establish_error(self):
 

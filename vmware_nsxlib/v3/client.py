@@ -29,6 +29,42 @@ LOG = log.getLogger(__name__)
 NULL_CURSOR_PREFIX = '0000'
 
 
+def get_http_error_details(response):
+    msg = response.json() if response.content else ''
+    error_code = None
+    related_error_codes = []
+
+    if isinstance(msg, dict) and 'error_message' in msg:
+        error_code = msg.get('error_code')
+        related_errors = [error['error_message'] for error in
+                          msg.get('related_errors', [])]
+        related_error_codes = [str(error['error_code']) for error in
+                               msg.get('related_errors', []) if
+                               error.get('error_code')]
+        msg = msg['error_message']
+        if related_errors:
+            msg += " relatedErrors: %s" % ' '.join(related_errors)
+
+    return {'status_code': response.status_code,
+            'error_code': error_code,
+            'related_error_codes': related_error_codes,
+            'details': msg}
+
+
+def init_http_exception_from_response(response):
+    if not response:
+        return None
+
+    error_details = get_http_error_details(response)
+    if not error_details['error_code']:
+        return None
+
+    error = http_error_to_exception(error_details['status_code'],
+                                    error_details['error_code'])
+
+    return error(manager='', **error_details)
+
+
 def http_error_to_exception(status_code, error_code):
     errors = {
         requests.codes.NOT_FOUND:
@@ -99,7 +135,7 @@ class RESTClient(object):
     def list(self, resource='', headers=None, silent=False):
         return self.url_list(resource, headers=headers, silent=silent)
 
-    def get(self, uuid, headers=None, silent=False, with_retries=True):
+    def get(self, uuid, headers=None, silent=False, with_retries=False):
         return self.url_get(uuid, headers=headers, silent=silent,
                             with_retries=with_retries)
 
@@ -132,7 +168,7 @@ class RESTClient(object):
             cursor = page.get('cursor', NULL_CURSOR_PREFIX)
         return concatenate_response
 
-    def url_get(self, url, headers=None, silent=False, with_retries=True):
+    def url_get(self, url, headers=None, silent=False, with_retries=False):
         return self._rest_call(url, method='GET', headers=headers,
                                silent=silent, with_retries=with_retries)
 
@@ -151,10 +187,10 @@ class RESTClient(object):
     def url_patch(self, url, body, headers=None):
         return self._rest_call(url, method='PATCH', body=body, headers=headers)
 
-    def _raise_error(self, status_code, operation, result_msg,
+    def _raise_error(self, operation, status_code, details,
                      error_code=None, related_error_codes=None):
         error = http_error_to_exception(status_code, error_code)
-        raise error(manager='', operation=operation, details=result_msg,
+        raise error(manager='', operation=operation, details=details,
                     error_code=error_code,
                     related_error_codes=related_error_codes,
                     status_code=status_code)
@@ -171,22 +207,9 @@ class RESTClient(object):
                                                    for code in expected]),
                              'body': result_msg})
 
-            error_code = None
-            related_error_codes = []
-            if isinstance(result_msg, dict) and 'error_message' in result_msg:
-                error_code = result_msg.get('error_code')
-                related_errors = [error['error_message'] for error in
-                                  result_msg.get('related_errors', [])]
-                related_error_codes = [str(error['error_code']) for error in
-                                       result_msg.get('related_errors', []) if
-                                       error.get('error_code')]
-                result_msg = result_msg['error_message']
-                if related_errors:
-                    result_msg += " relatedErrors: %s" % ' '.join(
-                        related_errors)
-            self._raise_error(result.status_code, operation, result_msg,
-                              error_code=error_code,
-                              related_error_codes=related_error_codes)
+            error_details = get_http_error_details(result)
+
+            self._raise_error(operation, **error_details)
 
     @classmethod
     def merge_headers(cls, *headers):
@@ -322,35 +345,21 @@ class NSX3Client(JSONRESTClient):
             default_headers=default_headers,
             client_obj=client_obj)
 
-    def _raise_error(self, status_code, operation, result_msg,
+    def _raise_error(self, operation, status_code, details,
                      error_code=None, related_error_codes=None):
         """Override the Rest client errors to add the manager IPs"""
         error = http_error_to_exception(status_code, error_code)
         raise error(manager=self.nsx_api_managers,
                     operation=operation,
-                    details=result_msg,
+                    details=details,
                     error_code=error_code,
                     related_error_codes=related_error_codes,
                     status_code=status_code)
 
     def _rest_call(self, url, **kwargs):
         if kwargs.get('with_retries', True):
-            # Retry on "607: Persistence layer is currently reconfiguring"
-            # and on "98: Cannot connect to server"
-            retry_codes = [exceptions.APITransactionAborted,
-                           exceptions.CannotConnectToServer]
-            if self.rate_limit_retry:
-                # If too many requests are handled by the nsx at the same time,
-                # error "429: Too Many Requests" or "503: Server Unavailable"
-                # will be returned.
-                retry_codes.append(exceptions.ServerBusy)
+            LOG.warning("with_retries setting is deprecated and will be "
+                        "removed. Please use exceptions setting in nsxlib "
+                        "config instead")
 
-            # the client is expected to retry after a random 400-600 milli,
-            # and later exponentially until 5 seconds wait
-            @utils.retry_random_upon_exception(
-                tuple(retry_codes), max_attempts=self.max_attempts)
-            def _rest_call_with_retry(self, url, **kwargs):
-                return super(NSX3Client, self)._rest_call(url, **kwargs)
-            return _rest_call_with_retry(self, url, **kwargs)
-        else:
-            return super(NSX3Client, self)._rest_call(url, **kwargs)
+        return super(NSX3Client, self)._rest_call(url, **kwargs)

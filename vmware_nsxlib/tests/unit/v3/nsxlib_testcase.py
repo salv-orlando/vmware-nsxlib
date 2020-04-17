@@ -19,7 +19,6 @@ import unittest
 import mock
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
-from requests import exceptions as requests_exceptions
 from requests import models
 
 from vmware_nsxlib import v3
@@ -180,12 +179,6 @@ class MemoryMockAPIProvider(nsx_cluster.AbstractHTTPProvider):
     def new_connection(self, cluster_api, provider):
         # all callers use the same backing
         return self._store
-
-    def is_connection_exception(self, exception):
-        return isinstance(exception, requests_exceptions.ConnectionError)
-
-    def is_timeout_exception(self, exception):
-        return isinstance(exception, requests_exceptions.Timeout)
 
 
 class NsxClientTestCase(NsxLibTestCase):
@@ -396,12 +389,14 @@ class NsxClientTestCase(NsxLibTestCase):
         return client
 
     def new_mocked_cluster(self, conf_managers, validate_conn_func,
-                           concurrent_connections=None):
+                           concurrent_connections=None, exceptions=None):
         mock_provider = mock.Mock()
         mock_provider.default_scheme = 'https'
         mock_provider.validate_connection = validate_conn_func
 
         nsxlib_config = get_default_nsxlib_config()
+        if exceptions:
+            nsxlib_config.exception_config = exceptions
         if concurrent_connections:
             nsxlib_config.concurrent_connections = concurrent_connections
         nsxlib_config.http_provider = mock_provider
