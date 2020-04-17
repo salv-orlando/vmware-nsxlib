@@ -228,7 +228,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         self.get_default_headers(session, provider,
                                  config.allow_overwrite_header,
                                  config.token_provider)
-
         return session
 
     def get_default_headers(self, session, provider, allow_overwrite_header,
@@ -649,7 +648,7 @@ class ClusteredAPI(object):
                 # slow rate at once per 33 seconds by default.
                 yield EndpointConnection(endpoint, conn, conn_wait, rate_wait)
 
-    def _raise_http_exception_if_needed(self, response):
+    def _raise_http_exception_if_needed(self, response, endpoint):
         # We need to inspect http codes to understand whether
         # this error is relevant for endpoint-level decisions, such
         # as ground endpoint or retry with next endpoint
@@ -657,6 +656,14 @@ class ClusteredAPI(object):
         if not exc:
             # This exception is irrelevant for endpoint decisions
             return
+
+        if (self.nsxlib_config.exception_config.should_regenerate(exc) and
+            bool(self.nsxlib_config.token_provider)):
+            # get new jwt token for authentication
+            self.nsxlib_config.token_provider.get_token(refresh=True)
+            # refresh endpoint so that it gets new header with updated token
+            endpoint.regenerate_pool()
+            raise exc
 
         exc_config = self.nsxlib_config.exception_config
         if (exc_config.should_ground_endpoint(exc) or
@@ -715,7 +722,7 @@ class ClusteredAPI(object):
 
                     # for some status codes, we need to bring the cluster
                     # down or retry API call
-                    self._raise_http_exception_if_needed(response)
+                    self._raise_http_exception_if_needed(response, endpoint)
 
                     return response
                 except Exception as e:
