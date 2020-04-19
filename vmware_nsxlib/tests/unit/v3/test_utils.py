@@ -23,6 +23,9 @@ from vmware_nsxlib.v3 import utils
 
 class TestNsxV3Utils(nsxlib_testcase.NsxClientTestCase):
 
+    def setUp(self, *args, **kwargs):
+        super(TestNsxV3Utils, self).setUp(with_mocks=True)
+
     def test_build_v3_tags_payload(self):
         result = self.nsxlib.build_v3_tags_payload(
             {'id': 'fake_id',
@@ -380,6 +383,10 @@ class NsxFeaturesTestCase(nsxlib_testcase.NsxLibTestCase):
 
 
 class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(APIRateLimiterTestCase, self).setUp(with_mocks=False)
+
     @mock.patch('time.time')
     def test_calc_wait_time_no_wait(self, mock_time):
         mock_time.return_value = 2.0

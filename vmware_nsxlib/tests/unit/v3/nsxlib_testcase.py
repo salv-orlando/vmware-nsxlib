@@ -141,7 +141,10 @@ class NsxLibTestCase(unittest.TestCase):
 
     def setUp(self, *args, **kwargs):
         super(NsxLibTestCase, self).setUp()
-        self.mocking = _mock_nsxlib()
+        if kwargs.get('with_mocks', True):
+            self.mocking = _mock_nsxlib()
+        else:
+            self.mocking = []
 
         if self.use_client_cert_auth():
             nsxlib_config = get_nsxlib_config_with_client_cert()

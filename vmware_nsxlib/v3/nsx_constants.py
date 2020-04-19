@@ -110,8 +110,6 @@ IPV4_IPV6 = 'IPV4_IPV6'
 
 LOCAL_IP_PREFIX = 'local_ip_prefix'
 
-LOGGING = 'logging'
-
 # Allowed address pairs
 NUM_ALLOWED_IP_ADDRESSES = 128
 MAX_STATIC_ROUTES = 26

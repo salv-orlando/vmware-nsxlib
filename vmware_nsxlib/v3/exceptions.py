@@ -174,11 +174,6 @@ class NSGroupIsFull(ManagerError):
                 "capacity, unable to add additional members.")
 
 
-class NumberOfNsgroupCriteriaTagsReached(ManagerError):
-    message = _("Port can be associated with at most %(max_num)s "
-                "security-groups.")
-
-
 class SecurityGroupMaximumCapacityReached(ManagerError):
     message = _("Security Group %(sg_id)s has reached its maximum capacity, "
                 "no more ports can be associated with this security-group.")

@@ -55,6 +55,9 @@ def _mock_create_and_list_nsgroups(test_method):
 class TestNSGroupManager(nsxlib_testcase.NsxLibTestCase):
     """Tests for vmware_nsxlib.v3.ns_group_manager.NSGroupManager."""
 
+    def setUp(self, *args, **kwargs):
+        super(TestNSGroupManager, self).setUp(with_mocks=False)
+
     @_mock_create_and_list_nsgroups
     def test_first_initialization(self):
         size = 5

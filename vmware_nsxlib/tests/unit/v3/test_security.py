@@ -27,6 +27,9 @@ from vmware_nsxlib.v3 import nsx_constants as const
 class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
     """Tests for vmware_nsxlib.v3.security.NsxLibFirewallSection"""
 
+    def setUp(self, *args, **kwargs):
+        super(TestNsxLibFirewallSection, self).setUp(with_mocks=False)
+
     def test_get_logicalport_reference(self):
         mock_port = '3ed55c9f-f879-4048-bdd3-eded92465252'
         result = self.nsxlib.firewall_section.get_logicalport_reference(
@@ -473,7 +476,10 @@ class TestNsxLibIPSet(nsxlib_testcase.NsxClientTestCase):
 class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
     """Tests for vmware_nsxlib.v3.security.NsxLibNSGroup"""
 
-    def test_get_nsgroup_complex_expression(self):
+    def setUp(self, *args, **kwargs):
+        super(TestNsxLibNSGroup, self).setUp(with_mocks=False)
+
+    def test_get_nsgroup_lp_complex_expression(self):
         port_tags = {'app': 'foo', 'project': 'myproject'}
         port_exp = [self.nsxlib.ns_group.get_port_tag_expression(k, v)
                     for k, v in six.iteritems(port_tags)]
@@ -481,6 +487,16 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
             expressions=port_exp)
         expected_exp = {'resource_type': const.NSGROUP_COMPLEX_EXP,
                         'expressions': port_exp}
+        self.assertEqual(expected_exp, complex_exp)
+
+    def test_get_nsgroup_ls_complex_expression(self):
+        switch_tags = {'app': 'foo', 'project': 'myproject'}
+        switch_exp = [self.nsxlib.ns_group.get_switch_tag_expression(k, v)
+                      for k, v in six.iteritems(switch_tags)]
+        complex_exp = self.nsxlib.ns_group.get_nsgroup_complex_expression(
+            expressions=switch_exp)
+        expected_exp = {'resource_type': const.NSGROUP_COMPLEX_EXP,
+                        'expressions': switch_exp}
         self.assertEqual(expected_exp, complex_exp)
 
     def test_update(self):
@@ -497,12 +513,72 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
                         'membership_criteria': membership_criteria}
                 update.assert_called_with(resource, data, headers=None)
 
+    def test_list(self):
+        ns_group = {'id': 'dummy'}
+        ret_list = {'results': [ns_group]}
+        with mock.patch.object(self.nsxlib.ns_group.client, 'list',
+                               return_value=ret_list) as list_mock:
+            result = self.nsxlib.ns_group.list()
+            list_mock.assert_called_with('ns-groups?populate_references=false')
+            self.assertEqual([ns_group], result)
+
+    def test_find(self):
+        name = 'test_name'
+        ns_group = {'id': 'dummy', 'display_name': name}
+        ret_list = {'results': [ns_group]}
+        with mock.patch.object(self.nsxlib.ns_group.client, 'list',
+                               return_value=ret_list):
+            result = self.nsxlib.ns_group.find_by_display_name(name)
+            self.assertEqual([ns_group], result)
+
+    def test_read(self):
+        ns_group_id = 'dummy'
+        with mock.patch.object(self.nsxlib.ns_group.client, 'get') as get_mock:
+            self.nsxlib.ns_group.read(ns_group_id)
+            get_mock.assert_called_with(
+                'ns-groups/%s?populate_references=true' % ns_group_id)
+
+    def test_create(self):
+        name = 'test_name'
+        description = 'dummy'
+        with mock.patch.object(self.nsxlib.ns_group.client,
+                               'create') as create_mock:
+            self.nsxlib.ns_group.create(name, description, None)
+            create_mock.assert_called_with(
+                'ns-groups',
+                {'display_name': name,
+                 'description': description,
+                 'tags': None,
+                 'members': []})
+
+    def test_create_with_membership(self):
+        name = 'test_name'
+        description = 'dummy'
+        membership = 'criteria'
+        with mock.patch.object(self.nsxlib.ns_group.client,
+                               'create') as create_mock:
+            self.nsxlib.ns_group.create(name, description, None,
+                                        membership_criteria=membership)
+            create_mock.assert_called_with(
+                'ns-groups',
+                {'display_name': name,
+                 'description': description,
+                 'tags': None,
+                 'members': [],
+                 'membership_criteria': [membership]})
+
+    def test_delete(self):
+        ns_group_id = 'dummy'
+        with mock.patch.object(self.nsxlib.ns_group.client,
+                               'delete') as del_mock:
+            self.nsxlib.ns_group.delete(ns_group_id)
+            del_mock.assert_called_with(
+                'ns-groups/%s?force=true' % ns_group_id)
+
     def test_update_nsgroup_and_section(self):
-        security_group = {
-            'name': 'name',
-            'id': uuidutils.generate_uuid(),
-            'description': None,
-            'logging': False}
+        name = 'name'
+        description = 'description'
+        logging = False
         nsgroup_id = uuidutils.generate_uuid()
         section_id = uuidutils.generate_uuid()
         log_sg_allowed_traffic = True
@@ -510,14 +586,14 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
         with mock.patch.object(self.nsxlib.client, 'update') as update_mock,\
             mock.patch.object(self.nsxlib.client, 'get') as get_mock:
             self.nsxlib.ns_group.update_nsgroup_and_section(
-                security_group, nsgroup_id, section_id,
+                name, description, logging, nsgroup_id, section_id,
                 log_sg_allowed_traffic)
             # updating the nsgroup and the section
             self.assertEqual(2, update_mock.call_count)
             # getting the rules, and get before each update
             self.assertEqual(3, get_mock.call_count)
 
-    def test_update_lport_nsgroups(self):
+    def test_update_lport_nsgroups_with_mocks(self):
         nsgroup_id1 = uuidutils.generate_uuid()
         nsgroup_id2 = uuidutils.generate_uuid()
         lport_id = uuidutils.generate_uuid()
@@ -534,3 +610,15 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
                                              [lport_id])
             remove_mock.assert_called_once_with(nsgroup_id1, 'LogicalPort',
                                                 lport_id)
+
+    def test_update_lport_nsgroups(self):
+        nsgroup_id1 = uuidutils.generate_uuid()
+        nsgroup_id2 = uuidutils.generate_uuid()
+        lport_id = uuidutils.generate_uuid()
+        original_nsgroups = [nsgroup_id1]
+        updated_nsgroups = [nsgroup_id2]
+
+        with mock.patch.object(self.nsxlib.client, 'create') as update_mock:
+            self.nsxlib.ns_group.update_lport_nsgroups(
+                lport_id, original_nsgroups, updated_nsgroups)
+            self.assertEqual(2, update_mock.call_count)

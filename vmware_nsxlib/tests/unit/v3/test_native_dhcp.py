@@ -21,7 +21,7 @@ class TestNativeDhcp(nsxlib_testcase.NsxLibTestCase):
     """Tests for vmware_nsxlib.v3.native_dhcp.NsxLibNativeDhcp."""
 
     def setUp(self, *args, **kwargs):
-        super(TestNativeDhcp, self).setUp()
+        super(TestNativeDhcp, self).setUp(with_mocks=False)
         self.handler = native_dhcp.NsxLibNativeDhcp(
             self.nsxlib.client,
             nsxlib_testcase.get_default_nsxlib_config())

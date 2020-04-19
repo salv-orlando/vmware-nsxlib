@@ -49,36 +49,15 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
     def resource_type(self):
         return 'NSGroup'
 
-    def update_nsgroup_and_section(self, security_group,
+    def update_nsgroup_and_section(self, name, description, logging,
                                    nsgroup_id, section_id,
                                    log_sg_allowed_traffic):
-        name = self.get_name(security_group)
-        description = security_group['description']
-        logging = (log_sg_allowed_traffic or
-                   security_group.get(consts.LOGGING, False))
+        logging = (log_sg_allowed_traffic or logging)
         rules = self.firewall_section._process_rules_logging_for_update(
             section_id, logging)
         self.update(nsgroup_id, name, description)
         self.firewall_section.update(section_id, name, description,
                                      rules=rules)
-
-    def get_name(self, security_group):
-        # NOTE(roeyc): We add the security-group id to the NSGroup name,
-        # for usability purposes.
-        return '%(name)s - %(id)s' % security_group
-
-    def get_lport_tags(self, secgroups):
-        # TODO(asarfaty): This api should move to vmware_nsx
-        if len(secgroups) > utils.MAX_NSGROUPS_CRITERIA_TAGS:
-            raise exceptions.NumberOfNsgroupCriteriaTagsReached(
-                max_num=utils.MAX_NSGROUPS_CRITERIA_TAGS)
-        tags = []
-        for sg in secgroups:
-            tags = utils.add_v3_tag(tags, PORT_SG_SCOPE, sg)
-        if not tags:
-            # This port shouldn't be associated with any security-group
-            tags = [{'scope': PORT_SG_SCOPE, 'tag': None}]
-        return tags
 
     def update_lport_nsgroups(self, lport_id, original_nsgroups,
                               updated_nsgroups):
