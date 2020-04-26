@@ -1959,7 +1959,7 @@ class TestNsxSearchNew(TestNsxSearch):
 
     @staticmethod
     def get_nsxlib_version():
-        return '3.0.0'
+        return nsx_constants.NSX_VERSION_3_1_0
 
 
 class TransportZone(BaseTestResource):

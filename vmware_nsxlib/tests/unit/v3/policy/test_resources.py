@@ -27,6 +27,8 @@ from vmware_nsxlib.v3.policy import core_defs
 from vmware_nsxlib.v3.policy import core_resources
 
 TEST_TENANT = 'test'
+# TODO(annak): move version forward with backend releases
+LATEST_VERSION = nsx_constants.NSX_VERSION_3_1_0
 
 
 class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
@@ -38,9 +40,8 @@ class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
             allow_passthrough=kwargs.get('allow_passthrough', True))
 
         # Mock the nsx-lib for the passthrough api
-        # TODO(annak): move version forward with backend releases
         with mock.patch("vmware_nsxlib.v3.NsxLib") as mock_lib:
-            mock_lib.return_value.get_version.return_value = "3.0.0"
+            mock_lib.return_value.get_version.return_value = LATEST_VERSION
             self.policy_lib = policy.NsxPolicyLib(nsxlib_config)
 
         self.policy_api = self.policy_lib.policy_api
@@ -3906,8 +3907,9 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
             self.resourceApi.update_route_redistribution_config(
                 tier0_id, config, service_id, tenant=TEST_TENANT)
             expected_def = core_defs.Tier0LocaleServiceDef(
-                nsx_version='3.0.0', tier0_id=tier0_id, service_id=service_id,
-                route_redistribution_config=config, tenant=TEST_TENANT)
+                nsx_version=LATEST_VERSION, tier0_id=tier0_id,
+                service_id=service_id, route_redistribution_config=config,
+                tenant=TEST_TENANT)
 
             self.assert_called_with_def(api_call, expected_def)
 
@@ -3925,7 +3927,7 @@ class TestPolicyTier0(NsxPolicyLibTestCase):
                 self.policy_lib.feature_supported(
                     nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG))
         with mock.patch.object(self.policy_lib, "get_version",
-                               return_value='3.0.0'):
+                               return_value=LATEST_VERSION):
             self.assertTrue(
                 self.policy_lib.feature_supported(
                     nsx_constants.FEATURE_ROUTE_REDISTRIBUTION_CONFIG))
@@ -4054,7 +4056,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
             if admin_state:
                 kwargs['admin_state'] = admin_state if 'UP' else 'DOWN'
             expected_def = core_defs.SegmentDef(
-                nsx_version='3.0.0',
+                nsx_version=LATEST_VERSION,
                 segment_id=mock.ANY,
                 name=name,
                 **kwargs)
@@ -4134,7 +4136,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
                                     name=name,
                                     admin_state=admin_state,
                                     tenant=TEST_TENANT)
-            expected_def = core_defs.SegmentDef(nsx_version='3.0.0',
+            expected_def = core_defs.SegmentDef(nsx_version=LATEST_VERSION,
                                                 segment_id=segment_id,
                                                 name=name,
                                                 admin_state=admin_state,
@@ -4312,13 +4314,13 @@ class TestPolicyIpPool(NsxPolicyLibTestCase):
 
         with mock.patch.object(
                 self.policy_api, "create_or_update") as api_call, \
-                mock.patch.object(self.resourceApi, 'version', '3.0.0'):
+                mock.patch.object(self.resourceApi, 'version', LATEST_VERSION):
             self.resourceApi.allocate_block_subnet(
                 ip_pool_id, ip_block_id, size, ip_subnet_id,
                 tenant=TEST_TENANT, start_ip=start_ip)
 
             expected_def = core_defs.IpPoolBlockSubnetDef(
-                nsx_version='3.0.0',
+                nsx_version=LATEST_VERSION,
                 ip_pool_id=ip_pool_id,
                 ip_block_id=ip_block_id,
                 ip_subnet_id=ip_subnet_id,
@@ -4607,7 +4609,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 self.policy_lib.feature_supported(
                     nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE))
         with mock.patch.object(self.policy_lib, "get_version",
-                               return_value='3.0.0'):
+                               return_value=LATEST_VERSION):
             self.assertTrue(
                 self.policy_lib.feature_supported(
                     nsx_constants.FEATURE_SWITCH_HYPERBUS_MODE))
@@ -4629,7 +4631,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
 
         with mock.patch.object(
             self.policy_api, "create_or_update") as api_call, \
-            mock.patch.object(self.resourceApi, 'version', '3.0.0'):
+            mock.patch.object(self.resourceApi, 'version', LATEST_VERSION):
             result = self.resourceApi.create_or_overwrite(
                 name, segment_id, description=description,
                 address_bindings=address_bindings,
@@ -4641,7 +4643,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.SegmentPortDef(
-                nsx_version='3.0.0',
+                nsx_version=LATEST_VERSION,
                 segment_id=segment_id,
                 port_id=mock.ANY,
                 name=name,
@@ -4717,7 +4719,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         hyperbus_mode = 'DISABLE'
         with mock.patch.object(
             self.policy_api, "create_or_update") as api_call, \
-            mock.patch.object(self.resourceApi, 'version', '3.0.0'):
+            mock.patch.object(self.resourceApi, 'version', LATEST_VERSION):
             self.resourceApi.attach(
                 segment_id, port_id,
                 attachment_type=attachment_type, vif_id=vif_id, app_id=app_id,
@@ -4727,7 +4729,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.SegmentPortDef(
-                nsx_version='3.0.0',
+                nsx_version=LATEST_VERSION,
                 segment_id=segment_id,
                 port_id=port_id,
                 attachment_type=attachment_type,
