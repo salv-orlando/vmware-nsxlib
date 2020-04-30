@@ -20,6 +20,7 @@ from distutils import version
 from oslo_log import log as logging
 import six
 
+from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3 import utils
@@ -1151,12 +1152,25 @@ class SegmentPortDef(ResourceDef):
             self._set_attr_if_specified(body, 'admin_state',
                                         value=admin_state)
 
+        if (self.has_attr('init_state') and
+            self._version_dependant_attr_supported('init_state')):
+            valid_list = [nsx_constants.INIT_STATE_UNBLOCKED_VLAN,
+                          nsx_constants.INIT_STATE_VIF_RESTORE]
+            init_state = self.get_attr('init_state')
+            if init_state not in valid_list:
+                raise exceptions.InvalidInput(
+                    operation='create_segment_port',
+                    arg_val=init_state,
+                    arg_name='init_state')
+            self._set_attr_if_specified(body, 'init_state')
+
         return body
 
     @property
     def version_dependant_attr_map(self):
         return {'hyperbus_mode': nsx_constants.NSX_VERSION_3_0_0,
-                'admin_state': nsx_constants.NSX_VERSION_3_0_0}
+                'admin_state': nsx_constants.NSX_VERSION_3_0_0,
+                'init_state': nsx_constants.NSX_VERSION_3_1_0}
 
 
 class SegmentBindingMapDefBase(ResourceDef):
