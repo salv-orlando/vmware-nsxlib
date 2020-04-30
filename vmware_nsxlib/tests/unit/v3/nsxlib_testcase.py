@@ -26,6 +26,7 @@ from vmware_nsxlib.v3 import client as nsx_client
 from vmware_nsxlib.v3 import client_cert
 from vmware_nsxlib.v3 import cluster as nsx_cluster
 from vmware_nsxlib.v3 import config
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import utils
 
 NSX_USER = 'admin'
@@ -49,6 +50,7 @@ DNS_NAMESERVERS = ['1.1.1.1']
 DNS_DOMAIN = 'openstacklocal'
 
 JSESSIONID = 'my_sess_id'
+LATEST_VERSION = nsx_constants.NSX_VERSION_3_1_0
 
 
 def _mock_nsxlib():

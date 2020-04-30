@@ -263,15 +263,15 @@ class RouterLib(object):
             route['destination'],
             route['nexthop'])
 
-    def change_edge_firewall_status(self, nsx_router_id,
-                                    action=nsx_constants.FW_DISABLE):
-        return self.nsxlib.logical_router.change_edge_firewall_status(
-            nsx_router_id, action)
-
     def delete_static_routes(self, nsx_router_id, route):
         return self.nsxlib.logical_router.delete_static_route_by_values(
             nsx_router_id, dest_cidr=route['destination'],
             nexthop=route['nexthop'])
+
+    def change_edge_firewall_status(self, nsx_router_id,
+                                    action=nsx_constants.FW_DISABLE):
+        return self.nsxlib.logical_router.change_edge_firewall_status(
+            nsx_router_id, action)
 
     def has_service_router(self, nsx_router_id):
         lrouter = self._router_client.get(nsx_router_id)

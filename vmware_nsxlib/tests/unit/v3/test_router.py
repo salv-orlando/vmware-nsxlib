@@ -24,6 +24,7 @@ from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3 import test_constants
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3 import nsx_constants
+from vmware_nsxlib.v3 import router as nsx_router
 
 
 class TestRouter(nsxlib_testcase.NsxClientTestCase):
@@ -44,7 +45,18 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
             self.assertEqual(
                 tier0_groups_dict[tier0_uuid]['member_index_list'], [0])
 
-    def test_validate_tier0_fail(self):
+    def test_validate_tier0_fail_no_cluster(self):
+        tier0_groups_dict = {}
+        tier0_uuid = uuidutils.generate_uuid()
+        rtr = {'edge_cluster_id': None}
+        with mock.patch.object(self.nsxlib.router._router_client, 'get',
+                               return_value=rtr):
+            self.assertRaises(
+                nsxlib_exc.NsxLibInvalidInput,
+                self.nsxlib.router.validate_tier0,
+                tier0_groups_dict, tier0_uuid)
+
+    def test_validate_tier0_fail_no_members(self):
         tier0_groups_dict = {}
         tier0_uuid = uuidutils.generate_uuid()
         edge_cluster = copy.copy(test_constants.FAKE_EDGE_CLUSTER)
@@ -102,6 +114,139 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
                 resource_type=nsx_constants.LROUTERPORT_CENTRALIZED)
             self.assertEqual(csp, port)
 
+    def test_update_advertisement(self):
+        router_id = test_constants.FAKE_ROUTER_UUID
+        nat = True
+        con = False
+        static = True
+        enabled = True
+        vip = False
+        snat = True
+        data = {'advertise_route_nat': nat,
+                'advertise_route_connected': con,
+                'advertise_route_static': static,
+                'enabled': enabled,
+                'advertise_lb_vip': vip,
+                'advertise_lb_snat_ip': snat}
+        api_client = self.nsxlib.router.nsxlib.logical_router.client
+        with mock.patch.object(api_client, 'get', return_value={}),\
+            mock.patch.object(api_client, 'update') as client_update,\
+            mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
+                       return_value=nsxlib_testcase.LATEST_VERSION):
+            self.nsxlib.router.update_advertisement(router_id, **data)
+            client_update.assert_called_with(
+                'logical-routers/%s/routing/advertisement' % router_id,
+                {'advertise_nat_routes': nat,
+                 'advertise_nsx_connected_routes': con,
+                 'advertise_static_routes': static,
+                 'enabled': enabled,
+                 'advertise_lb_vip': vip,
+                 'advertise_lb_snat_ip': snat},
+                headers=None)
+
+    def test_update_advertisement_lb_unsupported(self):
+        router_id = test_constants.FAKE_ROUTER_UUID
+        nat = True
+        con = False
+        static = True
+        enabled = True
+        vip = False
+        snat = True
+        data = {'advertise_route_nat': nat,
+                'advertise_route_connected': con,
+                'advertise_route_static': static,
+                'enabled': enabled,
+                'advertise_lb_vip': vip,
+                'advertise_lb_snat_ip': snat}
+        api_client = self.nsxlib.router.nsxlib.logical_router.client
+        with mock.patch.object(api_client, 'get', return_value={}),\
+            mock.patch.object(api_client, 'update') as client_update,\
+            mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
+                       return_value='2.0.0'):
+            self.nsxlib.router.update_advertisement(router_id, **data)
+            client_update.assert_called_with(
+                'logical-routers/%s/routing/advertisement' % router_id,
+                {'advertise_nat_routes': nat,
+                 'advertise_nsx_connected_routes': con,
+                 'advertise_static_routes': static,
+                 'enabled': enabled},
+                headers=None)
+
+    def test_delete_gw_snat_rule(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        gw_ip = '1.1.1.1'
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'delete_nat_rule_by_values') as del_api:
+            self.nsxlib.router.delete_gw_snat_rule(logical_router_id, gw_ip)
+            del_api.assert_called_with(
+                logical_router_id,
+                translated_network=gw_ip)
+
+    def test_delete_gw_snat_rule_by_source(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        gw_ip = '1.1.1.1'
+        source_net = '2.0.0.0/24'
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'delete_nat_rule_by_values') as del_api:
+            self.nsxlib.router.delete_gw_snat_rule_by_source(
+                logical_router_id, gw_ip, source_net)
+            del_api.assert_called_with(
+                logical_router_id,
+                translated_network=gw_ip,
+                match_source_network=source_net,
+                skip_not_found=False, strict_mode=True)
+
+    def test_delete_gw_snat_rules(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        gw_ip = '1.1.1.1'
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'delete_nat_rule_by_values') as del_api:
+            self.nsxlib.router.delete_gw_snat_rules(
+                logical_router_id, gw_ip)
+            del_api.assert_called_with(
+                logical_router_id,
+                translated_network=gw_ip,
+                skip_not_found=True, strict_mode=False)
+
+    def test_add_gw_snat_rule(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        gw_ip = '1.1.1.1'
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'add_nat_rule') as add_api:
+            self.nsxlib.router.add_gw_snat_rule(
+                logical_router_id, gw_ip)
+            add_api.assert_called_with(
+                logical_router_id,
+                translated_network=gw_ip,
+                action="SNAT",
+                bypass_firewall=True,
+                source_net=None,
+                rule_priority=nsx_router.GW_NAT_PRI,
+                tags=None,
+                display_name=None)
+
+    def test_update_router_edge_cluster(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        ec_id = test_constants.FAKE_EDGE_CLUSTER
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'update') as update_api:
+            self.nsxlib.router.update_router_edge_cluster(
+                logical_router_id, ec_id)
+            update_api.assert_called_with(
+                logical_router_id,
+                edge_cluster_id=ec_id)
+
+    def test_update_router_transport_zone(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        tz_id = test_constants.FAKE_TZ_UUID
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'update') as update_api:
+            self.nsxlib.router.update_router_transport_zone(
+                logical_router_id, tz_id)
+            update_api.assert_called_with(
+                logical_router_id,
+                transport_zone_id=tz_id)
+
     def test_create_logical_router_intf_port_by_ls_id(self):
         logical_router_id = uuidutils.generate_uuid()
         display_name = 'dummy'
@@ -136,6 +281,56 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
                 test_constants.FAKE_ROUTER_UUID,
                 '1.1.1.1', '2.2.2.2')
             self.assertEqual(add_rule.call_count, 2)
+
+    def test_delete_fip_nat_rules(self):
+        with mock.patch.object(self.nsxlib.logical_router,
+                               "delete_nat_rule_by_values") as del_rule:
+            self.nsxlib.router.delete_fip_nat_rules(
+                test_constants.FAKE_ROUTER_UUID,
+                '1.1.1.1', '2.2.2.2')
+            self.assertEqual(del_rule.call_count, 2)
+
+    def test_delete_fip_nat_rules_by_int(self):
+        with mock.patch.object(self.nsxlib.logical_router,
+                               "delete_nat_rule_by_values") as del_rule:
+            self.nsxlib.router.delete_fip_nat_rules_by_internal_ip(
+                test_constants.FAKE_ROUTER_UUID, '1.1.1.1')
+            self.assertEqual(del_rule.call_count, 2)
+
+    def test_add_static_routes(self):
+        dest = '1.1.1.0/24'
+        nexthop = '2.2.2.2'
+        route = {'destination': dest, 'nexthop': nexthop}
+        with mock.patch.object(self.nsxlib.logical_router,
+                               "add_static_route") as add_route:
+            self.nsxlib.router.add_static_routes(
+                test_constants.FAKE_ROUTER_UUID, route)
+            add_route.assert_called_once_with(
+                test_constants.FAKE_ROUTER_UUID,
+                dest, nexthop)
+
+    def test_del_static_routes(self):
+        dest = '1.1.1.0/24'
+        nexthop = '2.2.2.2'
+        route = {'destination': dest, 'nexthop': nexthop}
+        with mock.patch.object(self.nsxlib.logical_router,
+                               "delete_static_route_by_values") as del_route:
+            self.nsxlib.router.delete_static_routes(
+                test_constants.FAKE_ROUTER_UUID, route)
+            del_route.assert_called_once_with(
+                test_constants.FAKE_ROUTER_UUID,
+                dest_cidr=dest, nexthop=nexthop)
+
+    def test_has_service_router(self):
+        logical_router_id = test_constants.FAKE_ROUTER_UUID
+        ec_id = test_constants.FAKE_EDGE_CLUSTER
+        lr = {'id': logical_router_id,
+              'edge_cluster_id': ec_id}
+        with mock.patch.object(self.nsxlib.router.nsxlib.logical_router,
+                               'get', return_value=lr):
+            res = self.nsxlib.router.has_service_router(
+                logical_router_id)
+            self.assertTrue(res)
 
     def test_get_tier0_router_tz(self):
         tier0_uuid = uuidutils.generate_uuid()
