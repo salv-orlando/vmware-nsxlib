@@ -4026,7 +4026,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
                      dhcp_server=None, admin_state=None,
-                     ip_pool_id='external-ip-pool'):
+                     ip_pool_id='external-ip-pool', ls_id=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -4047,6 +4047,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
             kwargs['dhcp_server_config_id'] = dhcp_server
         if admin_state:
             kwargs['admin_state'] = admin_state
+
+        if ls_id:
+            kwargs['ls_id'] = ls_id
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
@@ -4097,6 +4100,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_without_ip_pool(self):
         self._test_create(ip_pool_id=None)
+
+    def test_create_with_ls_id(self):
+        self._test_create(ls_id='lsid1')
 
     def test_delete(self):
         segment_id = '111'
