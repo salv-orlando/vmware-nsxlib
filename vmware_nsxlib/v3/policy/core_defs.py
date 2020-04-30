@@ -907,7 +907,8 @@ class BaseSegmentDef(ResourceDef):
             self._set_attr_if_specified(body, 'ip_pool_id',
                                         body_attr='advanced_config',
                                         value=adv_cfg)
-        self._set_attrs_if_specified(body, ['domain_name', 'vlan_ids'])
+        self._set_attrs_if_specified(
+            body, ['domain_name', 'vlan_ids', 'ls_id'])
         return body
 
     @staticmethod
