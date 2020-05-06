@@ -42,7 +42,9 @@ class ExceptionConfig(object):
         # When hit during API call, these exceptions will be retried
         # after the endpoints are regenerated with up-to-date auth
         # credentials / tokens
-        self.regenerate_triggers = [v3_exceptions.InvalidCredentials]
+        self.regenerate_triggers = [v3_exceptions.InvalidCredentials,
+                                    v3_exceptions.ClientCertificateNotTrusted,
+                                    v3_exceptions.BadXSRFToken]
 
     def should_ground_endpoint(self, ex):
         for exception in self.ground_triggers:

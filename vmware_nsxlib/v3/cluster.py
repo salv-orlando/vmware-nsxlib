@@ -549,20 +549,19 @@ class ClusteredAPI(object):
                                                         endpoint,
                                                         conn)
                 endpoint.set_state(EndpointState.UP)
-        except exceptions.ClientCertificateNotTrusted:
-            LOG.warning("Failed to validate API cluster endpoint "
-                        "'%(ep)s' due to untrusted client certificate",
-                        {'ep': endpoint})
-            # regenerate connection pool based on new certificate
-            endpoint.regenerate_pool()
-        except exceptions.BadXSRFToken:
-            LOG.warning("Failed to validate API cluster endpoint "
-                        "'%(ep)s' due to expired XSRF token",
-                        {'ep': endpoint})
-            # regenerate connection pool based on token
-            endpoint.regenerate_pool()
         except Exception as e:
-            if self.nsxlib_config.exception_config.should_retry(e):
+            if self.nsxlib_config.exception_config.should_regenerate(e):
+                LOG.warning("Failed to validate API cluster endpoint "
+                            "'%(ep)s' due to an exception that calls for "
+                            "regeneration. Re-generating pool.",
+                            {'ep': endpoint})
+                if bool(self.nsxlib_config.token_provider):
+                    # get new jwt token for authentication
+                    self.nsxlib_config.token_provider.get_token(refresh=True)
+                # refresh endpoint with new headers that have updated token
+                endpoint.regenerate_pool()
+                return
+            elif self.nsxlib_config.exception_config.should_retry(e):
                 LOG.info("Exception is retriable, endpoint stays UP")
                 endpoint.set_state(EndpointState.UP)
             else:
@@ -657,10 +656,10 @@ class ClusteredAPI(object):
             # This exception is irrelevant for endpoint decisions
             return
 
-        if (self.nsxlib_config.exception_config.should_regenerate(exc) and
-            bool(self.nsxlib_config.token_provider)):
-            # get new jwt token for authentication
-            self.nsxlib_config.token_provider.get_token(refresh=True)
+        if self.nsxlib_config.exception_config.should_regenerate(exc):
+            if bool(self.nsxlib_config.token_provider):
+                # get new jwt token for authentication
+                self.nsxlib_config.token_provider.get_token(refresh=True)
             # refresh endpoint so that it gets new header with updated token
             endpoint.regenerate_pool()
             raise exc
