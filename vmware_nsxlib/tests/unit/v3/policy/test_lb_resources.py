@@ -896,6 +896,25 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
                 relax_scale_validation=relax_scale_validation)
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_update_customized(self):
+        obj_id = '111'
+        name = 'name'
+        tags = [{'tag': '1', 'scope': '2'}]
+
+        def update_callback(body):
+            body['tags'] = tags
+
+        with self.mock_get(obj_id, name), \
+            mock.patch.object(self.policy_api.client, "update") as update_call:
+            self.resourceApi.update_customized(
+                obj_id, update_callback)
+
+            update_call.assert_called_once_with(
+                'infra/lb-services/%s' % obj_id,
+                {'id': obj_id, 'display_name': name,
+                 'resource_type': 'LBService',
+                 'tags': tags})
+
     def test_get_status(self):
         obj_id = '111'
         with mock.patch.object(self.policy_api, "get") as api_call:
