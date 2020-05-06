@@ -694,6 +694,30 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
             relax_scale_validation=relax_scale_validation,
             tenant=tenant)
 
+    def update_customized(self, lb_service_id, update_payload_cbk,
+                          tenant=constants.POLICY_INFRA_TENANT):
+        """Update the LB service using GET & PUT
+
+        Changing the body with a customized callback
+        """
+
+        lb_service_def = self.entry_def(
+            lb_service_id=lb_service_id, tenant=tenant)
+        lb_service_path = lb_service_def.get_resource_path()
+
+        @utils.retry_upon_exception(
+            nsxlib_exc.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _update():
+            # Get the current data of service
+            lb_service_body = self.policy_api.get(lb_service_def)
+            # Update the body with the supplied callback
+            update_payload_cbk(lb_service_body)
+            # Update the backend using PUT
+            self.policy_api.client.update(lb_service_path, lb_service_body)
+
+        _update()
+
     def get_statistics(self, lb_service_id,
                        tenant=constants.POLICY_INFRA_TENANT):
         lb_service_stats_def = (
