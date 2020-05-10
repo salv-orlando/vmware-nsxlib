@@ -15,8 +15,8 @@
 #
 import copy
 import unittest
+from unittest import mock
 
-import mock
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 from requests import models

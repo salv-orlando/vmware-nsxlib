@@ -14,7 +14,7 @@
 #    under the License.
 #
 
-import mock
+from unittest import mock
 
 from vmware_nsxlib.tests.unit.v3.policy import test_resources
 from vmware_nsxlib.v3.policy import ipsec_vpn_defs

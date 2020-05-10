@@ -16,7 +16,7 @@
 
 import copy
 
-import mock
+from unittest import mock
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3.policy import policy_testcase

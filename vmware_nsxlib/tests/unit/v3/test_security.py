@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
-import six
+from unittest import mock
 
 from oslo_utils import uuidutils
+import six
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3 import test_constants

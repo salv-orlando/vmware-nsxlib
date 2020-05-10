@@ -14,8 +14,8 @@
 #    under the License.
 #
 import unittest
+from unittest import mock
 
-import mock
 from requests import codes
 from requests import exceptions as requests_exceptions
 from requests import models

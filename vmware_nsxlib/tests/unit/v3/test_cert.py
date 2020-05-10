@@ -15,8 +15,8 @@
 #
 
 import os
+from unittest import mock
 
-import mock
 from OpenSSL import crypto
 from oslo_serialization import jsonutils
 

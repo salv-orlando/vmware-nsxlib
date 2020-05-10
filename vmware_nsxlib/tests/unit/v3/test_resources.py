@@ -14,9 +14,9 @@
 #    under the License.
 #
 import copy
+from unittest import mock
 
 import eventlet
-import mock
 
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
