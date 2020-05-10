@@ -358,7 +358,7 @@ class NSX3Client(JSONRESTClient):
                     status_code=status_code)
 
     def _rest_call(self, url, **kwargs):
-        if kwargs.get('with_retries', True):
+        if 'with_retries' in kwargs and kwargs['with_retries']:
             LOG.warning("with_retries setting is deprecated and will be "
                         "removed. Please use exceptions setting in nsxlib "
                         "config instead")
