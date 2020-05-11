@@ -2,3 +2,5 @@
 host=review.opendev.org
 port=29418
 project=x/vmware-nsxlib.git
+branch=stable/ussuri
+defaultbranch=stable/ussuri
