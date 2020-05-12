@@ -1905,6 +1905,25 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
                           self.nsxlib._build_query,
                           tags=user_tags)
 
+    def test_nsx_search_all(self):
+        """Test search all base method."""
+        mock_search = mock.Mock()
+        mock_search.side_effect = [
+            {"cursor": "2",
+             "result_count": 3,
+             "results": [{"id": "s1"}, {"id": "s2"}]},
+            {"cursor": "3",
+             "result_count": 3,
+             "results": [{"id": "s3"}]}]
+        args = "foo"
+        kwargs = {"a1": "v1", "a2": "v2"}
+        results = self.nsxlib._search_all(mock_search, *args, **kwargs)
+        mock_search.assert_has_calls([
+            mock.call(*args, cursor=0, **kwargs),
+            mock.call(*args, cursor=2, **kwargs)])
+        self.assertEqual(3, len(results))
+        self.assertEqual([{"id": "s1"}, {"id": "s2"}, {"id": "s3"}], results)
+
     def test_nsx_search_all_by_tags(self):
         """Test search all of resources with the specified tag."""
         with mock.patch.object(self.nsxlib.client, 'url_get') as search:
@@ -1923,6 +1942,57 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
                 mock.call(self.search_path % query),
                 mock.call((self.search_path + '&cursor=2') % query)])
             self.assertEqual(3, len(results))
+
+    @mock.patch("vmware_nsxlib.v3.lib.NsxLibBase._search_all")
+    def test_nsx_search_all_by_attribute_values(self, mock_search_all):
+        """Test search all resources with the specified attribute values."""
+        resource_type = "dummy_type"
+        name, values = "dummy_attr", ["id1", "id2", "id3"]
+        self.nsxlib.search_all_resource_by_attribute_values(
+            resource_type, name, values)
+        mock_search_all.assert_called_once_with(
+            self.nsxlib.search_resource_by_attribute_values, resource_type,
+            name, values)
+
+    @mock.patch("vmware_nsxlib.v3.lib.NsxLibBase._search_all")
+    def test_nsx_search_all_by_filters(self, mock_search_all):
+        """Test search all resources with the specified filters."""
+        resource_type = "dummy_type"
+        filters = [{"field_names": "foo", "value": "bar"}]
+        extra_attrs = {"related": [{"resource_type": "FirewallRule",
+                                    "join_condition": "section_id:id"}]}
+        self.nsxlib.search_all_resource_by_filters(
+            resource_type, filters, **extra_attrs)
+        mock_search_all.assert_called_once_with(
+            self.nsxlib.search_resource_by_filters, resource_type, filters,
+            **extra_attrs)
+
+    def test_nsx_search_resource_by_attribute_values(self):
+        """Test search resources with the specified attribute values."""
+        with mock.patch.object(self.nsxlib.client, "url_post") as search:
+            resource_type = "dummy_type"
+            attr_name, attr_values = "dummy_name", ["value1", "value2"]
+            attr_query = " OR ".join(attr_values)
+            query = "resource_type:%s AND %s:(%s)" % (
+                resource_type, attr_name, attr_query)
+            body = {"query_pipeline": [{"query": query}]}
+            self.nsxlib.search_resource_by_attribute_values(
+                resource_type, attr_name, attr_values)
+            search.assert_called_with("search/querypipeline", body)
+
+    def test_nsx_search_resource_by_filters(self):
+        """Test search resources with the specified filters."""
+        with mock.patch.object(self.nsxlib.client, "url_post") as search:
+            parent_type, child_type = "parent_type", "child_type"
+            filters = [{"field_names": "foo", "value": "bar"}]
+            related = [{"resource_type": child_type,
+                        "join_condition": "section_id:id"}]
+            body = {"primary": {"resource_type": parent_type,
+                                "filters": filters},
+                    "related": related}
+            self.nsxlib.search_resource_by_filters(
+                parent_type, filters, related=related)
+            search.assert_called_with("search/aggregate", body)
 
     def test_get_id_by_resource_and_tag(self):
         id = 'test'
