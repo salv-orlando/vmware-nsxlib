@@ -409,7 +409,7 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
         # This exception does not ground endpoint
         self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
 
-    def test_non_retriable_error(self):
+    def test_regenerate_error(self):
 
         def server_error():
             return mocks.MockRequestsResponse(
@@ -425,7 +425,8 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
             session_response=[server_error for i in range(0, max_attempts)])
         api.nsxlib_config.exception_config = exceptions
 
-        api.get('api/v1/transport-zones')
+        self.assertRaises(nsxlib_exc.ClientCertificateNotTrusted,
+                          api.get, 'api/v1/transport-zones')
         self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
 
     def test_exception_translation_on_ground_error(self):
