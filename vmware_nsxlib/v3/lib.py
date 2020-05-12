@@ -203,14 +203,83 @@ class NsxLibBase(object):
 
         return do_search(url)
 
-    def search_all_by_tags(self, tags, resource_type=None, **extra_attrs):
-        """Return all the results searched based on tags."""
+    def search_resource_by_attribute_values(self, resource_type, name, values,
+                                            cursor=None, page_size=None):
+        """Search resources of a given type matching values of an attribute.
+
+        :param resource_type: String parameter specifying the desired
+                              resource_type.
+        :param name: Attribute name to match.
+        :param values: List of attribute values to search for.
+        :param cursor: Opaque cursor to be used for getting next page of
+                       records (supplied by current result page).
+        :param page_size: Maximum number of results to return in this page.
+
+        :returns: a list of resources of the requested type matching
+                  specified attribute values.
+        """
+        attribute_query = " OR ".join(values)
+        query = 'resource_type:%s' % resource_type + (
+            " AND %s:(%s)" % (name, attribute_query)
+            if attribute_query else "")
+        body = {"query_pipeline": [{"query": query}]}
+        args = []
+        if cursor:
+            args.append("cursor=%d" % cursor)
+        if page_size:
+            args.append("page_size=%d" % page_size)
+        url = "search/querypipeline" + ("?%s" % "&".join(args) if args else "")
+
+        # Retry the search in case of error
+        @utils.retry_upon_exception(exceptions.NsxSearchError,
+                                    max_attempts=self.client.max_attempts)
+        def do_search(url):
+            return self.client.url_post(url, body)
+
+        return do_search(url)
+
+    def search_resource_by_filters(self, resource_type, filters,
+                                   cursor=None, page_size=None, **extra_attrs):
+        """Search resources of a given type matching specific filters.
+
+        :param resource_type: String parameter specifying the desired
+                              resource_type.
+        :param filters: List of dictionaries containing filters. Each
+                     filter dictionary is of the form:
+                     {'field_names': <filter_key>, 'value': <filter_value>}
+        :param cursor: Opaque cursor to be used for getting next page of
+                       records (supplied by current result page).
+        :param page_size: Maximum number of results to return in this page.
+        :param extra_attrs: Support querying by user specified attributes.
+
+        :returns: a list of resources of the requested type matching
+                  specified filters.
+        """
+        body = {"primary": {"resource_type": resource_type,
+                            "filters": filters}}
+        related = extra_attrs.get("related")
+        if related:
+            body["related"] = related
+        args = []
+        if cursor:
+            args.append("cursor=%d" % cursor)
+        if page_size:
+            args.append("page_size=%d" % page_size)
+        url = "search/aggregate" + ("?%s" % "&".join(args) if args else "")
+
+        # Retry the search in case of error
+        @utils.retry_upon_exception(exceptions.NsxSearchError,
+                                    max_attempts=self.client.max_attempts)
+        def do_search(url):
+            return self.client.url_post(url, body)
+
+        return do_search(url)
+
+    def _search_all(self, search_func, *args, **kwargs):
         results = []
         cursor = 0
         while True:
-            response = self.search_by_tags(
-                resource_type=resource_type, tags=tags, cursor=cursor,
-                **extra_attrs)
+            response = search_func(*args, cursor=cursor, **kwargs)
             if not response['results']:
                 return results
             results.extend(response['results'])
@@ -219,21 +288,32 @@ class NsxLibBase(object):
             if cursor >= result_count:
                 return results
 
+    def search_all_by_tags(self, tags, resource_type=None, **extra_attrs):
+        """Return all the results searched based on tags."""
+        return self._search_all(self.search_by_tags,
+                                resource_type=resource_type, tags=tags,
+                                **extra_attrs)
+
     def search_all_resource_by_attributes(self, resource_type, **attributes):
-        """Return all the results searched based on attributes."""
-        results = []
-        cursor = 0
-        while True:
-            response = self.search_resource_by_attributes(
-                resource_type=resource_type,
-                cursor=cursor, **attributes)
-            if not response['results']:
-                return results
-            results.extend(response['results'])
-            cursor = int(response['cursor'])
-            result_count = int(response['result_count'])
-            if cursor >= result_count:
-                return results
+        """Return all resources of a given type matching specific attributes.
+
+        """
+        return self._search_all(self.search_resource_by_attributes,
+                                resource_type=resource_type, **attributes)
+
+    def search_all_resource_by_attribute_values(self, resource_type, name,
+                                                values):
+        """Return all resources of a given type matching an attribute value.
+
+        """
+        return self._search_all(self.search_resource_by_attribute_values,
+                                resource_type, name, values)
+
+    def search_all_resource_by_filters(self, resource_type, filters,
+                                       **extra_attrs):
+        """Return all resources of a given type matching specific filters."""
+        return self._search_all(self.search_resource_by_filters, resource_type,
+                                filters, **extra_attrs)
 
     def get_id_by_resource_and_tag(self, resource_type, scope, tag,
                                    alert_not_found=False,
