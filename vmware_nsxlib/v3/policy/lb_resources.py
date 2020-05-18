@@ -910,6 +910,17 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
         self.policy_api.create_or_update(
             lbvs_def, partial_updates=False)
 
+    def remove_dlb_virtual_server_persistence_profile(
+            self, virtual_server_id, tenant=constants.POLICY_INFRA_TENANT):
+        dlb_vs_def = self._get_and_update_def(
+            virtual_server_id=virtual_server_id, tenant=tenant)
+        body = dlb_vs_def.body if dlb_vs_def.body else {}
+        body.pop('lb_persistence_profile_path', None)
+        if body:
+            dlb_vs_def.set_obj_dict(body)
+        self.policy_api.create_or_update(
+            dlb_vs_def, partial_updates=False)
+
     def update_virtual_server_with_vip(self, virtual_server_id, vip,
                                        tenant=constants.POLICY_INFRA_TENANT):
         return self.update(
