@@ -1433,6 +1433,18 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 virtual_server_id=vs_id, name=vs_name)
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_remove_dlb_virtual_server_persistence_profile(self):
+        vs_id = 'test-id'
+        vs_name = 'test-name'
+        with self.mock_get(
+                vs_id, vs_name, lb_persistence_profile_path='test-profile'), \
+             self.mock_create_update() as update_call:
+            self.resourceApi.remove_dlb_virtual_server_persistence_profile(
+                vs_id)
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=vs_id, name=vs_name)
+            self.assert_called_with_def(update_call, expected_def)
+
 
 class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
 
