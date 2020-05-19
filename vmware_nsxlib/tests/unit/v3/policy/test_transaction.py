@@ -260,11 +260,13 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
         nat_rule1 = {"action": constants.NAT_ACTION_SNAT,
                      "display_name": "snat rule",
                      "id": nat_rule_id1,
-                     "resource_type": "PolicyNatRule"}
+                     "resource_type": "PolicyNatRule",
+                     "firewall_match": constants.NAT_FIREWALL_MATCH_BYPASS}
         nat_rule2 = {"action": constants.NAT_ACTION_DNAT,
                      "display_name": "dnat rule",
                      "id": nat_rule_id2,
-                     "resource_type": "PolicyNatRule"}
+                     "resource_type": "PolicyNatRule",
+                     "firewall_match": constants.NAT_FIREWALL_MATCH_BYPASS}
 
         policy_nat = {"id": "USER",
                       "resource_type": "PolicyNat",
