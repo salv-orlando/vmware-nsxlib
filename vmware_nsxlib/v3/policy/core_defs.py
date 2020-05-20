@@ -897,6 +897,7 @@ class BaseSegmentDef(ResourceDef):
             subnets = []
             if self.get_attr('subnets'):
                 subnets = [subnet.get_obj_dict(self.nsx_version)
+                           if isinstance(subnet, Subnet) else subnet
                            for subnet in self.get_attr('subnets')]
             self._set_attr_if_specified(body, 'subnets', value=subnets)
 
