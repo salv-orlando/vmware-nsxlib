@@ -1570,6 +1570,43 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_update_without_partial_patch(self):
+        obj_id = '111'
+        name = 'new name'
+        description = 'new desc'
+        members = [{'ip_address': '10.0.0.1'}]
+        algorithm = 'algo'
+        active_monitor_paths = ['path1']
+        member_group = 'group1'
+        snat_translation = False
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': obj_id}), \
+            mock.patch.object(self.policy_api,
+                              "create_or_update") as update_call:
+            self.resourceApi.update(obj_id,
+                                    name=name,
+                                    description=description,
+                                    members=members,
+                                    active_monitor_paths=active_monitor_paths,
+                                    algorithm=algorithm,
+                                    member_group=member_group,
+                                    snat_translation=snat_translation,
+                                    tenant=TEST_TENANT,
+                                    allow_partial_updates=False)
+            expected_def = lb_defs.LBPoolDef(
+                lb_pool_id=obj_id,
+                name=name,
+                description=description,
+                members=members,
+                active_monitor_paths=active_monitor_paths,
+                algorithm=algorithm,
+                member_group=member_group,
+                snat_translation=snat_translation,
+                tenant=TEST_TENANT)
+            update_call.assert_called_with(mock.ANY, partial_updates=False,
+                                           force=False)
+            self.assert_called_with_def(update_call, expected_def)
+
     def test_add_monitor_to_pool(self):
         obj_id = '111'
         active_monitor_paths = ['path1']

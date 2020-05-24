@@ -512,7 +512,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                tags=IGNORE, members=IGNORE, algorithm=IGNORE,
                active_monitor_paths=IGNORE, member_group=IGNORE,
                snat_translation=IGNORE,
-               tenant=constants.POLICY_INFRA_TENANT):
+               tenant=constants.POLICY_INFRA_TENANT,
+               allow_partial_updates=True):
         self._update(
             lb_pool_id=lb_pool_id,
             name=name,
@@ -523,7 +524,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
             algorithm=algorithm,
             member_group=member_group,
             snat_translation=snat_translation,
-            tenant=tenant)
+            tenant=tenant, allow_partial_updates=allow_partial_updates)
 
     def add_monitor_to_pool(self, lb_pool_id, active_monitor_paths,
                             tenant=constants.POLICY_INFRA_TENANT):
