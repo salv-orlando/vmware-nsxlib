@@ -242,8 +242,12 @@ def dict_match(dict1, dict2):
     return True
 
 
+def get_name_short_uuid(uuid):
+    return '_' + uuid[:5] + '...' + uuid[-5:]
+
+
 def get_name_and_uuid(name, uuid, tag=None, maxlen=80):
-    short_uuid = '_' + uuid[:5] + '...' + uuid[-5:]
+    short_uuid = get_name_short_uuid(uuid)
     maxlen = maxlen - len(short_uuid)
     if tag:
         maxlen = maxlen - len(tag) - 1

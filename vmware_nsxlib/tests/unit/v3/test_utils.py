@@ -118,6 +118,12 @@ class TestNsxV3Utils(nsxlib_testcase.NsxClientTestCase):
         short_name = utils.get_name_and_uuid(name, uuid)
         self.assertEqual(expected, short_name)
 
+    def test_get_name_short_uuid(self):
+        uuid = 'afc40f8a-4967-477e-a17a-9d560d1786c7'
+        suffix = '_afc40...786c7'
+        short_uuid = utils.get_name_short_uuid(uuid)
+        self.assertEqual(suffix, short_uuid)
+
     def test_build_v3_tags_max_length_payload(self):
         result = self.nsxlib.build_v3_tags_payload(
             {'id': 'X' * 255,
