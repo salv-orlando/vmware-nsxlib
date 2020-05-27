@@ -144,6 +144,14 @@ class NsxLibConfig(object):
                                         connection validations. This option
                                         defaults to None, which disables rate
                                         limit.
+    :param api_rate_mode: Algorithm used to adaptively adjust max API rate
+                          limit. If not set, the max rate will not be
+                          automatically changed. If set to 'AIMD', max API
+                          rate will be increase by 1 after successful calls
+                          that was blocked before sent, and will be decreased
+                          by half after 429/503 error for each period.
+                          The rate has hard max limit of min(100/s, param
+                          api_rate_limit_per_endpoint).
 
     -- Additional parameters which are relevant only for the Policy manager:
     :param allow_passthrough: If True, use nsx manager api for cases which are
@@ -182,6 +190,7 @@ class NsxLibConfig(object):
                  realization_max_attempts=50,
                  realization_wait_sec=1.0,
                  api_rate_limit_per_endpoint=None,
+                 api_rate_mode=None,
                  exception_config=None):
 
         self.nsx_api_managers = nsx_api_managers
@@ -211,6 +220,7 @@ class NsxLibConfig(object):
         self.realization_max_attempts = realization_max_attempts
         self.realization_wait_sec = realization_wait_sec
         self.api_rate_limit_per_endpoint = api_rate_limit_per_endpoint
+        self.api_rate_mode = api_rate_mode
         self.exception_config = exception_config or ExceptionConfig()
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:

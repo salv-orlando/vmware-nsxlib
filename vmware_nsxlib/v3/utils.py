@@ -702,22 +702,28 @@ class APIRateLimiter(object):
         if period <= 0 or int(max_calls) <= 0:
             raise ValueError('period and max_calls should be positive')
         self._period = period
-        self._max_calls = int(max_calls)
+        self._max_calls = min(int(max_calls),
+                              constants.API_DEFAULT_MAX_RATE)
         self._call_time = collections.deque()
         self._lock = Lock()
 
     def __enter__(self):
         if not self._enabled:
             return 0
+        pre_wait_ts = time.time()
         with self._lock:
             wait_time = self._calc_wait_time()
             if wait_time:
                 time.sleep(wait_time)
             # assume api call happens immediately after entering context
-            self._call_time.append(time.time())
-            return wait_time
+            post_wait_ts = time.time()
+            self._call_time.append(post_wait_ts)
+            return post_wait_ts - pre_wait_ts
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def adjust_rate(self, **kwargs):
         pass
 
     def _calc_wait_time(self):
@@ -733,3 +739,37 @@ class APIRateLimiter(object):
         # T = self.call_time[-self.max_calls] + self.period
         # Thus need to wait T - now
         return self._call_time[-self._max_calls] + self._period - now
+
+
+class APIRateLimiterAIMD(APIRateLimiter):
+    def __init__(self, max_calls, period=1.0):
+        super(APIRateLimiterAIMD, self).__init__(max_calls, period=period)
+        if self._enabled:
+            self._top_rate = self._max_calls
+            self._max_calls = 1
+            self._pos_sig = 0
+            self._neg_sig = 0
+            self._last_adjust_rate = time.time()
+
+    def adjust_rate(self, wait_time=0.0, status_code=200, **kwargs):
+        if not self._enabled:
+            return
+        with self._lock:
+            if status_code in constants.API_REDUCE_RATE_CODES:
+                self._neg_sig += 1
+            elif wait_time >= constants.API_WAIT_MIN_THRESHOLD:
+                self._pos_sig += 1
+
+            now = time.time()
+            if now - self._last_adjust_rate >= self._period:
+                if self._neg_sig > 0:
+                    self._max_calls = max(self._max_calls // 2, 1)
+                    LOG.debug("Decreasing API rate limit to %d due to HTTP "
+                              "status code %d", self._max_calls, status_code)
+                elif self._pos_sig > 0:
+                    self._max_calls = min(self._max_calls + 1, self._top_rate)
+                    LOG.debug("Increasing API rate limit to %d with HTTP "
+                              "status code %d", self._max_calls, status_code)
+                self._pos_sig = 0
+                self._neg_sig = 0
+                self._last_adjust_rate = now
