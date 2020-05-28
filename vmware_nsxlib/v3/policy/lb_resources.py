@@ -15,6 +15,7 @@
 #
 
 import abc
+import copy
 
 from oslo_log import log as logging
 import six
@@ -892,9 +893,29 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                             vs_data=body,
                             rules=lb_rules, tenant=tenant)
 
+    def update_lb_rules(self, virtual_server_id, rules,
+                        tenant=constants.POLICY_INFRA_TENANT):
+        lbvs_def = self.entry_def(
+            virtual_server_id=virtual_server_id,
+            tenant=tenant)
+        lbvs_path = lbvs_def.get_resource_path()
+
+        @utils.retry_upon_exception(
+            nsxlib_exc.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _update():
+            # Get the current data of vs
+            lbvs_body = self.policy_api.get(lbvs_def)
+            lbvs_body['rules'] = copy.deepcopy(rules)
+            # Update the backend using PUT
+            self.policy_api.client.update(lbvs_path, lbvs_body)
+
+        _update()
+
     def update_lb_rule(self, virtual_server_id, lb_rule_name,
                        actions=None, match_conditions=None,
                        match_strategy=None, phase=None, position=-1,
+                       compare_name_suffix=None,
                        tenant=constants.POLICY_INFRA_TENANT):
         lb_rule = lb_defs.LBRuleDef(
             actions, match_conditions, lb_rule_name, match_strategy, phase)
@@ -906,8 +927,13 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
 
         # Remove existing rule
         try:
-            rule_index = next(lb_rules.index(r) for r in lb_rules
-                              if r.get('display_name') == lb_rule_name)
+            if compare_name_suffix:
+                rule_index = next(lb_rules.index(r) for r in lb_rules
+                                  if r.get('display_name',
+                                           '').endswith(compare_name_suffix))
+            else:
+                rule_index = next(lb_rules.index(r) for r in lb_rules
+                                  if r.get('display_name') == lb_rule_name)
         except Exception:
             err_msg = (_("No resource in rules matched for values: "
                          "%(values)s") % {'values': lb_rule_name})
@@ -926,13 +952,19 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             rules=lb_rules, vs_data=body, tenant=tenant)
 
     def remove_lb_rule(self, virtual_server_id, lb_rule_name,
+                       check_name_suffix=False,
                        tenant=constants.POLICY_INFRA_TENANT):
         lbvs_def = self.entry_def(virtual_server_id=virtual_server_id,
                                   tenant=tenant)
         body = self.policy_api.get(lbvs_def)
         lb_rules = body.get('rules', [])
-        lb_rules = [r for r in lb_rules if (r.get('display_name') !=
-                                            lb_rule_name)]
+        if check_name_suffix:
+            lb_rules = [r for r in lb_rules
+                        if not r.get('display_name', '').endswith(
+                            lb_rule_name)]
+        else:
+            lb_rules = [r for r in lb_rules
+                        if r.get('display_name') != lb_rule_name]
         return self._update(
             virtual_server_id=virtual_server_id, vs_data=body,
             rules=lb_rules, tenant=tenant)

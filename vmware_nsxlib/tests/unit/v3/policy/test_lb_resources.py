@@ -1143,6 +1143,36 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                        {'display_name': 'xx', 'actions': '22'}])
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_update_lb_rule_suffix(self):
+        vs_obj_id = '111'
+        vs_name = 'name-name'
+        with self.mock_get(
+                vs_obj_id, vs_name,
+                rules=[{'display_name': 'xx_with_suffix', 'actions': '11'},
+                       {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update_lb_rule(
+                vs_obj_id, 'xx', actions='22',
+                compare_name_suffix='suffix')
+
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=vs_obj_id,
+                rules=[{'display_name': 'xx', 'actions': '22'},
+                       {'display_name': 'yy'}])
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_update_lb_rule_wrong_suffix(self):
+        vs_obj_id = '111'
+        vs_name = 'name-name'
+        with self.mock_get(
+                vs_obj_id, vs_name,
+                rules=[{'display_name': 'xx_with_suffix', 'actions': '11'},
+                       {'display_name': 'yy'}]):
+            self.assertRaises(nsxlib_exc.ResourceNotFound,
+                              self.resourceApi.update_lb_rule,
+                              vs_obj_id, 'xx', actions='22',
+                              compare_name_suffix='bad')
+
     def test_remove_lb_rule(self):
         vs_obj_id = '111'
         vs_name = 'name-name'
@@ -1155,6 +1185,37 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
             expected_def = lb_defs.LBVirtualServerDef(
                 virtual_server_id=vs_obj_id,
                 rules=[{'display_name': 'yy'}])
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_remove_lb_rule_by_suffix(self):
+        vs_obj_id = '111'
+        vs_name = 'name-name'
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx_with_suffix'},
+                                  {'display_name': 'yy'}]), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.remove_lb_rule(vs_obj_id, 'with_suffix',
+                                            check_name_suffix=True)
+
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=vs_obj_id,
+                rules=[{'display_name': 'yy'}])
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_remove_lb_rule_wrong_suffix(self):
+        vs_obj_id = '111'
+        vs_name = 'name-name'
+        with self.mock_get(vs_obj_id, vs_name,
+                           rules=[{'display_name': 'xx_with_suffix'},
+                                  {'display_name': 'yy'}]),\
+            self.mock_create_update() as update_call:
+            self.resourceApi.remove_lb_rule(vs_obj_id, 'wrong_suffiX',
+                                            check_name_suffix=True)
+
+            expected_def = lb_defs.LBVirtualServerDef(
+                virtual_server_id=vs_obj_id,
+                rules=[{'display_name': 'xx_with_suffix'},
+                       {'display_name': 'yy'}])
             self.assert_called_with_def(update_call, expected_def)
 
     def test_wait_until_realized_fail(self):
