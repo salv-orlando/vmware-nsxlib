@@ -1127,6 +1127,15 @@ class LogicalRouterTestCase(BaseTestResource):
             data=jsonutils.dumps(expected_payload, sort_keys=True),
             headers=self.default_headers())
 
+    def test_list_static_routes(self):
+        router = self.get_mocked_resource()
+        router.list_static_routes(test_constants.FAKE_ROUTER_UUID)
+        test_client.assert_json_call(
+            'get', router,
+            ('https://1.2.3.4/api/v1/logical-routers/%s/routing/'
+             'static-routes' % test_constants.FAKE_ROUTER_UUID),
+            headers=self.default_headers())
+
     def test_update_advertisement(self):
         router = self.get_mocked_resource()
         router_id = test_constants.FAKE_ROUTER_UUID
