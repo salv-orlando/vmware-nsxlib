@@ -392,11 +392,13 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
 
     def setUp(self, *args, **kwargs):
         super(APIRateLimiterTestCase, self).setUp(with_mocks=False)
+        self.rate_limiter = utils.APIRateLimiter
 
     @mock.patch('time.time')
     def test_calc_wait_time_no_wait(self, mock_time):
         mock_time.return_value = 2.0
-        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter = self.rate_limiter(max_calls=2, period=1.0)
+        rate_limiter._max_calls = 2
         # no wait when no prev calls
         self.assertEqual(rate_limiter._calc_wait_time(), 0)
         # no wait when prev call in period window is less than max_calls
@@ -411,7 +413,8 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
         mock_time.return_value = 2.0
 
         # At rate limit
-        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter = self.rate_limiter(max_calls=2, period=1.0)
+        rate_limiter._max_calls = 2
         rate_limiter._call_time.append(0.9)
         rate_limiter._call_time.append(1.2)
         rate_limiter._call_time.append(1.5)
@@ -420,7 +423,8 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
         self.assertListEqual(list(rate_limiter._call_time), [1.2, 1.5])
 
         # Over rate limit. Enforce no compensation wait.
-        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter = self.rate_limiter(max_calls=2, period=1.0)
+        rate_limiter._max_calls = 2
         rate_limiter._call_time.append(0.9)
         rate_limiter._call_time.append(1.2)
         rate_limiter._call_time.append(1.5)
@@ -434,7 +438,7 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
     @mock.patch('time.time')
     def test_context_manager_no_wait(self, mock_time, mock_sleep, mock_calc):
         mock_time.return_value = 2.0
-        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        rate_limiter = self.rate_limiter(max_calls=2, period=1.0)
         mock_calc.return_value = 0
         with rate_limiter as wait_time:
             self.assertEqual(wait_time, 0)
@@ -444,7 +448,7 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
     @mock.patch('vmware_nsxlib.v3.utils.APIRateLimiter._calc_wait_time')
     @mock.patch('time.sleep')
     def test_context_manager_disabled(self, mock_sleep, mock_calc):
-        rate_limiter = utils.APIRateLimiter(max_calls=None)
+        rate_limiter = self.rate_limiter(max_calls=None)
         with rate_limiter as wait_time:
             self.assertEqual(wait_time, 0)
             mock_sleep.assert_not_called()
@@ -454,10 +458,65 @@ class APIRateLimiterTestCase(nsxlib_testcase.NsxLibTestCase):
     @mock.patch('time.sleep')
     @mock.patch('time.time')
     def test_context_manager_need_wait(self, mock_time, mock_sleep, mock_calc):
-        mock_time.return_value = 2.0
-        rate_limiter = utils.APIRateLimiter(max_calls=2, period=1.0)
+        mock_time.return_value = 0.0
+        rate_limiter = self.rate_limiter(max_calls=2, period=1.0)
+        mock_time.side_effect = [2.0, 2.5]
         mock_calc.return_value = 0.5
         with rate_limiter as wait_time:
             self.assertEqual(wait_time, 0.5)
             mock_sleep.assert_called_once_with(wait_time)
-        self.assertListEqual(list(rate_limiter._call_time), [2.0])
+        self.assertListEqual(list(rate_limiter._call_time), [2.5])
+
+
+class APIRateLimiterAIMDTestCase(APIRateLimiterTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(APIRateLimiterAIMDTestCase, self).setUp(with_mocks=False)
+        self.rate_limiter = utils.APIRateLimiterAIMD
+
+    @mock.patch('time.time')
+    def test_adjust_rate_increase(self, mock_time):
+        mock_time.side_effect = [0.0, 2.0, 4.0, 6.0]
+        rate_limiter = self.rate_limiter(max_calls=10)
+        rate_limiter._max_calls = 8
+        # normal period increases rate by 1, even for non-200 normal codes
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=404)
+        self.assertEqual(rate_limiter._max_calls, 9)
+        # max calls limited by top limit
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=200)
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=200)
+        self.assertEqual(rate_limiter._max_calls, 10)
+
+    @mock.patch('time.time')
+    def test_adjust_rate_decrease(self, mock_time):
+        mock_time.side_effect = [0.0, 2.0, 4.0, 6.0]
+        rate_limiter = self.rate_limiter(max_calls=10)
+        rate_limiter._max_calls = 4
+        # 429 or 503 should decrease rate by half
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=429)
+        self.assertEqual(rate_limiter._max_calls, 2)
+        rate_limiter.adjust_rate(wait_time=0.0, status_code=503)
+        self.assertEqual(rate_limiter._max_calls, 1)
+        # lower bound should be 1
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=503)
+        self.assertEqual(rate_limiter._max_calls, 1)
+
+    @mock.patch('time.time')
+    def test_adjust_rate_no_change(self, mock_time):
+        mock_time.side_effect = [0.0, 2.0, 2.5, 2.6]
+        rate_limiter = self.rate_limiter(max_calls=10)
+        rate_limiter._max_calls = 4
+        # non blocked successful calls should not change rate
+        rate_limiter.adjust_rate(wait_time=0.001, status_code=200)
+        self.assertEqual(rate_limiter._max_calls, 4)
+
+        # too fast calls should not change rate
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=200)
+        self.assertEqual(rate_limiter._max_calls, 4)
+        rate_limiter.adjust_rate(wait_time=1.0, status_code=429)
+        self.assertEqual(rate_limiter._max_calls, 4)
+
+    def test_adjust_rate_disabled(self):
+        rate_limiter = self.rate_limiter(max_calls=None)
+        rate_limiter.adjust_rate(wait_time=0.001, status_code=200)
+        self.assertFalse(hasattr(rate_limiter, '_max_calls'))

@@ -38,6 +38,7 @@ import urllib3
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client as nsx_client
+from vmware_nsxlib.v3 import constants
 from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import utils
 
@@ -360,12 +361,17 @@ class Endpoint(object):
     to the underlying connections.
     """
 
-    def __init__(self, provider, pool, api_rate_limit=None):
+    def __init__(self, provider, pool, api_rate_limit=None,
+                 api_rate_mode=None):
         self.provider = provider
         self.pool = pool
         self._state = EndpointState.INITIALIZED
         self._last_updated = datetime.datetime.now()
-        self.rate_limiter = utils.APIRateLimiter(api_rate_limit)
+        if api_rate_mode == constants.API_RATE_MODE_AIMD:
+            self.rate_limiter = utils.APIRateLimiterAIMD(
+                max_calls=api_rate_limit)
+        else:
+            self.rate_limiter = utils.APIRateLimiter(max_calls=api_rate_limit)
 
     def regenerate_pool(self):
         self.pool = pools.Pool(min_size=self.pool.min_size,
@@ -426,7 +432,8 @@ class ClusteredAPI(object):
                  min_conns_per_pool=0,
                  max_conns_per_pool=20,
                  keepalive_interval=33,
-                 api_rate_limit=None):
+                 api_rate_limit=None,
+                 api_rate_mode=None):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
@@ -434,7 +441,8 @@ class ClusteredAPI(object):
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers, min_conns_per_pool,
-                                 max_conns_per_pool, api_rate_limit)
+                                 max_conns_per_pool, api_rate_limit,
+                                 api_rate_mode)
 
         _init_cluster()
 
@@ -444,7 +452,7 @@ class ClusteredAPI(object):
         self._reinit_cluster = _init_cluster
 
     def _init_endpoints(self, providers, min_conns_per_pool,
-                        max_conns_per_pool, api_rate_limit):
+                        max_conns_per_pool, api_rate_limit, api_rate_mode):
         LOG.debug("Initializing API endpoints")
 
         def _create_conn(p):
@@ -461,7 +469,7 @@ class ClusteredAPI(object):
                 order_as_stack=True,
                 create=_create_conn(provider))
 
-            endpoint = Endpoint(provider, pool, api_rate_limit)
+            endpoint = Endpoint(provider, pool, api_rate_limit, api_rate_mode)
             self._endpoints[provider.id] = endpoint
 
         # service requests using round robin
@@ -719,6 +727,11 @@ class ClusteredAPI(object):
                     response = do_request(url, *args, **kwargs)
                     endpoint.set_state(EndpointState.UP)
 
+                    # Adjust API Rate Limit before raising HTTP exception
+                    endpoint.rate_limiter.adjust_rate(
+                        wait_time=conn_data.rate_wait,
+                        status_code=response.status_code)
+
                     # for some status codes, we need to bring the cluster
                     # down or retry API call
                     self._raise_http_exception_if_needed(response, endpoint)
@@ -760,7 +773,8 @@ class NSXClusteredAPI(ClusteredAPI):
             self._http_provider,
             max_conns_per_pool=self.nsxlib_config.concurrent_connections,
             keepalive_interval=self.nsxlib_config.conn_idle_timeout,
-            api_rate_limit=self.nsxlib_config.api_rate_limit_per_endpoint)
+            api_rate_limit=self.nsxlib_config.api_rate_limit_per_endpoint,
+            api_rate_mode=self.nsxlib_config.api_rate_mode)
 
         LOG.debug("Created NSX clustered API with '%s' "
                   "provider", self._http_provider.provider_id)

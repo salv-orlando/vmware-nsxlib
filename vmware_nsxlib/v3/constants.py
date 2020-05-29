@@ -115,3 +115,11 @@ IPV4_ICMP_TYPES = {0: [0],  # Echo reply
 IPV4_ICMP_STRICT_TYPES = IPV4_ICMP_TYPES.copy()
 # Note: replace item 9 as we did a shallow copy
 IPV4_ICMP_STRICT_TYPES[9] = [0]
+
+# API Rate Limiter Related const
+API_RATE_MODE_AIMD = 'AIMD'
+# HTTP status code to trigger API rate decrement
+API_REDUCE_RATE_CODES = [429, 503]
+# Minimum time in seconds to consider a call as blocked due to rate limit
+API_WAIT_MIN_THRESHOLD = 0.01
+API_DEFAULT_MAX_RATE = 100
