@@ -665,6 +665,11 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             kwargs['next_hops'] = [{"ip_address": nexthop}]
         return self._delete_resource_by_values(resource, **kwargs)
 
+    def list_static_routes(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/static-routes' %
+                    logical_router_id)
+        return self.client.list(resource)
+
     def delete_nat_rule(self, logical_router_id, nat_rule_id):
         path = 'logical-routers/%s/nat/rules/%s' % (logical_router_id,
                                                     nat_rule_id)
