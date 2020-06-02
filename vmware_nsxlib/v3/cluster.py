@@ -565,7 +565,8 @@ class ClusteredAPI(object):
                             {'ep': endpoint})
                 if bool(self.nsxlib_config.token_provider):
                     # get new jwt token for authentication
-                    self.nsxlib_config.token_provider.get_token(refresh=True)
+                    self.nsxlib_config.token_provider.get_token(
+                        refresh_token=True)
                 # refresh endpoint with new headers that have updated token
                 endpoint.regenerate_pool()
                 return
@@ -667,7 +668,8 @@ class ClusteredAPI(object):
         if self.nsxlib_config.exception_config.should_regenerate(exc):
             if bool(self.nsxlib_config.token_provider):
                 # get new jwt token for authentication
-                self.nsxlib_config.token_provider.get_token(refresh=True)
+                self.nsxlib_config.token_provider.get_token(
+                    refresh_token=True)
             # refresh endpoint so that it gets new header with updated token
             endpoint.regenerate_pool()
             raise exc
