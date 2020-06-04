@@ -185,6 +185,12 @@ class NsxPolicyLib(lib.NsxLibBase):
             if (feature == nsx_constants.FEATURE_RELAX_SCALE_VALIDATION):
                 return True
 
+        if (version.LooseVersion(self.get_version()) >=
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_1_0)):
+            # features available since 3.1.0
+            if feature == nsx_constants.FEATURE_SPOOFGUARD_CIDR:
+                return True
+
         return (feature == nsx_constants.FEATURE_NSX_POLICY)
 
     def reinitialize_cluster(self, resource, event, trigger, payload=None):

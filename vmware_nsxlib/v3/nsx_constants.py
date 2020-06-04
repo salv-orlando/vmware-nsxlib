@@ -176,6 +176,7 @@ FEATURE_GET_TZ_FROM_SWITCH = 'Get TZ endpoints from host switch'
 FEATURE_CONTAINER_CLUSTER_INVENTORY = 'Container Cluster Inventory'
 FEATURE_IPV6 = 'IPV6 Forwarding and Address Allocation'
 FEATURE_MP2P_MIGRATION = 'MP to Policy Migration'
+FEATURE_SPOOFGUARD_CIDR = 'Spoofguard IPv4 CIDR'
 
 # Features available depending on the Policy Manager backend version
 FEATURE_NSX_POLICY = 'NSX Policy'

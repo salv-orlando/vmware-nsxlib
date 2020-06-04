@@ -170,7 +170,9 @@ class NsxLib(lib.NsxLibBase):
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_1_0)):
             # features available since 3.1.0
-            if (feature == nsx_constants.FEATURE_MP2P_MIGRATION):
+            if feature == nsx_constants.FEATURE_MP2P_MIGRATION:
+                return True
+            if feature == nsx_constants.FEATURE_SPOOFGUARD_CIDR:
                 return True
 
         if (version.LooseVersion(self.get_version()) >=
