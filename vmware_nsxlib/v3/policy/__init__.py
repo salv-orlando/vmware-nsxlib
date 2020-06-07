@@ -107,6 +107,12 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.segment_security_profile_maps = (
             core_resources.SegmentSecurityProfilesBindingMapApi(
                 *args))
+        self.segment_qos_profile_maps = (
+            core_resources.SegmentQosProfilesBindingMapApi(
+                *args))
+        self.segment_discovery_profile_maps = (
+            core_resources.SegmentDiscoveryProfilesBindingMapApi(
+                *args))
         self.segment_port_security_profiles = (
             core_resources.SegmentPortSecurityProfilesBindingMapApi(
                 *args))

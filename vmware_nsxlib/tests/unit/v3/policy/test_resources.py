@@ -4679,6 +4679,182 @@ class TestPolicySegmentSecProfilesBinding(NsxPolicyLibTestCase):
                 update_call, expected_def)
 
 
+class TestPolicySegmentDiscoveryProfilesBinding(NsxPolicyLibTestCase):
+
+    def setUp(self, resource_api_name='segment_discovery_profile_maps',
+              resource_def=core_defs.SegmentDiscoveryProfilesBindingMapDef):
+        super(TestPolicySegmentDiscoveryProfilesBinding, self).setUp()
+        self.resourceApi = getattr(self.policy_lib, resource_api_name)
+        self.resourceDef = resource_def
+
+    def test_create(self):
+        name = 'test'
+        segment_id = 'seg1'
+        prf1 = '1'
+        prf2 = '2'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, segment_id,
+                ip_discovery_profile_id=prf1,
+                mac_discovery_profile_id=prf2,
+                tenant=TEST_TENANT)
+
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                name=name,
+                ip_discovery_profile_id=prf1,
+                mac_discovery_profile_id=prf2,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(segment_id, tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': segment_id}) as api_call:
+            result = self.resourceApi.get(segment_id,
+                                          tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(segment_id, result['id'])
+
+    def test_list(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(segment_id,
+                                           tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        name = 'new name'
+        segment_id = 'seg1'
+        prf1 = '1'
+        prf2 = '2'
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
+
+            self.resourceApi.update(
+                segment_id=segment_id,
+                name=name,
+                ip_discovery_profile_id=prf1,
+                mac_discovery_profile_id=prf2,
+                tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                name=name,
+                ip_discovery_profile_id=prf1,
+                mac_discovery_profile_id=prf2,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(
+                update_call, expected_def)
+
+
+class TestPolicySegmentQosProfilesBinding(NsxPolicyLibTestCase):
+
+    def setUp(self, resource_api_name='segment_qos_profile_maps',
+              resource_def=core_defs.SegmentQosProfilesBindingMapDef):
+        super(TestPolicySegmentQosProfilesBinding, self).setUp()
+        self.resourceApi = getattr(self.policy_lib, resource_api_name)
+        self.resourceDef = resource_def
+
+    def test_create(self):
+        name = 'test'
+        segment_id = 'seg1'
+        prf1 = '1'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, segment_id,
+                qos_profile_id=prf1,
+                tenant=TEST_TENANT)
+
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                name=name,
+                qos_profile_id=prf1,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(segment_id, tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_get(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={'id': segment_id}) as api_call:
+            result = self.resourceApi.get(segment_id,
+                                          tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(segment_id, result['id'])
+
+    def test_list(self):
+        segment_id = 'seg1'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(segment_id,
+                                           tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_update(self):
+        name = 'new name'
+        segment_id = 'seg1'
+        prf1 = '1'
+        with self.mock_get(segment_id, name), \
+            self.mock_create_update() as update_call:
+
+            self.resourceApi.update(
+                segment_id=segment_id,
+                name=name,
+                qos_profile_id=prf1,
+                tenant=TEST_TENANT)
+            expected_def = self.resourceDef(
+                segment_id=segment_id,
+                map_id=core_resources.DEFAULT_MAP_ID,
+                name=name,
+                qos_profile_id=prf1,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(
+                update_call, expected_def)
+
+
 class TestPolicySegmentPortSecProfilesBinding(NsxPolicyLibTestCase):
 
     def setUp(self, resource_api_name='segment_port_security_profiles',
@@ -4781,13 +4957,13 @@ class TestPolicySegmentPortSecProfilesBinding(NsxPolicyLibTestCase):
                 update_call, expected_def)
 
 
-class TestPolicySegmentDiscoveryProfilesBinding(NsxPolicyLibTestCase):
+class TestPolicySegmentPortDiscoveryProfilesBinding(NsxPolicyLibTestCase):
 
     def setUp(
         self, resource_api_name='segment_port_discovery_profiles',
         resource_def=core_defs.SegmentPortDiscoveryProfilesBindingMapDef):
 
-        super(TestPolicySegmentDiscoveryProfilesBinding, self).setUp()
+        super(TestPolicySegmentPortDiscoveryProfilesBinding, self).setUp()
         self.resourceApi = getattr(self.policy_lib, resource_api_name)
         self.resourceDef = resource_def
 
@@ -4884,13 +5060,13 @@ class TestPolicySegmentDiscoveryProfilesBinding(NsxPolicyLibTestCase):
                 update_call, expected_def)
 
 
-class TestPolicySegmentQosProfilesBinding(NsxPolicyLibTestCase):
+class TestPolicySegmentPortQosProfilesBinding(NsxPolicyLibTestCase):
 
     def setUp(
         self, resource_api_name='segment_port_qos_profiles',
         resource_def=core_defs.SegmentPortQoSProfilesBindingMapDef):
 
-        super(TestPolicySegmentQosProfilesBinding, self).setUp()
+        super(TestPolicySegmentPortQosProfilesBinding, self).setUp()
         self.resourceApi = getattr(self.policy_lib, resource_api_name)
         self.resourceDef = resource_def
 
