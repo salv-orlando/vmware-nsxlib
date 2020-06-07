@@ -1209,6 +1209,75 @@ class SegmentSecProfilesBindingMapDef(SegmentBindingMapDefBase):
         return body
 
 
+class SegmentQosProfilesBindingMapDef(SegmentBindingMapDefBase):
+    @property
+    def path_pattern(self):
+        return (SEGMENTS_PATH_PATTERN +
+                "%s/segment-qos-profile-binding-maps/")
+
+    @staticmethod
+    def resource_type():
+        return 'SegmentQoSProfileBindingMap'
+
+    def get_obj_dict(self):
+        body = super(SegmentQosProfilesBindingMapDef, self).get_obj_dict()
+
+        if self.has_attr('segment_qos_profile_id'):
+            path = ""
+            if self.get_attr('segment_qos_profile_id'):
+                profile = QosProfileDef(
+                    profile_id=self.get_attr('segment_qos_profile_id'),
+                    tenant=self.get_tenant())
+                path = profile.get_resource_full_path()
+            self._set_attr_if_specified(
+                body, 'segment_qos_profile_id',
+                body_attr='segment_qos_profile_path',
+                value=path)
+
+        return body
+
+
+class SegmentDiscoveryProfilesBindingMapDef(SegmentBindingMapDefBase):
+    @property
+    def path_pattern(self):
+        return (SEGMENTS_PATH_PATTERN +
+                "%s/segment-discovery-profile-binding-maps/")
+
+    @staticmethod
+    def resource_type():
+        return 'SegmentDiscoveryProfileBindingMap'
+
+    def get_obj_dict(self):
+        body = super(SegmentDiscoveryProfilesBindingMapDef,
+                     self).get_obj_dict()
+
+        if self.has_attr('mac_discovery_profile_id'):
+            path = ""
+            if self.get_attr('mac_discovery_profile_id'):
+                profile = MacDiscoveryProfileDef(
+                    profile_id=self.get_attr('mac_discovery_profile_id'),
+                    tenant=self.get_tenant())
+                path = profile.get_resource_full_path()
+            self._set_attr_if_specified(
+                body, 'mac_discovery_profile_id',
+                body_attr='mac_discovery_profile_path',
+                value=path)
+
+        if self.has_attr('ip_discovery_profile_id'):
+            path = ""
+            if self.get_attr('ip_discovery_profile_id'):
+                profile = IpDiscoveryProfileDef(
+                    profile_id=self.get_attr('ip_discovery_profile_id'),
+                    tenant=self.get_tenant())
+                path = profile.get_resource_full_path()
+            self._set_attr_if_specified(
+                body, 'ip_discovery_profile_id',
+                body_attr='ip_discovery_profile_path',
+                value=path)
+
+        return body
+
+
 class SegmentPortBindingMapDefBase(ResourceDef):
 
     @property
