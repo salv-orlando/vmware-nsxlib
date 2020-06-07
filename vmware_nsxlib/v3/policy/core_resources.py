@@ -2380,6 +2380,92 @@ class SegmentSecurityProfilesBindingMapApi(SegmentProfilesBindingMapBaseApi):
             tenant=tenant)
 
 
+class SegmentDiscoveryProfilesBindingMapApi(SegmentProfilesBindingMapBaseApi):
+
+    @property
+    def entry_def(self):
+        return core_defs.SegmentDiscoveryProfilesBindingMapDef
+
+    def create_or_overwrite(self, name, segment_id,
+                            map_id=DEFAULT_MAP_ID,
+                            description=IGNORE,
+                            ip_discovery_profile_id=IGNORE,
+                            mac_discovery_profile_id=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        map_id = self._init_obj_uuid(map_id)
+        map_def = self._init_def(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            ip_discovery_profile_id=ip_discovery_profile_id,
+            mac_discovery_profile_id=mac_discovery_profile_id,
+            tags=tags,
+            tenant=tenant)
+        self._create_or_store(map_def)
+        return map_id
+
+    def update(self, segment_id,
+               map_id=DEFAULT_MAP_ID,
+               name=IGNORE,
+               description=IGNORE,
+               ip_discovery_profile_id=IGNORE,
+               mac_discovery_profile_id=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            ip_discovery_profile_id=ip_discovery_profile_id,
+            mac_discovery_profile_id=mac_discovery_profile_id,
+            tags=tags,
+            tenant=tenant)
+
+
+class SegmentQosProfilesBindingMapApi(SegmentProfilesBindingMapBaseApi):
+
+    @property
+    def entry_def(self):
+        return core_defs.SegmentQosProfilesBindingMapDef
+
+    def create_or_overwrite(self, name, segment_id,
+                            map_id=DEFAULT_MAP_ID,
+                            description=IGNORE,
+                            qos_profile_id=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        map_id = self._init_obj_uuid(map_id)
+        map_def = self._init_def(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            qos_profile_id=qos_profile_id,
+            tags=tags,
+            tenant=tenant)
+        self._create_or_store(map_def)
+        return map_id
+
+    def update(self, segment_id,
+               map_id=DEFAULT_MAP_ID,
+               name=IGNORE,
+               description=IGNORE,
+               qos_profile_id=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(
+            segment_id=segment_id,
+            map_id=map_id,
+            name=name,
+            description=description,
+            qos_profile_id=qos_profile_id,
+            tags=tags,
+            tenant=tenant)
+
+
 class SegmentPortProfilesBindingMapBaseApi(NsxPolicyResourceBase):
 
     def delete(self, segment_id, port_id, map_id=DEFAULT_MAP_ID,
