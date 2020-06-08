@@ -2145,6 +2145,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                             allocate_addresses=IGNORE,
                             hyperbus_mode=IGNORE,
                             admin_state=IGNORE,
+                            init_state=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2162,6 +2163,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   allocate_addresses=allocate_addresses,
                                   hyperbus_mode=hyperbus_mode,
                                   admin_state=admin_state,
+                                  init_state=init_state,
                                   tags=tags,
                                   tenant=tenant)
         self._create_or_store(port_def)
