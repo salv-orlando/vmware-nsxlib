@@ -3937,6 +3937,14 @@ class NsxPolicyEdgeClusterApi(NsxPolicyResourceBase):
         nodes = self._list(nodes_def)
         return [node['id'] for node in nodes]
 
+    def get_edge_node_nsx_ids(self, ec_id,
+                              ep_id=constants.DEFAULT_ENFORCEMENT_POINT,
+                              tenant=constants.POLICY_INFRA_TENANT):
+        nodes_def = core_defs.EdgeClusterNodeDef(
+            ep_id=ep_id, ec_id=ec_id, tenant=tenant)
+        nodes = self._list(nodes_def)
+        return [node.get('nsx_id', node['id']) for node in nodes]
+
 
 class NsxPolicyMetadataProxyApi(NsxPolicyResourceBase):
     # Currently this is used as a ready only Api
