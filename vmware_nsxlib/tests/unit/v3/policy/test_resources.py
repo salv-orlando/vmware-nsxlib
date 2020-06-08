@@ -2510,6 +2510,21 @@ class TestPolicyEdgeCluster(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual([node_id], result)
 
+    def test_get_nodes_nsx_ids(self):
+        obj_id = '111'
+        node_id = 'node1'
+        node_nsx_id = 'nsx1'
+        with mock.patch.object(
+            self.policy_api, "list",
+            return_value={'results': [{'id': node_id,
+                                       'nsx_id': node_nsx_id}]}) as api_call:
+            result = self.resourceApi.get_edge_node_nsx_ids(
+                obj_id, tenant=TEST_TENANT)
+            expected_def = core_defs.EdgeClusterNodeDef(
+                ec_id=obj_id, tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([node_nsx_id], result)
+
 
 class TestPolicyMetadataProxy(NsxPolicyLibTestCase):
 
