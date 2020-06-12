@@ -1438,7 +1438,7 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
         vs_name = 'test-name'
         with self.mock_get(
                 vs_id, vs_name, lb_persistence_profile_path='test-profile'), \
-             self.mock_create_update() as update_call:
+                self.mock_create_update() as update_call:
             self.resourceApi.remove_dlb_virtual_server_persistence_profile(
                 vs_id)
             expected_def = lb_defs.LBVirtualServerDef(

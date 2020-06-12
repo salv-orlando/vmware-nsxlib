@@ -1764,7 +1764,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
 
     def setUp(self):
         super(TestNsxSearch, self).setUp()
-        self.search_path = 'search?query=%s'
+        self.search_path = 'search?query=%s&sort_by=id'
         self.mock = mock.patch("vmware_nsxlib.v3.NsxLib.get_version",
                                return_value=self.get_nsxlib_version())
         self.mock.start()
@@ -1978,7 +1978,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             body = {"query_pipeline": [{"query": query}]}
             self.nsxlib.search_resource_by_attribute_values(
                 resource_type, attr_name, attr_values)
-            search.assert_called_with("search/querypipeline", body)
+            search.assert_called_with("search/querypipeline?sort_by=id", body)
 
     def test_nsx_search_resource_by_filters(self):
         """Test search resources with the specified filters."""
@@ -1992,7 +1992,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
                     "related": related}
             self.nsxlib.search_resource_by_filters(
                 parent_type, filters, related=related)
-            search.assert_called_with("search/aggregate", body)
+            search.assert_called_with("search/aggregate?sort_by=id", body)
 
     def test_get_id_by_resource_and_tag(self):
         id = 'test'
@@ -2034,7 +2034,7 @@ class TestNsxSearchNew(TestNsxSearch):
     def setUp(self):
 
         super(TestNsxSearchNew, self).setUp()
-        self.search_path = 'search/query?query=%s'
+        self.search_path = 'search/query?query=%s&sort_by=id'
 
     @staticmethod
     def get_nsxlib_version():
