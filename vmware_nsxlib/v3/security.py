@@ -201,13 +201,8 @@ class NsxLibNsGroup(utils.NsxLibApiBase):
             '%s?populate_references=true' % self.get_path(nsgroup_id))
 
     def delete(self, nsgroup_id):
-        try:
-            return self._delete_by_path_with_retry(
-                '%s?force=true' % self.get_path(nsgroup_id))
-        # FIXME(roeyc): Should only except NotFound error.
-        except Exception:
-            LOG.debug("NSGroup %s does not exists for delete request.",
-                      nsgroup_id)
+        resource = '%s?force=true' % nsgroup_id
+        return self._delete_with_retry(resource)
 
     def find_by_display_name(self, display_name):
         found = []
