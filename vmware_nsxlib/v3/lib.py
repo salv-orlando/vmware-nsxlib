@@ -121,8 +121,8 @@ class NsxLibBase(object):
     def _get_search_url(self):
         if (version.LooseVersion(self.get_version()) >=
             version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0)):
-            return "search/query?query=%s"
-        return "search?query=%s"
+            return "search/query?query=%s&sort_by=id"
+        return "search?query=%s&sort_by=id"
 
     # TODO(abhiraut): Revisit this method to generate complex boolean
     #                 queries to search resources.
@@ -223,12 +223,8 @@ class NsxLibBase(object):
             " AND %s:(%s)" % (name, attribute_query)
             if attribute_query else "")
         body = {"query_pipeline": [{"query": query}]}
-        args = []
-        if cursor:
-            args.append("cursor=%d" % cursor)
-        if page_size:
-            args.append("page_size=%d" % page_size)
-        url = "search/querypipeline" + ("?%s" % "&".join(args) if args else "")
+        url = self._add_pagination_parameters(
+            "search/querypipeline?sort_by=id", cursor, page_size)
 
         # Retry the search in case of error
         @utils.retry_upon_exception(exceptions.NsxSearchError,
@@ -260,12 +256,8 @@ class NsxLibBase(object):
         related = extra_attrs.get("related")
         if related:
             body["related"] = related
-        args = []
-        if cursor:
-            args.append("cursor=%d" % cursor)
-        if page_size:
-            args.append("page_size=%d" % page_size)
-        url = "search/aggregate" + ("?%s" % "&".join(args) if args else "")
+        url = self._add_pagination_parameters(
+            "search/aggregate?sort_by=id", cursor, page_size)
 
         # Retry the search in case of error
         @utils.retry_upon_exception(exceptions.NsxSearchError,

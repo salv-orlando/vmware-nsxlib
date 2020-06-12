@@ -6348,7 +6348,7 @@ class TestNsxSearch(NsxPolicyLibTestCase):
 
     def setUp(self):
         super(TestNsxSearch, self).setUp()
-        self.search_path = 'search/query?query=%s'
+        self.search_path = 'search/query?query=%s&sort_by=id'
 
     def test_nsx_search_by_realization(self):
         """Test search of resources with the specified tag."""
