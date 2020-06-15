@@ -45,6 +45,13 @@ class NsxPolicyLib(lib.NsxLibBase):
             config = copy.deepcopy(self.nsxlib_config)
             # X-Allow-Overwrite must be set for passthrough apis
             config.allow_overwrite_header = True
+            # Manually copy providers (No deep copy, as those are instances)
+            # FIXME(asarfaty): This can be handled nicer by adding
+            # __deepcopy__ methods to the provider classes to do the deepcopy
+            # correctly
+            config.token_provider = self.nsxlib_config.token_provider
+            config.client_cert_provider = (
+                self.nsxlib_config.client_cert_provider)
             self.nsx_api = v3.NsxLib(config)
         else:
             self.nsx_api = None
