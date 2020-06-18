@@ -1644,10 +1644,10 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
         self._delete_with_retry(nat_rule_def)
 
     def get(self, tier0_id, nat_rule_id, nat_id=DEFAULT_NAT_ID,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         nat_rule_def = self.entry_def(tier0_id=tier0_id, nat_id=nat_id,
                                       nat_rule_id=nat_rule_id, tenant=tenant)
-        return self.policy_api.get(nat_rule_def)
+        return self.policy_api.get(nat_rule_def, silent=silent)
 
     def list(self, tier0_id, nat_id=DEFAULT_NAT_ID,
              tenant=constants.POLICY_INFRA_TENANT):
@@ -1734,10 +1734,10 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
         self._delete_or_store(nat_rule_def)
 
     def get(self, tier1_id, nat_rule_id, nat_id=DEFAULT_NAT_ID,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         nat_rule_def = self.entry_def(tier1_id=tier1_id, nat_id=nat_id,
                                       nat_rule_id=nat_rule_id, tenant=tenant)
-        return self.policy_api.get(nat_rule_def)
+        return self.policy_api.get(nat_rule_def, silent=silent)
 
     def list(self, tier1_id, nat_id=DEFAULT_NAT_ID,
              tenant=constants.POLICY_INFRA_TENANT):
@@ -1810,11 +1810,11 @@ class NsxPolicyTier1StaticRouteApi(NsxPolicyResourceBase):
         self._delete_with_retry(static_route_def)
 
     def get(self, tier1_id, static_route_id,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         static_route_def = self.entry_def(tier1_id=tier1_id,
                                           static_route_id=static_route_id,
                                           tenant=tenant)
-        return self.policy_api.get(static_route_def)
+        return self.policy_api.get(static_route_def, silent=silent)
 
     def list(self, tier1_id,
              tenant=constants.POLICY_INFRA_TENANT):
@@ -2322,11 +2322,11 @@ class SegmentProfilesBindingMapBaseApi(NsxPolicyResourceBase):
         self._delete_with_retry(map_def)
 
     def get(self, segment_id, map_id=DEFAULT_MAP_ID,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         map_def = self.entry_def(segment_id=segment_id,
                                  map_id=map_id,
                                  tenant=tenant)
-        return self.policy_api.get(map_def)
+        return self.policy_api.get(map_def, silent=silent)
 
     def list(self, segment_id,
              tenant=constants.POLICY_INFRA_TENANT):
@@ -2477,12 +2477,12 @@ class SegmentPortProfilesBindingMapBaseApi(NsxPolicyResourceBase):
         self._delete_with_retry(map_def)
 
     def get(self, segment_id, port_id, map_id=DEFAULT_MAP_ID,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         map_def = self.entry_def(segment_id=segment_id,
                                  port_id=port_id,
                                  map_id=map_id,
                                  tenant=tenant)
-        return self.policy_api.get(map_def)
+        return self.policy_api.get(map_def, silent=silent)
 
     def list(self, segment_id, port_id,
              tenant=constants.POLICY_INFRA_TENANT):
@@ -2973,10 +2973,11 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
                                      tenant=tenant)
         self._delete_with_retry(ip_pool_def)
 
-    def get(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT):
+    def get(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT,
+            silent=False):
         ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id,
                                      tenant=tenant)
-        return self.policy_api.get(ip_pool_def)
+        return self.policy_api.get(ip_pool_def, silent=silent)
 
     def list(self, tenant=constants.POLICY_INFRA_TENANT):
         ip_pool_def = self.entry_def(tenant=tenant)
@@ -4309,10 +4310,11 @@ class NsxIpv6NdraProfileApi(NsxPolicyResourceBase):
                                      tenant=tenant)
         self._delete_with_retry(profile_def)
 
-    def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT):
+    def get(self, profile_id, tenant=constants.POLICY_INFRA_TENANT,
+            silent=False):
         profile_def = self.entry_def(profile_id=profile_id,
                                      tenant=tenant)
-        return self.policy_api.get(profile_def)
+        return self.policy_api.get(profile_def, silent=silent)
 
     def list(self, tenant=constants.POLICY_INFRA_TENANT):
         profile_def = self.entry_def(tenant=tenant)
@@ -4578,11 +4580,11 @@ class NsxPolicyTier0RouteMapApi(NsxPolicyResourceBase):
         self._delete_with_retry(route_map_def)
 
     def get(self, tier0_id, route_map_id,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         route_map_def = self.entry_def(tier0_id=tier0_id,
                                        route_map_id=route_map_id,
                                        tenant=tenant)
-        return self.policy_api.get(route_map_def)
+        return self.policy_api.get(route_map_def, silent=silent)
 
     def list(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
         route_map_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
@@ -4651,11 +4653,11 @@ class NsxPolicyTier0PrefixListApi(NsxPolicyResourceBase):
         self._delete_with_retry(prefix_list_def)
 
     def get(self, tier0_id, prefix_list_id,
-            tenant=constants.POLICY_INFRA_TENANT):
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
         prefix_list_def = self.entry_def(tier0_id=tier0_id,
                                          prefix_list_id=prefix_list_id,
                                          tenant=tenant)
-        return self.policy_api.get(prefix_list_def)
+        return self.policy_api.get(prefix_list_def, silent=silent)
 
     def list(self, tier0_id, tenant=constants.POLICY_INFRA_TENANT):
         prefix_list_def = self.entry_def(tier0_id=tier0_id, tenant=tenant)
