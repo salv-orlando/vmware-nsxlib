@@ -3535,7 +3535,13 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
             map_def.set_obj_dict(comm_map)
             # Update the entire map at the NSX
             if transaction:
-                self._create_or_store(map_def, replaced_entries)
+                if not ignore_entries:
+                    # Add the rules under the map and not as ChileRules for
+                    # improved performance on the NSX side
+                    comm_map['rules'] = [rule.get_obj_dict() for rule in
+                                         replaced_entries]
+                    map_def.set_obj_dict(comm_map)
+                self._create_or_store(map_def)
             else:
                 body = map_def.get_obj_dict()
                 if not ignore_entries:
