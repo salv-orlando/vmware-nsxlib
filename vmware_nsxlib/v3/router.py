@@ -94,12 +94,20 @@ class RouterLib(object):
         # Create Tier1 logical router link port
         t1_tags = copy.copy(tags)
         t1_tags = utils.add_v3_tag(t1_tags, 'os-tier1-uuid', tier1_uuid)
-        tier1_link_port = self._router_port_client.create(
-            tier1_uuid, display_name=TIER1_ROUTER_LINK_PORT_NAME, tags=t1_tags,
-            resource_type=nsx_constants.LROUTERPORT_LINKONTIER1,
-            logical_port_id=linked_logical_port_id,
-            address_groups=None)
-        return tier0_link_port, tier1_link_port
+        try:
+            tier1_link_port = self._router_port_client.create(
+                tier1_uuid, display_name=TIER1_ROUTER_LINK_PORT_NAME,
+                tags=t1_tags,
+                resource_type=nsx_constants.LROUTERPORT_LINKONTIER1,
+                logical_port_id=linked_logical_port_id,
+                address_groups=None)
+            return tier0_link_port, tier1_link_port
+        except Exception as e:
+            LOG.warning("Failed to create tier1 link port for tier1 router "
+                        "%s, deleting peer tier0 link port %s: %s",
+                        tier1_uuid, linked_logical_port_id, e)
+            self._router_port_client.delete(linked_logical_port_id)
+            raise e
 
     def remove_router_link_port(self, tier1_uuid, tier0_uuid=None):
         # Note(asarfaty): tier0_uuid is not used by this method and can
