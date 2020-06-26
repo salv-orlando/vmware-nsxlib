@@ -84,6 +84,24 @@ class TestRouter(nsxlib_testcase.NsxClientTestCase):
                     tier1_uuid, tier0_uuid, tags))
             self.assertEqual(port_create.call_count, 2)
 
+    def test_add_router_link_port_fail(self):
+        tags = [{'scope': 'a', 'tag': 'b'}]
+        tier0_uuid = uuidutils.generate_uuid()
+        tier1_uuid = uuidutils.generate_uuid()
+        tier0_link_port_id = uuidutils.generate_uuid()
+        with mock.patch.object(self.nsxlib.router._router_port_client,
+                               'create') as port_create,\
+            mock.patch.object(self.nsxlib.router._router_port_client,
+                              'delete') as port_delete:
+            tier0_link_port = {'id': tier0_link_port_id}
+            port_create.side_effect = [tier0_link_port,
+                                       nsxlib_exc.ManagerError]
+            self.assertRaises(
+                nsxlib_exc.ManagerError,
+                self.nsxlib.router.add_router_link_port,
+                tier1_uuid, tier0_uuid, tags)
+            port_delete.assert_called_once_with(tier0_link_port_id)
+
     def test_remove_router_link_port(self):
         tier1_uuid = uuidutils.generate_uuid()
         with mock.patch.object(
