@@ -5191,6 +5191,22 @@ class TestPolicyCertificate(NsxPolicyLibTestCase):
             )
             self.assert_called_with_def(update_call, expected_def)
 
+    def test_find_cert_with_pem(self):
+        id1 = '1'
+        id2 = '2'
+        pem1 = '111'
+        pem2 = '222'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': [
+                                   {'id': id1, 'pem_encoded': pem1},
+                                   {'id': id2, 'pem_encoded': pem2}]}) as api:
+            cert_ids = self.resourceApi.find_cert_with_pem(
+                pem1, tenant=TEST_TENANT)
+            self.assertEqual(1, len(cert_ids))
+            self.assertEqual(id1, cert_ids[0])
+            expected_def = core_defs.CertificateDef(tenant=TEST_TENANT)
+            self.assert_called_with_def(api, expected_def)
+
 
 class TestPolicyExcludeList(NsxPolicyLibTestCase):
 
