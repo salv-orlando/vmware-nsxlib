@@ -2265,7 +2265,7 @@ class CertificateDef(ResourceDef):
 
     @staticmethod
     def resource_type():
-        return "TlsTrustData"
+        return "TlsCertificate"
 
     def get_obj_dict(self):
         body = super(CertificateDef, self).get_obj_dict()
