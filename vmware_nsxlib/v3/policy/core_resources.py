@@ -4485,6 +4485,14 @@ class NsxPolicyCertApi(NsxPolicyResourceBase):
         certificate_def = self.entry_def(tenant=tenant)
         return self._list(certificate_def)
 
+    def find_cert_with_pem(self, cert_pem,
+                           tenant=constants.POLICY_INFRA_TENANT):
+        # Find certificate with cert_pem
+        certs = self.list(tenant=tenant)
+        cert_ids = [cert['id'] for cert in certs
+                    if cert['pem_encoded'] == cert_pem]
+        return cert_ids
+
     def update(self, certificate_id, name=IGNORE,
                pem_encoded=IGNORE, private_key=IGNORE,
                passphrase=IGNORE, key_algo=IGNORE, description=IGNORE,
