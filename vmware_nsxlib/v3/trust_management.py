@@ -29,6 +29,10 @@ USER_GROUP_TYPES = [
 
 class NsxLibTrustManagement(utils.NsxLibApiBase):
 
+    @property
+    def uri_segment(self):
+        return CERT_SECTION
+
     def create_cert_list(self, cert_pem, private_key=None, passphrase=None,
                          tags=None):
         resource = CERT_SECTION + '?action=import'
