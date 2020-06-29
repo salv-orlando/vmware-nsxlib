@@ -868,6 +868,11 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
         resource = ('logical-routers/%s/routing/bgp' % logical_router_id)
         return self.client.get(resource)
 
+    def get_bgp_neighbors(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/bgp/neighbors' %
+                    logical_router_id)
+        return self.client.get(resource)
+
     def get_route_map(self, logical_router_id, route_map_id):
         resource = ('logical-routers/%s/routing/route-maps/%s' % (
                     logical_router_id, route_map_id))
