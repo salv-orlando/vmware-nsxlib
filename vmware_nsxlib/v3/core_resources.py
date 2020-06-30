@@ -846,6 +846,15 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             resource = self.get_path()
         return self.client.list(resource)
 
+    def get_bgp_config(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/bgp' % logical_router_id)
+        return self.client.get(resource)
+
+    def get_bgp_neighbors(self, logical_router_id):
+        resource = ('logical-routers/%s/routing/bgp/neighbors' %
+                    logical_router_id)
+        return self.client.get(resource)
+
 
 class NsxLibEdgeCluster(utils.NsxLibApiBase):
 
