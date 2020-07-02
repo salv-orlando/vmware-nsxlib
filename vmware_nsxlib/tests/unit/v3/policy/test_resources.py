@@ -4650,7 +4650,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         tags = [{'scope': 'a', 'tag': 'b'}]
         hyperbus_mode = 'DISABLE'
         admin_state = True
-        init_state = 'VIF_RESTORE'
+        init_state = 'RESTORE_VIF'
 
         with mock.patch.object(
             self.policy_api, "create_or_update") as api_call, \
@@ -4702,7 +4702,7 @@ class TestPolicySegmentPort(NsxPolicyLibTestCase):
         allocate_addresses = "BOTH"
         tags = [{'scope': 'a', 'tag': 'b'}]
         hyperbus_mode = 'DISABLE'
-        init_state = 'VIF_RESTORE'
+        init_state = 'RESTORE_VIF'
 
         with mock.patch.object(
             self.policy_api, "create_or_update") as api_call, \
