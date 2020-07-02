@@ -52,7 +52,9 @@ def get_http_error_details(response):
 
 
 def init_http_exception_from_response(response):
-    if not response:
+    if response is None or response:
+        # The response object has a __bool__ method that return True for
+        # status code under 400. In that case there is no need for exception
         return None
 
     error_details = get_http_error_details(response)

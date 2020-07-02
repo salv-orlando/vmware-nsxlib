@@ -278,7 +278,7 @@ class NsxClientTestCase(NsxLibTestCase):
             super(NsxClientTestCase.MockHTTPProvider, self).__init__()
             if isinstance(session_response, list):
                 self._session_responses = session_response
-            elif session_response:
+            elif session_response is not None:
                 self._session_responses = [session_response]
             else:
                 self._session_responses = None
