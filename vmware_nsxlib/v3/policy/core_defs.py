@@ -1156,7 +1156,7 @@ class SegmentPortDef(ResourceDef):
         if (self.has_attr('init_state') and
             self._version_dependant_attr_supported('init_state')):
             valid_list = [nsx_constants.INIT_STATE_UNBLOCKED_VLAN,
-                          nsx_constants.INIT_STATE_VIF_RESTORE]
+                          nsx_constants.INIT_STATE_RESTORE_VIF]
             init_state = self.get_attr('init_state')
             if init_state not in valid_list:
                 raise exceptions.InvalidInput(
