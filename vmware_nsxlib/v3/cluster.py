@@ -256,7 +256,12 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                 LOG.error("Session create failed for endpoint %s due to "
                           "error in retrieving JSON Web Token: %s",
                           provider.url, e)
-        elif not session.cert_provider:
+        elif session.cert_provider:
+            # Session create will fail without token_provider, returning 403
+            LOG.debug("Skipping get_default_headers due to missing "
+                      "token_provider")
+            return
+        else:
             # With client certificate authentication, username and password
             # may not be provided.
             # If provided, backend treats these credentials as authentication
