@@ -831,6 +831,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
 
         If the router was already retrieved from the backend it is possible
         to give it as an input to avoid another backend call.
+        In case of multiple sections, the first valid one will be returned
         """
         if not router_body:
             router_body = self.get(lrouter_id)
@@ -839,7 +840,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             for sec in firewall_sections:
                 if (sec.get('is_valid') and
                     sec.get('target_type') == "FirewallSection"):
-                    return firewall_sections[0].get('target_id')
+                    return sec.get('target_id')
 
     def list(self, router_type=None):
         """List all/by type logical routers."""
