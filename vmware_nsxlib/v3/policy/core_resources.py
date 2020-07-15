@@ -3693,6 +3693,16 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
         return self._get_realization_info(map_def, entity_type=entity_type,
                                           silent=silent)
 
+    def wait_until_realized(self, domain_id, map_id, entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        map_def = self.parent_entry_def(map_id=map_id,
+                                        domain_id=domain_id,
+                                        tenant=tenant)
+        return self._wait_until_realized(map_def, entity_type=entity_type,
+                                         sleep=sleep,
+                                         max_attempts=max_attempts)
+
 
 class NsxPolicyCommunicationMapApi(NsxPolicySecurityPolicyBaseApi):
     """NSX Policy CommunicationMap (Under a Domain). AKA Security"""
