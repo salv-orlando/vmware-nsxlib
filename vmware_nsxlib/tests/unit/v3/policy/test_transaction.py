@@ -391,7 +391,8 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
         self.assert_infra_patch_call(expected_body)
 
     @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
-    def test_updating_security_policy_and_dfw_rules(self, mock_get_api):
+    def _test_updating_security_policy_and_dfw_rules(
+        self, use_child_rules, mock_get_api):
         dfw_rule1 = {'id': 'rule_id1', 'action': 'ALLOW',
                      'display_name': 'rule1', 'description': None,
                      'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
@@ -449,15 +450,20 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
                 name=security_policy['display_name'],
                 domain_id=domain_id,
                 map_id=map_id,
-                entries=dfw_rule_entries
+                entries=dfw_rule_entries,
+                use_child_rules=use_child_rules
             )
 
         dfw_rule1['display_name'] = new_rule_name
         dfw_rule1['direction'] = new_direction
-        child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule1},
-                       {'resource_type': 'ChildRule', 'Rule': dfw_rule2,
-                        'marked_for_delete': True}]
-        security_policy.update({'children': child_rules})
+        if use_child_rules:
+            child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule1},
+                           {'resource_type': 'ChildRule', 'Rule': dfw_rule2,
+                            'marked_for_delete': True}]
+            security_policy.update({'children': child_rules})
+        else:
+            security_policy['rules'] = copy.deepcopy([dfw_rule1, dfw_rule2])
+
         child_security_policies = [{
             'resource_type': 'ChildSecurityPolicy',
             'SecurityPolicy': security_policy
@@ -470,6 +476,12 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
         expected_body = {'resource_type': 'Infra',
                          'children': child_domains}
         self.assert_infra_patch_call(expected_body)
+
+    def test_updating_security_policy_and_dfw_rules(self):
+        return self._test_updating_security_policy_and_dfw_rules(True)
+
+    def test_updating_security_policy_and_dfw_rules_no_child_rules(self):
+        return self._test_updating_security_policy_and_dfw_rules(False)
 
     @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
     def test_updating_security_policy_with_no_entries_set(self, mock_get_api):
