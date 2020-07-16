@@ -454,7 +454,10 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
 
         dfw_rule1['display_name'] = new_rule_name
         dfw_rule1['direction'] = new_direction
-        security_policy['rules'] = copy.deepcopy([dfw_rule1, dfw_rule2])
+        child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule1},
+                       {'resource_type': 'ChildRule', 'Rule': dfw_rule2,
+                        'marked_for_delete': True}]
+        security_policy.update({'children': child_rules})
         child_security_policies = [{
             'resource_type': 'ChildSecurityPolicy',
             'SecurityPolicy': security_policy
