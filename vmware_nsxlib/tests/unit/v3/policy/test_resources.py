@@ -2022,6 +2022,7 @@ class TestPolicyCommunicationMap(NsxPolicyLibTestCase):
             update_call.assert_called_once_with(
                 domain_id, map_id, entries,
                 category=constants.CATEGORY_APPLICATION,
+                use_child_rules=True,
                 tenant=TEST_TENANT)
 
     def test_update_with_entries(self):
