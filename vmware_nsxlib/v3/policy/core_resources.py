@@ -1941,6 +1941,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             dhcp_server_config_id=IGNORE,
                             admin_state=IGNORE,
                             ls_id=IGNORE,
+                            unique_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1965,6 +1966,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             dhcp_server_config_id=dhcp_server_config_id,
             admin_state=admin_state,
             ls_id=ls_id,
+            unique_id=unique_id,
             tags=tags,
             tenant=tenant)
         self._create_or_store(segment_def)
