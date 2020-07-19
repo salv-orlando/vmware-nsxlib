@@ -15,11 +15,11 @@
 #
 import unittest
 from unittest import mock
+from urllib import parse as urlparse
 
 from requests import codes
 from requests import exceptions as requests_exceptions
 from requests import models
-import six.moves.urllib.parse as urlparse
 
 from oslo_serialization import jsonutils
 

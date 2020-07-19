@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
-
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
 from vmware_nsxlib.v3 import utils
 
@@ -98,7 +96,7 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
     def find_cert_and_identity(self, name, cert_pem):
         certs = self.get_certs()
 
-        if not isinstance(cert_pem, six.text_type):
+        if not isinstance(cert_pem, str):
             cert_pem = cert_pem.decode('ascii')
 
         cert_ids = [cert['id'] for cert in certs

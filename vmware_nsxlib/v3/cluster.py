@@ -23,6 +23,8 @@ import itertools
 import logging
 import re
 import time
+from urllib import parse as urlparse
+import urllib3
 
 import eventlet
 from eventlet import greenpool
@@ -32,9 +34,6 @@ from oslo_log import log
 from oslo_service import loopingcall
 import requests
 from requests import adapters
-import six
-import six.moves.urllib.parse as urlparse
-import urllib3
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client as nsx_client
@@ -53,8 +52,7 @@ logging.getLogger(
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AbstractHTTPProvider(object):
+class AbstractHTTPProvider(object, metaclass=abc.ABCMeta):
     """Interface for providers of HTTP connections.
 
     which are responsible for creating and validating connections

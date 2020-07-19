@@ -16,7 +16,6 @@
 from unittest import mock
 
 from oslo_utils import uuidutils
-import six
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3 import test_constants
@@ -482,7 +481,7 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
     def test_get_nsgroup_lp_complex_expression(self):
         port_tags = {'app': 'foo', 'project': 'myproject'}
         port_exp = [self.nsxlib.ns_group.get_port_tag_expression(k, v)
-                    for k, v in six.iteritems(port_tags)]
+                    for k, v in port_tags.items()]
         complex_exp = self.nsxlib.ns_group.get_nsgroup_complex_expression(
             expressions=port_exp)
         expected_exp = {'resource_type': const.NSGROUP_COMPLEX_EXP,
@@ -492,7 +491,7 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
     def test_get_nsgroup_ls_complex_expression(self):
         switch_tags = {'app': 'foo', 'project': 'myproject'}
         switch_exp = [self.nsxlib.ns_group.get_switch_tag_expression(k, v)
-                      for k, v in six.iteritems(switch_tags)]
+                      for k, v in switch_tags.items()]
         complex_exp = self.nsxlib.ns_group.get_nsgroup_complex_expression(
             expressions=switch_exp)
         expected_exp = {'resource_type': const.NSGROUP_COMPLEX_EXP,

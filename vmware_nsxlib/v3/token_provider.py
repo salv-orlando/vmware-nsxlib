@@ -15,13 +15,10 @@
 
 import abc
 
-import six
-
 
 # NOTE: Consider inheriting from an abstract TokenProvider class to share
 #       interface with XSRF token
-@six.add_metaclass(abc.ABCMeta)
-class AbstractJWTProvider(object):
+class AbstractJWTProvider(object, metaclass=abc.ABCMeta):
     """Interface for providers of JSON Web Tokens(JWT)
 
     Responsible to provide the token value and refresh it once expired,

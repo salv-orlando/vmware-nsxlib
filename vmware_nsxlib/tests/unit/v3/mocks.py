@@ -12,11 +12,11 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import requests
-import six.moves.urllib.parse as urlparse
+from urllib import parse as urlparse
 
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+import requests
 
 from vmware_nsxlib.v3 import nsx_constants
 

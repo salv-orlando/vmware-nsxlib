@@ -18,7 +18,6 @@ import abc
 from distutils import version
 
 from oslo_log import log as logging
-import six
 
 from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import nsx_constants
@@ -70,8 +69,7 @@ TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
                                       "%s/locale-services/")
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ResourceDef(object):
+class ResourceDef(object, metaclass=abc.ABCMeta):
     def __init__(self, nsx_version=None, **kwargs):
         self.attrs = kwargs
 

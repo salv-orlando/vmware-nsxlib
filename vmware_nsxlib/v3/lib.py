@@ -17,7 +17,6 @@ import abc
 from distutils import version
 
 from oslo_log import log
-import six
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client
@@ -29,8 +28,7 @@ from vmware_nsxlib.v3 import utils
 LOG = log.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NsxLibBase(object):
+class NsxLibBase(object, metaclass=abc.ABCMeta):
     def __init__(self, nsxlib_config):
 
         self.nsx_version = None

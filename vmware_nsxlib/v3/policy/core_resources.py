@@ -22,7 +22,6 @@ import decorator
 import eventlet
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import six
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import exceptions
@@ -56,8 +55,7 @@ def check_allowed_passthrough(f, *args, **kwargs):
     return f(*args, **kwargs)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NsxPolicyResourceBase(object):
+class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
     """Abstract class for NSX policy resources
 
     declaring the basic apis each policy resource should support,

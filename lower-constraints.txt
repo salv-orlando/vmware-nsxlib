@@ -20,7 +20,6 @@ python-subunit==1.0.0
 pylint==1.7.1
 reno==2.5.0
 requests-mock==1.2.0
-six==1.10.0
 sphinx==1.6.5
 stestr==1.0.0
 tempest==17.1.0

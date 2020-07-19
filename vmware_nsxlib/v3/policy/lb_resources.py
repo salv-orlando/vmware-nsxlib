@@ -14,11 +14,9 @@
 #    under the License.
 #
 
-import abc
 import copy
 
 from oslo_log import log as logging
-import six
 
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
@@ -1080,7 +1078,6 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             sleep=sleep, max_attempts=max_attempts)
 
 
-@six.add_metaclass(abc.ABCMeta)
 class NsxPolicyLBMonitorProfileBase(NsxPolicyResourceBase):
     """NSX Policy LB monitor profile"""
 

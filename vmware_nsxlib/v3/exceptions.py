@@ -15,7 +15,6 @@
 #
 
 from oslo_utils import excutils
-import six
 
 from vmware_nsxlib._i18n import _
 
@@ -39,10 +38,6 @@ class NsxLibException(Exception):
                     ctxt.reraise = False
                     # at least get the core message out if something happened
                     super(NsxLibException, self).__init__(self.message)
-
-    if six.PY2:
-        def __unicode__(self):
-            return unicode(self.msg) if six.PY2 else self.msg  # noqa
 
     def __str__(self):
         return self.msg
