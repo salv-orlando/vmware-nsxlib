@@ -2143,6 +2143,57 @@ class TestPolicyGatewayPolicy(TestPolicyCommunicationMap):
         self.resource_type = 'GatewayPolicy'
         self.path_name = 'gateway-policies'
 
+    def test_get_realized(self):
+        domain_id = 'd1'
+        map_id = '111'
+        result = [{'state': constants.STATE_REALIZED,
+                   'entity_type': 'RealizedFirewallSection'}]
+        with mock.patch.object(
+            self.policy_api, "get_realized_entities",
+            return_value=result) as api_get:
+            state = self.resourceApi.get_realized_state(
+                domain_id, map_id, tenant=TEST_TENANT)
+            self.assertEqual(constants.STATE_REALIZED, state)
+            path = "/%s/domains/%s/%s/%s" % (
+                TEST_TENANT, domain_id, self.path_name, map_id)
+            api_get.assert_called_once_with(path, silent=False)
+
+    def test_wait_until_realized_failed(self):
+        domain_id = 'd1'
+        map_id = '111'
+        gw_section_id = 'realized_111'
+        info = {'state': constants.STATE_UNREALIZED,
+                'realization_specific_identifier': gw_section_id}
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              domain_id, map_id, tenant=TEST_TENANT,
+                              max_attempts=5, sleep=0.1)
+
+    def test_wait_until_state_sucessful_with_error(self):
+        domain_id = 'd1'
+        map_id = '111'
+        info = {'consolidated_status': {'consolidated_status': 'ERROR'}}
+        with mock.patch.object(self.resourceApi.policy_api,
+                               "get_intent_consolidated_status",
+                               return_value=info):
+            self.assertRaises(nsxlib_exc.RealizationErrorStateError,
+                              self.resourceApi.wait_until_state_sucessful,
+                              domain_id, map_id, tenant=TEST_TENANT,
+                              max_attempts=5, sleep=0.1)
+
+    def test_wait_until_state_sucessful(self):
+        domain_id = 'd1'
+        map_id = '111'
+        info = {'consolidated_status': {'consolidated_status': 'SUCCESS'}}
+        with mock.patch.object(self.resourceApi.policy_api,
+                               "get_intent_consolidated_status",
+                               return_value=info):
+            self.resourceApi.wait_until_state_sucessful(
+                domain_id, map_id, tenant=TEST_TENANT,
+                max_attempts=5, sleep=0.1)
+
 
 class TestPolicyEnforcementPoint(NsxPolicyLibTestCase):
 
