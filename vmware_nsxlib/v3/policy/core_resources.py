@@ -3697,6 +3697,52 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                          sleep=sleep,
                                          max_attempts=max_attempts)
 
+    def wait_until_state_sucessful(self, domain_id, map_id,
+                                   tenant=constants.POLICY_INFRA_TENANT,
+                                   sleep=None, max_attempts=None,
+                                   with_refresh=False):
+        map_def = self.parent_entry_def(map_id=map_id,
+                                        domain_id=domain_id,
+                                        tenant=tenant)
+        map_path = map_def.get_resource_full_path()
+
+        if sleep is None:
+            sleep = self.nsxlib_config.realization_wait_sec
+        if max_attempts is None:
+            max_attempts = self.nsxlib_config.realization_max_attempts
+
+        @utils.retry_upon_none_result(max_attempts, delay=sleep, random=True)
+        def get_state():
+            state = self.policy_api.get_intent_consolidated_status(
+                map_path, silent=True)
+            if state and state.get('consolidated_status'):
+                con_state = state['consolidated_status'].get(
+                    'consolidated_status')
+                if con_state == 'SUCCESS':
+                    return True
+                if con_state == 'ERROR':
+                    raise exceptions.RealizationErrorStateError(
+                        resource_type=map_def.resource_type(),
+                        resource_id=map_def.get_id(),
+                        error="Unknown")
+            if with_refresh:
+                # Refresh the consolidated state for the next time
+                # (if not, it will be refreshed at the policy level after a
+                # refresh cycle)
+                self.policy_api.refresh_realized_state(map_path)
+
+        try:
+            return get_state()
+        except exceptions.RealizationError as e:
+            raise e
+        except Exception:
+            # max retries reached
+            raise exceptions.RealizationTimeoutError(
+                resource_type=map_def.resource_type(),
+                resource_id=map_def.get_id(),
+                attempts=max_attempts,
+                sleep=sleep)
+
 
 class NsxPolicyCommunicationMapApi(NsxPolicySecurityPolicyBaseApi):
     """NSX Policy CommunicationMap (Under a Domain). AKA Security"""
