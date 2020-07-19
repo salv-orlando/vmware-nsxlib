@@ -567,7 +567,7 @@ def validate_icmp_params(icmp_type, icmp_code, icmp_version=4, strict=False):
     if icmp_version != 4:
         # ICMPv6 is currently not supported
         return
-    if icmp_type:
+    if icmp_type is not None:
         if (strict and icmp_type not in
                 constants.IPV4_ICMP_STRICT_TYPES):
             raise nsxlib_exceptions.InvalidInput(
