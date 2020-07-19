@@ -18,6 +18,7 @@ import abc
 from distutils import version
 
 from oslo_log import log as logging
+import requests
 import six
 
 from vmware_nsxlib.v3 import exceptions
@@ -58,8 +59,14 @@ WAF_PROFILES_PATH_PATTERN = (TENANTS_PATH_PATTERN +
 CERTIFICATE_PATH_PATTERN = TENANTS_PATH_PATTERN + "certificates/"
 EXCLUDE_LIST_PATH_PATTERN = (TENANTS_PATH_PATTERN +
                              "settings/firewall/security/exclude-list")
-
-REALIZATION_PATH = "infra/realized-state/realized-entities?intent_path=%s"
+REALIZATION_PATH_PREFIX = "infra/realized-state/"
+REALIZATION_PATH_SUFFIX = "?intent_path=%s"
+REALIZATION_PATH = (REALIZATION_PATH_PREFIX + "realized-entities" +
+                    REALIZATION_PATH_SUFFIX)
+REALIZATION_REFRESH_PATH = (REALIZATION_PATH_PREFIX + "realized-entity" +
+                            REALIZATION_PATH_SUFFIX + "&action=refresh")
+REALIZATION_STATUS_PATH = (REALIZATION_PATH_PREFIX + "status" +
+                           REALIZATION_PATH_SUFFIX)
 DHCP_REALY_PATTERN = TENANTS_PATH_PATTERN + "dhcp-relay-configs/"
 DHCP_SERVER_PATTERN = TENANTS_PATH_PATTERN + "dhcp-server-configs/"
 MDPROXY_PATTERN = TENANTS_PATH_PATTERN + "metadata-proxies/"
@@ -2524,6 +2531,16 @@ class NsxPolicyApi(object):
         entity = self.get_realized_entity(path, silent=silent)
         if entity:
             return entity['state']
+
+    def refresh_realized_state(self, path):
+        # Using POST, excepting 204
+        expected_results = [requests.codes.no_content]
+        return self.client.create(REALIZATION_REFRESH_PATH % path,
+                                  expected_results=expected_results)
+
+    def get_intent_consolidated_status(self, path, silent=False):
+        return self.client.get(REALIZATION_STATUS_PATH % path,
+                               silent=silent)
 
 
 class RouteMapEntry(object):
