@@ -64,7 +64,7 @@ def set_inject_headers_callback(callback):
 
 
 def censor_headers(headers):
-    censored_headers = ['authorization']
+    censored_headers = ['authorization', 'X-XSRF-TOKEN', 'Cookie']
     result = {}
     for name, value in headers.items():
         if name.lower() in censored_headers:
