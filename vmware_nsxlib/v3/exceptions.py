@@ -94,6 +94,11 @@ class ResourceNotFound(ManagerError):
                 "%(operation)s")
 
 
+class MultipleResourcesFound(ManagerError):
+    message = _("Multiple resources are found on backend (%(manager)s) for "
+                "%(operation)s, where only one is expected")
+
+
 class BackendResourceNotFound(ResourceNotFound):
     message = _("%(details)s On backend (%(manager)s) with Operation: "
                 "%(operation)s")
