@@ -51,6 +51,10 @@ class MonitorTypes(object):
 class LoadBalancerBase(utils.NsxLibApiBase):
     resource = ''
 
+    @property
+    def uri_segment(self):
+        return self.resource
+
     @staticmethod
     def _build_args(body, display_name=None, description=None, tags=None,
                     resource_type=None, **kwargs):
