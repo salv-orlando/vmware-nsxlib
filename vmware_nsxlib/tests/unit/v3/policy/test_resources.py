@@ -5677,7 +5677,9 @@ class TestPolicyTier1SegmentPort(NsxPolicyLibTestCase):
         port_id = 'port-111'
         segment_id = 'seg-111'
         info = {'state': constants.STATE_ERROR,
-                'alarms': [{'message': 'dummy'}],
+                'alarms': [{'message': 'dummy',
+                            'error_details': {
+                                'error_code': 5109}}],
                 'entity_type': 'RealizedLogicalPort'}
         with mock.patch.object(self.resourceApi, "_get_realization_info",
                                return_value=info):
