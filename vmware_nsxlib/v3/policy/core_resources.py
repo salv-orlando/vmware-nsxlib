@@ -261,6 +261,13 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
                 if info['state'] == constants.STATE_ERROR:
                     error_msg, error_code, related_error_codes = \
                         self._get_realization_error_message_and_code(info)
+                    # There could be a delay between setting NSX-T
+                    # Error realization state and updating the realization
+                    # entity with alarms. Retry should be perform upon None
+                    # error code to avoid 'Unknown' RealizationErrorStateError
+                    # exception
+                    if error_code is None:
+                        return
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
