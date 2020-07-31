@@ -155,6 +155,10 @@ class InvalidCredentials(ManagerError):
     message = _("Failed to authenticate with NSX: %(msg)s")
 
 
+class InvalidLicense(ManagerError):
+    message = _("No valid License to configure NSX resources: %(msg)s")
+
+
 class BadJSONWebTokenProviderRequest(NsxLibException):
     message = _("Bad or expired JSON web token request from provider: %(msg)s")
 
