@@ -2146,6 +2146,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                             hyperbus_mode=IGNORE,
                             admin_state=IGNORE,
                             init_state=IGNORE,
+                            extra_configs=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2164,6 +2165,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                                   hyperbus_mode=hyperbus_mode,
                                   admin_state=admin_state,
                                   init_state=init_state,
+                                  extra_configs=extra_configs,
                                   tags=tags,
                                   tenant=tenant)
         self._create_or_store(port_def)
@@ -2194,6 +2196,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                address_bindings=IGNORE,
                hyperbus_mode=IGNORE,
                admin_state=IGNORE,
+               extra_configs=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2204,6 +2207,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      address_bindings=address_bindings,
                      hyperbus_mode=hyperbus_mode,
                      admin_state=admin_state,
+                     extra_configs=extra_configs,
                      tags=tags,
                      tenant=tenant)
 
@@ -2240,6 +2244,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                context_id=None,
                traffic_tag=None,
                hyperbus_mode=IGNORE,
+               extra_configs=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2252,6 +2257,7 @@ class NsxPolicySegmentPortApi(NsxPolicyResourceBase):
                      context_id=context_id,
                      traffic_tag=traffic_tag,
                      hyperbus_mode=hyperbus_mode,
+                     extra_configs=extra_configs,
                      tags=tags,
                      tenant=tenant)
 

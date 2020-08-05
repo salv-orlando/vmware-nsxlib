@@ -151,6 +151,7 @@ NSX_VERSION_2_3_0 = '2.3.0'
 NSX_VERSION_2_4_0 = '2.4.0'
 NSX_VERSION_2_5_0 = '2.5.0'
 NSX_VERSION_3_0_0 = '3.0.0'
+NSX_VERSION_3_0_2 = '3.0.2'
 NSX_VERSION_3_1_0 = '3.1.0'
 
 # Features available depending on the NSX Manager backend version
