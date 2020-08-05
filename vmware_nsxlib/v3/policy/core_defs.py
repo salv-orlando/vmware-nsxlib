@@ -1165,13 +1165,18 @@ class SegmentPortDef(ResourceDef):
                     arg_name='init_state')
             self._set_attr_if_specified(body, 'init_state')
 
+        if (self.has_attr('extra_configs') and
+            self._version_dependant_attr_supported('extra_configs')):
+            self._set_attr_if_specified(body, 'extra_configs')
+
         return body
 
     @property
     def version_dependant_attr_map(self):
         return {'hyperbus_mode': nsx_constants.NSX_VERSION_3_0_0,
                 'admin_state': nsx_constants.NSX_VERSION_3_0_0,
-                'init_state': nsx_constants.NSX_VERSION_3_1_0}
+                'init_state': nsx_constants.NSX_VERSION_3_1_0,
+                'extra_configs': nsx_constants.NSX_VERSION_3_0_2}
 
 
 class SegmentBindingMapDefBase(ResourceDef):
