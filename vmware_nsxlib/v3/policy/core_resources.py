@@ -346,8 +346,8 @@ class NsxPolicyResourceBase(object):
             except IndexError:
                 return
 
-    def _list(self, obj_def):
-        return self.policy_api.list(obj_def).get('results', [])
+    def _list(self, obj_def, silent=False):
+        return self.policy_api.list(obj_def, silent=silent).get('results', [])
 
     def _create_or_store(self, policy_def, child_def=None):
         transaction = trans.NsxPolicyTransaction.get_current()
