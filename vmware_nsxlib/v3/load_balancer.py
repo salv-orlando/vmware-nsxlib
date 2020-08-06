@@ -494,10 +494,10 @@ class Service(LoadBalancerBase):
                                       'virtual-servers', 'status')
         return self.client.get(object_url)
 
-    def get_stats(self, service_id, source='realtime'):
+    def get_stats(self, service_id, source='realtime', silent=False):
         object_url = '%s/%s/%s?source=%s' % (self.resource, service_id,
                                              'statistics', source)
-        return self.client.get(object_url)
+        return self.client.get(object_url, silent=silent)
 
     def get_usage(self, service_id):
         object_url = '%s/%s/%s' % (self.resource, service_id, 'usage')

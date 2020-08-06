@@ -609,7 +609,8 @@ class TestService(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.service.get_stats(fake_service['id'])
             get.assert_called_with(
                 'loadbalancer/services/%s/statistics?source=realtime' %
-                fake_service['id'])
+                fake_service['id'],
+                silent=False)
 
     def test_get_status(self):
         with mock.patch.object(self.nsxlib.client, 'get') as get:
