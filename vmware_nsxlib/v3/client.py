@@ -249,25 +249,24 @@ class RESTClient(object):
             request_headers.update(inject_headers)
 
         request_url = self._build_url(url)
-
         do_request = getattr(self._conn, method.lower())
-        if not silent:
-
-            LOG.debug("REST call: %s %s. Headers: %s. Body: %s",
-                      method, request_url,
-                      utils.censor_headers(request_headers),
-                      self._mask_password(body))
-
+        if silent:
+            self._conn.set_silent(True)
         ts = time.time()
         result = do_request(
             request_url,
             data=body,
             headers=request_headers)
         te = time.time()
+        if silent:
+            self._conn.set_silent(False)
 
         if not silent:
-            LOG.debug("REST call: %s %s. Response: %s. Took %2.4f",
+            LOG.debug("REST call: %s %s. Headers: %s. Body: %s. Response: %s. "
+                      "Took %2.4f",
                       method, request_url,
+                      utils.censor_headers(request_headers),
+                      self._mask_password(body),
                       result.json() if result.content else '',
                       te - ts)
 
