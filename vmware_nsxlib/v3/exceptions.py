@@ -70,6 +70,7 @@ class ManagerError(NsxLibException):
     message = _("Unexpected error from backend manager (%(manager)s) "
                 "for %(operation)s%(details)s")
     related_error_codes = []
+    related_status_codes = []
 
     def __init__(self, **kwargs):
         details = kwargs.get('details', '')
@@ -82,6 +83,7 @@ class ManagerError(NsxLibException):
         self.error_code = kwargs.get('error_code')
         self.related_error_codes = kwargs.get('related_error_codes', [])
         self.status_code = kwargs.get('status_code')
+        self.related_status_codes = kwargs.get('related_status_codes', [])
 
 
 class ResourceNotFound(ManagerError):
