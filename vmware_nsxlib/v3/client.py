@@ -223,12 +223,6 @@ class RESTClient(object):
         request_url = self._build_url(url)
 
         do_request = getattr(self._conn, method.lower())
-        if not silent:
-
-            LOG.debug("REST call: %s %s. Headers: %s. Body: %s",
-                      method, request_url, request_headers,
-                      self._mask_password(body))
-
         ts = time.time()
         result = do_request(
             request_url,
@@ -237,8 +231,10 @@ class RESTClient(object):
         te = time.time()
 
         if not silent:
-            LOG.debug("REST call: %s %s. Response: %s. Took %2.4f",
-                      method, request_url,
+            LOG.debug("REST call: %s %s. Headers: %s. Body: %s. Response: %s. "
+                      "Took %2.4f",
+                      method, request_url, request_headers,
+                      self._mask_password(body),
                       result.json() if result.content else '',
                       te - ts)
 
