@@ -85,6 +85,7 @@ class TimeoutSession(requests.Session):
         self.timeout = timeout
         self.read_timeout = read_timeout
         self.cert_provider = None
+        self._silent = False
         super(TimeoutSession, self).__init__()
 
     @property
@@ -94,6 +95,9 @@ class TimeoutSession(requests.Session):
     @cert_provider.setter
     def cert_provider(self, value):
         self._cert_provider = value
+
+    def set_silent(self, silent_mode):
+        self._silent = silent_mode
 
     # wrapper timeouts at the session level
     # see: https://goo.gl/xNk7aM
@@ -441,6 +445,7 @@ class ClusteredAPI(object):
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
         self._print_keepalive = 0
+        self._silent = False
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers, min_conns_per_pool,
@@ -453,6 +458,9 @@ class ClusteredAPI(object):
         # for api workers to ensure each process has its own keepalive
         # loops + state
         self._reinit_cluster = _init_cluster
+
+    def set_silent(self, silent_mode):
+        self._silent = silent_mode
 
     def _init_endpoints(self, providers, min_conns_per_pool,
                         max_conns_per_pool, api_rate_limit, api_rate_mode):
@@ -722,10 +730,11 @@ class ClusteredAPI(object):
                     if conn.default_headers:
                         kwargs['headers'] = kwargs.get('headers', {})
                         kwargs['headers'].update(conn.default_headers)
-                    LOG.debug("API cluster proxy %s %s to %s with %s. "
-                              "Waited conn: %2.4f, rate: %2.4f",
-                              proxy_for.upper(), uri, url, kwargs,
-                              conn_data.conn_wait, conn_data.rate_wait)
+                    if not self._silent:
+                        LOG.debug("API cluster proxy %s %s to %s with %s. "
+                                  "Waited conn: %2.4f, rate: %2.4f",
+                                  proxy_for.upper(), uri, url, kwargs,
+                                  conn_data.conn_wait, conn_data.rate_wait)
 
                     # call the actual connection method to do the
                     # http request/response over the wire
@@ -756,7 +765,7 @@ class ClusteredAPI(object):
                         raise e
 
                     # Returning the exception instead of raising it will cause
-                    # decarator to retry. If retry attempts is exceeded, this
+                    # decorator to retry. If retry attempts is exceeded, this
                     # same exception will be raised due to overriden reraise
                     # method of RetryAttemptsExceeded
                     return e
