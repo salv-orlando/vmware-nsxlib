@@ -259,7 +259,8 @@ class NsxV3RESTClientTestCase(nsxlib_testcase.NsxClientTestCase):
                                            'error_message': 'bad',
                                            'related_errors': [{
                                                'error_message': 'bla',
-                                               'error_code': 'code'}]})
+                                               'error_code': 'code',
+                                               'httpStatus': 'BAD_REQUEST'}]})
             response = mocks.MockRequestsResponse(
                 status_code, content)
 

@@ -34,6 +34,7 @@ def get_http_error_details(response):
     msg = response.json() if response.content else ''
     error_code = None
     related_error_codes = []
+    related_status_codes = []
 
     if isinstance(msg, dict) and 'error_message' in msg:
         error_code = msg.get('error_code')
@@ -42,6 +43,10 @@ def get_http_error_details(response):
         related_error_codes = [str(error['error_code']) for error in
                                msg.get('related_errors', []) if
                                error.get('error_code')]
+        related_status_codes = [getattr(requests.codes, error['httpStatus'])
+                                for error in msg.get('related_errors', []) if
+                                error.get('httpStatus')]
+
         msg = msg['error_message']
         if related_errors:
             msg += " relatedErrors: %s" % ' '.join(related_errors)
@@ -49,6 +54,7 @@ def get_http_error_details(response):
     return {'status_code': response.status_code,
             'error_code': error_code,
             'related_error_codes': related_error_codes,
+            'related_status_codes': related_status_codes,
             'details': msg}
 
 
@@ -193,12 +199,14 @@ class RESTClient(object):
         return self._rest_call(url, method='PATCH', body=body, headers=headers)
 
     def _raise_error(self, operation, status_code, details,
-                     error_code=None, related_error_codes=None):
+                     error_code=None, related_error_codes=None,
+                     related_status_codes=None):
         error = http_error_to_exception(status_code, error_code)
         raise error(manager='', operation=operation, details=details,
                     error_code=error_code,
                     related_error_codes=related_error_codes,
-                    status_code=status_code)
+                    status_code=status_code,
+                    related_status_codes=related_status_codes)
 
     def _validate_result(self, result, expected, operation, silent=False):
         if result.status_code not in expected:
@@ -349,7 +357,8 @@ class NSX3Client(JSONRESTClient):
             client_obj=client_obj)
 
     def _raise_error(self, operation, status_code, details,
-                     error_code=None, related_error_codes=None):
+                     error_code=None, related_error_codes=None,
+                     related_status_codes=None):
         """Override the Rest client errors to add the manager IPs"""
         error = http_error_to_exception(status_code, error_code)
         raise error(manager=self.nsx_api_managers,
@@ -357,6 +366,7 @@ class NSX3Client(JSONRESTClient):
                     details=details,
                     error_code=error_code,
                     related_error_codes=related_error_codes,
+                    related_status_codes=related_status_codes,
                     status_code=status_code)
 
     def _rest_call(self, url, **kwargs):
