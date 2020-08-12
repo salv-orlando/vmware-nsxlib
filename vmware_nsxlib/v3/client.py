@@ -87,6 +87,7 @@ def http_error_to_exception(status_code, error_code):
              '8327': exceptions.NsxOverlapVlan,
              '500045': exceptions.NsxPendingDelete,
              '500030': exceptions.ResourceInUse,
+             '500087': exceptions.StaleRevision,
              '500105': exceptions.NsxOverlapAddresses,
              '503040': exceptions.NsxSegemntWithVM,
              '100148': exceptions.StaleRevision},
