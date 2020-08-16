@@ -116,6 +116,8 @@ LOCAL_IP_PREFIX = 'local_ip_prefix'
 
 # Allowed address pairs
 NUM_ALLOWED_IP_ADDRESSES = 128
+NUM_ALLOWED_IP_ADDRESSES_v4 = NUM_ALLOWED_IP_ADDRESSES
+NUM_ALLOWED_IP_ADDRESSES_v6 = 16
 MAX_STATIC_ROUTES = 26
 
 # QoS directions egress/ingress
