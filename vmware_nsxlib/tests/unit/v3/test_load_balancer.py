@@ -152,7 +152,8 @@ class TestApplicationProfile(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.application_profile.delete(
                 fake_profile['id'])
             delete.assert_called_with(
-                'loadbalancer/application-profiles/%s' % fake_profile['id'])
+                'loadbalancer/application-profiles/%s' % fake_profile['id'],
+                headers=None)
 
 
 class TestPersistenceProfile(nsxlib_testcase.NsxClientTestCase):
@@ -193,7 +194,8 @@ class TestPersistenceProfile(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.persistence_profile.delete(
                 fake_profile['id'])
             delete.assert_called_with(
-                'loadbalancer/persistence-profiles/%s' % fake_profile['id'])
+                'loadbalancer/persistence-profiles/%s' % fake_profile['id'],
+                headers=None)
 
 
 class TestRule(nsxlib_testcase.NsxClientTestCase):
@@ -227,7 +229,7 @@ class TestRule(nsxlib_testcase.NsxClientTestCase):
             fake_rule = consts.FAKE_RULE.copy()
             self.nsxlib.load_balancer.rule.delete(fake_rule['id'])
             delete.assert_called_with(
-                'loadbalancer/rules/%s' % fake_rule['id'])
+                'loadbalancer/rules/%s' % fake_rule['id'], headers=None)
 
 
 class TestClientSslProfile(nsxlib_testcase.NsxClientTestCase):
@@ -265,7 +267,8 @@ class TestClientSslProfile(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.client_ssl_profile.delete(
                 fake_profile['id'])
             delete.assert_called_with(
-                'loadbalancer/client-ssl-profiles/%s' % fake_profile['id'])
+                'loadbalancer/client-ssl-profiles/%s' % fake_profile['id'],
+                headers=None)
 
 
 class TestServerSslProfile(nsxlib_testcase.NsxClientTestCase):
@@ -303,7 +306,8 @@ class TestServerSslProfile(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.server_ssl_profile.delete(
                 fake_profile['id'])
             delete.assert_called_with(
-                'loadbalancer/server-ssl-profiles/%s' % fake_profile['id'])
+                'loadbalancer/server-ssl-profiles/%s' % fake_profile['id'],
+                headers=None)
 
 
 class TestMonitor(nsxlib_testcase.NsxClientTestCase):
@@ -341,7 +345,7 @@ class TestMonitor(nsxlib_testcase.NsxClientTestCase):
             fake_monitor = consts.FAKE_MONITOR.copy()
             self.nsxlib.load_balancer.monitor.delete(fake_monitor['id'])
             delete.assert_called_with(
-                'loadbalancer/monitors/%s' % fake_monitor['id'])
+                'loadbalancer/monitors/%s' % fake_monitor['id'], headers=None)
 
 
 class TestPool(nsxlib_testcase.NsxClientTestCase):
@@ -378,7 +382,7 @@ class TestPool(nsxlib_testcase.NsxClientTestCase):
             fake_profile = consts.FAKE_POOL.copy()
             self.nsxlib.load_balancer.pool.delete(fake_profile['id'])
             delete.assert_called_with(
-                'loadbalancer/pools/%s' % fake_profile['id'])
+                'loadbalancer/pools/%s' % fake_profile['id'], headers=None)
 
     def test_remove_monitor_from_pool(self):
         fake_pool = consts.FAKE_POOL.copy()
@@ -463,7 +467,8 @@ class TestVirtualServer(nsxlib_testcase.NsxClientTestCase):
             self.nsxlib.load_balancer.virtual_server.delete(
                 fake_virtual_server['id'])
             delete.assert_called_with(
-                'loadbalancer/virtual-servers/%s' % fake_virtual_server['id'])
+                'loadbalancer/virtual-servers/%s' % fake_virtual_server['id'],
+                headers=None)
 
     def test_add_rule(self):
         fake_virtual_server = consts.FAKE_VIRTUAL_SERVER.copy()
@@ -633,7 +638,7 @@ class TestService(nsxlib_testcase.NsxClientTestCase):
             fake_service = consts.FAKE_SERVICE.copy()
             self.nsxlib.load_balancer.service.delete(fake_service['id'])
             delete.assert_called_with(
-                'loadbalancer/services/%s' % fake_service['id'])
+                'loadbalancer/services/%s' % fake_service['id'], headers=None)
 
     def test_get_usage(self):
         with mock.patch.object(self.nsxlib.client, 'get') as get:

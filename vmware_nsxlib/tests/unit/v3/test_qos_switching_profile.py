@@ -223,7 +223,8 @@ class NsxLibQosTestCase(nsxlib_testcase.NsxClientTestCase):
                 test_constants.FAKE_QOS_PROFILE['id'])
             delete.assert_called_with(
                 'switching-profiles/%s'
-                % test_constants.FAKE_QOS_PROFILE['id'])
+                % test_constants.FAKE_QOS_PROFILE['id'],
+                headers=None)
 
     def test_qos_switching_profile_set_shaping(self):
         """Test updating a qos-switching profile
