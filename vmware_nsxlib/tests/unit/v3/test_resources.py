@@ -2356,6 +2356,17 @@ class NsxLibIpBlockSubnetTestCase(BaseTestResource):
             (mocked_resource.uri_segment, block_id),
             headers=self.default_headers())
 
+    def test_force_delete(self):
+        mocked_resource = self.get_mocked_resource()
+        subnet_id = 'subnet1'
+        headers = self.default_headers()
+        headers['X-Allow-Overwrite'] = 'true'
+        mocked_resource.delete(subnet_id, allow_overwrite=True)
+        test_client.assert_json_call(
+            'delete', mocked_resource,
+            'https://1.2.3.4/api/v1/pools/ip-subnets/%s' % subnet_id,
+            headers=headers)
+
 
 class NsxLibIpBlockTestCase(BaseTestResource):
 

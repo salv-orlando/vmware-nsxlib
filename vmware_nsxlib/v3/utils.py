@@ -477,15 +477,15 @@ class NsxLibApiBase(object):
                 action_params=action_params,
                 update_payload_cbk=update_payload_cbk)
 
-    def _delete_with_retry(self, resource):
-        self._delete_by_path_with_retry(self.get_path(resource))
+    def _delete_with_retry(self, resource, headers=None):
+        self._delete_by_path_with_retry(self.get_path(resource), headers)
 
-    def _delete_by_path_with_retry(self, path):
+    def _delete_by_path_with_retry(self, path, headers=None):
         # Using internal method so we can access max_attempts in the decorator
         @retry_upon_exception(nsxlib_exc.StaleRevision,
                               max_attempts=self.max_attempts)
         def _do_delete():
-            self.client.delete(path)
+            self.client.delete(path, headers=headers)
 
         _do_delete()
 
