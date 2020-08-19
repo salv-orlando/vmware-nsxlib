@@ -1086,9 +1086,13 @@ class NsxLibIpBlockSubnet(utils.NsxLibApiBase):
             headers = {'X-Allow-Overwrite': 'true'}
         return self.client.create(self.get_path(), body, headers=headers)
 
-    def delete(self, subnet_id):
+    def delete(self, subnet_id, allow_overwrite=False):
         """Delete a IP block subnet on the backend."""
-        self._delete_with_retry(subnet_id)
+        headers = None
+        if allow_overwrite:
+            # Need to force delete subnet if IpBlock is created by Policy API
+            headers = {'X-Allow-Overwrite': 'true'}
+        self._delete_with_retry(subnet_id, headers=headers)
 
     def list(self, ip_block_id):
         resource = '%s?block_id=%s' % (self.get_path(), ip_block_id)

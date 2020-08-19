@@ -432,7 +432,8 @@ class TestNsxLibIPSet(nsxlib_testcase.NsxClientTestCase):
         with mock.patch.object(self.nsxlib.client, 'delete') as delete:
             fake_ip_set = test_constants.FAKE_IP_SET.copy()
             self.nsxlib.ip_set.delete(fake_ip_set['id'])
-            delete.assert_called_with('ip-sets/%s' % fake_ip_set['id'])
+            delete.assert_called_with('ip-sets/%s' % fake_ip_set['id'],
+                                      headers=None)
 
     def test_update_ip_set(self):
         fake_ip_set = test_constants.FAKE_IP_SET.copy()
@@ -593,7 +594,7 @@ class TestNsxLibNSGroup(nsxlib_testcase.NsxClientTestCase):
                                'delete') as del_mock:
             self.nsxlib.ns_group.delete(ns_group_id)
             del_mock.assert_called_with(
-                'ns-groups/%s?force=true' % ns_group_id)
+                'ns-groups/%s?force=true' % ns_group_id, headers=None)
 
     def test_update_nsgroup_and_section(self):
         name = 'name'
