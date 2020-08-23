@@ -22,6 +22,7 @@ from vmware_nsxlib.v3 import exceptions
 
 from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import core_defs
+from vmware_nsxlib.v3 import utils
 
 
 class NsxPolicyTransactionException(exceptions.NsxLibException):
@@ -190,7 +191,14 @@ class NsxPolicyTransaction(object):
                                          resource_def.get_delete()))
         if body:
             headers = {'nsx-enable-partial-patch': 'true'}
-            self.client.patch(url, body, headers=headers)
+
+            @utils.retry_upon_exception(
+                (exceptions.NsxPendingDelete, exceptions.StaleRevision),
+                max_attempts=self.client.max_attempts)
+            def _do_patch_with_retry():
+                self.client.patch(url, body, headers=headers)
+
+            _do_patch_with_retry()
 
     @staticmethod
     def get_current():
