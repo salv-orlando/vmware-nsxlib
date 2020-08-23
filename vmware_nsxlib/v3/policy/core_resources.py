@@ -143,19 +143,25 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
 
     def _update(self, allow_partial_updates=True, force=False, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
-        if (allow_partial_updates and
-                self.policy_api.partial_updates_supported()):
-            policy_def = self._init_def(**kwargs)
-            partial_updates = True
-        else:
-            policy_def = self._get_and_update_def(**kwargs)
-            partial_updates = False
+        @utils.retry_upon_exception(
+            exceptions.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _do_update_with_retry():
+            if (allow_partial_updates and
+                    self.policy_api.partial_updates_supported()):
+                policy_def = self._init_def(**kwargs)
+                partial_updates = True
+            else:
+                policy_def = self._get_and_update_def(**kwargs)
+                partial_updates = False
 
-        if policy_def.bodyless():
-            # Nothing to update - only keys provided in kwargs
-            return
-        self.policy_api.create_or_update(
-            policy_def, partial_updates=partial_updates, force=force)
+            if policy_def.bodyless():
+                # Nothing to update - only keys provided in kwargs
+                return
+            self.policy_api.create_or_update(
+                policy_def, partial_updates=partial_updates, force=force)
+
+        return _do_update_with_retry()
 
     @staticmethod
     def _init_obj_uuid(obj_uuid):
