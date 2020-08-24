@@ -62,6 +62,26 @@ class TestNsxLibFirewallSection(nsxlib_testcase.NsxLibTestCase):
         }
         self.assertEqual(expected, result)
 
+    def test_get_rule_dict(self):
+        result = self.nsxlib.firewall_section.get_rule_dict(
+            'display_name', sources='sources', destinations='destinations',
+            direction=const.IN_OUT, ip_protocol=const.IPV4_IPV6,
+            services='services', action=const.FW_ACTION_ALLOW,
+            logged=True, disabled=True, applied_tos='applied_tos',
+            rule_tag='rule_tag')
+        expected = {'display_name': 'display_name',
+                    'sources': 'sources',
+                    'destinations': 'destinations',
+                    'direction': const.IN_OUT,
+                    'ip_protocol': const.IPV4_IPV6,
+                    'services': 'services',
+                    'action': const.FW_ACTION_ALLOW,
+                    'logged': True,
+                    'disabled': True,
+                    'applied_tos': 'applied_tos',
+                    'rule_tag': 'rule_tag'}
+        self.assertEqual(expected, result)
+
     def test_create_rules_with_protocol(self):
         with mock.patch("vmware_nsxlib.v3.security.NsxLibFirewallSection"
                         ".add_rules") as add_rules:
