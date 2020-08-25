@@ -1499,6 +1499,13 @@ class LogicalRouterPortTestCase(BaseTestResource):
         result = lrport.get_tier1_link_port(router_id)
         self.assertEqual(test_constants.FAKE_ROUTER_LINKT1_PORT, result)
 
+    def test_get_tier0_uplink_ports(self):
+        router_id = test_constants.FAKE_ROUTER_PORT['logical_router_id']
+        lrport = self.get_mocked_resource(response={'results': [
+            test_constants.FAKE_ROUTER_PORT]})
+        result = lrport.get_tier0_uplink_ports(router_id)
+        self.assertEqual([test_constants.FAKE_ROUTER_PORT], result)
+
     def test_get_tier0_uplink_port(self):
         """Test getting a Tier0 router uplink port by router id."""
         router_id = test_constants.FAKE_ROUTER_PORT['logical_router_id']
