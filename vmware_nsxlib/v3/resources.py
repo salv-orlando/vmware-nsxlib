@@ -370,11 +370,18 @@ class LogicalRouterPort(utils.NsxLibApiBase):
             manager=self.client.nsx_api_managers,
             operation="get router link port")
 
-    def get_tier0_uplink_port(self, logical_router_id):
+    def get_tier0_uplink_ports(self, logical_router_id):
         logical_router_ports = self.get_by_router_id(logical_router_id)
+        ports = []
         for port in logical_router_ports:
             if port['resource_type'] == nsx_constants.LROUTERPORT_UPLINK:
-                return port
+                ports.append(port)
+        return ports
+
+    def get_tier0_uplink_port(self, logical_router_id):
+        ports = self.get_tier0_uplink_ports(logical_router_id)
+        if ports:
+            return ports[0]
 
     def get_tier0_uplink_subnets(self, logical_router_id):
         port = self.get_tier0_uplink_port(logical_router_id)
