@@ -719,20 +719,22 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
         _update()
 
     def get_statistics(self, lb_service_id,
-                       tenant=constants.POLICY_INFRA_TENANT):
+                       tenant=constants.POLICY_INFRA_TENANT,
+                       silent=False):
         lb_service_stats_def = (
             lb_defs.LBServiceStatisticsDef(
                 lb_service_id=lb_service_id,
                 tenant=tenant))
-        return self.policy_api.get(lb_service_stats_def)
+        return self.policy_api.get(lb_service_stats_def, silent=silent)
 
     def get_status(self, lb_service_id,
-                   tenant=constants.POLICY_INFRA_TENANT):
+                   tenant=constants.POLICY_INFRA_TENANT,
+                   silent=False):
         lb_service_status_def = (
             lb_defs.LBServiceStatusDef(
                 lb_service_id=lb_service_id,
                 tenant=tenant))
-        return self.policy_api.get(lb_service_status_def)
+        return self.policy_api.get(lb_service_status_def, silent=silent)
 
     def get_virtual_server_status(self, lb_service_id, lb_virtual_server_id,
                                   tenant=constants.POLICY_INFRA_TENANT):
