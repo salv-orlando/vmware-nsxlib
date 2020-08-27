@@ -776,11 +776,12 @@ class APIRateLimiterAIMD(APIRateLimiter):
 
 
 class APICallRecord(object):
-    def __init__(self, verb, uri, status, timestamp=None):
+    def __init__(self, verb, uri, status, provider=None, timestamp=None):
         self.timestamp = timestamp or time.time()
         self.verb = verb
         self.uri = uri
         self.status = status
+        self.provider = provider
 
 
 class APICallCollector(object):

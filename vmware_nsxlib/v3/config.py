@@ -153,9 +153,9 @@ class NsxLibConfig(object):
                           The rate has hard max limit of min(100/s, param
                           api_rate_limit_per_endpoint).
     :param api_log_mode: Option to collect API call logs within nsxlib.
-                         When set to API_LOG_PER_CLUSTER, API call sent to all
+                         When set to API_LOG_PER_CLUSTER, API calls sent to all
                          endpoints will be collected at one place.
-                         When set to API_LOG_PER_ENDPOINT, API call sent to
+                         When set to API_LOG_PER_ENDPOINT, API calls sent to
                          each endpoint will be collected individually.
                          By default, this option is disabled as set to None.
 
