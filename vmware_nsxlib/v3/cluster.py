@@ -774,7 +774,8 @@ class ClusteredAPI(object):
 
                     # add api call log
                     api_record = utils.APICallRecord(
-                        verb=proxy_for, uri=uri, status=response.status_code)
+                        verb=proxy_for, uri=uri, status=response.status_code,
+                        provider=endpoint.provider.id)
                     endpoint.add_api_record(api_record)
 
                     # Adjust API Rate Limit before raising HTTP exception
