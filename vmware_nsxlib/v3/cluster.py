@@ -366,7 +366,7 @@ class Endpoint(object):
     """
 
     def __init__(self, provider, pool, api_rate_limit=None,
-                 api_rate_mode=None):
+                 api_rate_mode=None, api_call_collector=None):
         self.provider = provider
         self.pool = pool
         self._state = EndpointState.INITIALIZED
@@ -376,6 +376,7 @@ class Endpoint(object):
                 max_calls=api_rate_limit)
         else:
             self.rate_limiter = utils.APIRateLimiter(max_calls=api_rate_limit)
+        self.api_call_collector = api_call_collector
 
     def regenerate_pool(self):
         self.pool = pools.Pool(min_size=self.pool.min_size,
@@ -404,6 +405,15 @@ class Endpoint(object):
         self._last_updated = datetime.datetime.now()
 
         return old_state
+
+    def add_api_record(self, record):
+        if self.api_call_collector:
+            self.api_call_collector.add_record(record)
+
+    def pop_all_api_records(self):
+        if self.api_call_collector:
+            return self.api_call_collector.pop_all_records()
+        return []
 
     def __str__(self):
         return "[%s] %s" % (self.state, self.provider)
@@ -437,17 +447,19 @@ class ClusteredAPI(object):
                  max_conns_per_pool=20,
                  keepalive_interval=33,
                  api_rate_limit=None,
-                 api_rate_mode=None):
+                 api_rate_mode=None,
+                 api_log_mode=None):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
         self._print_keepalive = 0
         self._silent = False
+        self._api_call_collectors = []
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers, min_conns_per_pool,
                                  max_conns_per_pool, api_rate_limit,
-                                 api_rate_mode)
+                                 api_rate_mode, api_log_mode)
 
         _init_cluster()
 
@@ -460,7 +472,8 @@ class ClusteredAPI(object):
         self._silent = silent_mode
 
     def _init_endpoints(self, providers, min_conns_per_pool,
-                        max_conns_per_pool, api_rate_limit, api_rate_mode):
+                        max_conns_per_pool, api_rate_limit, api_rate_mode,
+                        api_log_mode):
         LOG.debug("Initializing API endpoints")
 
         def _create_conn(p):
@@ -468,6 +481,14 @@ class ClusteredAPI(object):
                 return self._http_provider.new_connection(self, p)
 
             return _conn
+
+        self._api_call_collectors = []
+        api_call_collector = None
+        if api_log_mode == constants.API_CALL_LOG_PER_CLUSTER:
+            # Init one instance of collector for the entire cluster
+            api_call_collector = utils.APICallCollector(
+                ",".join([provider.id for provider in providers]))
+            self._api_call_collectors.append(api_call_collector)
 
         self._endpoints = {}
         for provider in providers:
@@ -477,7 +498,13 @@ class ClusteredAPI(object):
                 order_as_stack=True,
                 create=_create_conn(provider))
 
-            endpoint = Endpoint(provider, pool, api_rate_limit, api_rate_mode)
+            if api_log_mode == constants.API_CALL_LOG_PER_ENDPOINT:
+                # Init one instance of collector for each endpoint
+                api_call_collector = utils.APICallCollector(provider.id)
+                self._api_call_collectors.append(api_call_collector)
+
+            endpoint = Endpoint(provider, pool, api_rate_limit, api_rate_mode,
+                                api_call_collector)
             self._endpoints[provider.id] = endpoint
 
         # service requests using round robin
@@ -540,6 +567,10 @@ class ClusteredAPI(object):
     @property
     def http_provider(self):
         return self._http_provider
+
+    @property
+    def api_call_collectors(self):
+        return self._api_call_collectors
 
     @property
     def health(self):
@@ -738,6 +769,11 @@ class ClusteredAPI(object):
                     response = do_request(url, *args, **kwargs)
                     endpoint.set_state(EndpointState.UP)
 
+                    # add api call log
+                    api_record = utils.APICallRecord(
+                        verb=proxy_for, uri=uri, status=response.status_code)
+                    endpoint.add_api_record(api_record)
+
                     # Adjust API Rate Limit before raising HTTP exception
                     endpoint.rate_limiter.adjust_rate(
                         wait_time=conn_data.rate_wait,
@@ -785,7 +821,8 @@ class NSXClusteredAPI(ClusteredAPI):
             max_conns_per_pool=self.nsxlib_config.concurrent_connections,
             keepalive_interval=self.nsxlib_config.conn_idle_timeout,
             api_rate_limit=self.nsxlib_config.api_rate_limit_per_endpoint,
-            api_rate_mode=self.nsxlib_config.api_rate_mode)
+            api_rate_mode=self.nsxlib_config.api_rate_mode,
+            api_log_mode=self.nsxlib_config.api_log_mode)
 
         LOG.debug("Created NSX clustered API with '%s' "
                   "provider", self._http_provider.provider_id)

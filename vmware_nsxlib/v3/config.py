@@ -152,6 +152,12 @@ class NsxLibConfig(object):
                           by half after 429/503 error for each period.
                           The rate has hard max limit of min(100/s, param
                           api_rate_limit_per_endpoint).
+    :param api_log_mode: Option to collect API call logs within nsxlib.
+                         When set to API_LOG_PER_CLUSTER, API call sent to all
+                         endpoints will be collected at one place.
+                         When set to API_LOG_PER_ENDPOINT, API call sent to
+                         each endpoint will be collected individually.
+                         By default, this option is disabled as set to None.
 
     -- Additional parameters which are relevant only for the Policy manager:
     :param allow_passthrough: If True, use nsx manager api for cases which are
@@ -191,7 +197,8 @@ class NsxLibConfig(object):
                  realization_wait_sec=1.0,
                  api_rate_limit_per_endpoint=None,
                  api_rate_mode=None,
-                 exception_config=None):
+                 exception_config=None,
+                 api_log_mode=None):
 
         self.nsx_api_managers = nsx_api_managers
         self._username = username
@@ -222,6 +229,7 @@ class NsxLibConfig(object):
         self.api_rate_limit_per_endpoint = api_rate_limit_per_endpoint
         self.api_rate_mode = api_rate_mode
         self.exception_config = exception_config or ExceptionConfig()
+        self.api_log_mode = api_log_mode
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
             LOG.warning("When only one endpoint is provided, keepalive probes"

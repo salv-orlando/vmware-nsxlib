@@ -773,3 +773,29 @@ class APIRateLimiterAIMD(APIRateLimiter):
                 self._pos_sig = 0
                 self._neg_sig = 0
                 self._last_adjust_rate = now
+
+
+class APICallRecord(object):
+    def __init__(self, verb, uri, status, timestamp=None):
+        self.timestamp = timestamp or time.time()
+        self.verb = verb
+        self.uri = uri
+        self.status = status
+
+
+class APICallCollector(object):
+    def __init__(self, provider, max_entry=50000):
+        self._api_log_store = collections.deque(maxlen=max_entry)
+        self.provider = provider
+
+    def add_record(self, record):
+        self._api_log_store.append(record)
+
+    def pop_record(self):
+        return self._api_log_store.popleft()
+
+    def pop_all_records(self):
+        records = []
+        while len(self._api_log_store) > 0:
+            records.append(self.pop_record())
+        return records
