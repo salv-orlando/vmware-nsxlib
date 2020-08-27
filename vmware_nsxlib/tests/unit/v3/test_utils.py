@@ -520,3 +520,43 @@ class APIRateLimiterAIMDTestCase(APIRateLimiterTestCase):
         rate_limiter = self.rate_limiter(max_calls=None)
         rate_limiter.adjust_rate(wait_time=0.001, status_code=200)
         self.assertFalse(hasattr(rate_limiter, '_max_calls'))
+
+
+class APICallCollectorTestCase(nsxlib_testcase.NsxLibTestCase):
+    def setUp(self, *args, **kwargs):
+        super(APICallCollectorTestCase, self).setUp(with_mocks=False)
+        self.api_collector = utils.APICallCollector('1.2.3.4', max_entry=2)
+
+    def test_add_record(self):
+        record1 = utils.APICallRecord('ts1', 'get', 'uri_1', 200)
+        record2 = utils.APICallRecord('ts2', 'post', 'uri_2', 404)
+        self.api_collector.add_record(record1)
+        self.api_collector.add_record(record2)
+        self.assertListEqual(list(self.api_collector._api_log_store),
+                             [record1, record2])
+
+    def test_add_record_overflow(self):
+        record1 = utils.APICallRecord('ts1', 'get', 'uri_1', 200)
+        record2 = utils.APICallRecord('ts2', 'post', 'uri_2', 404)
+        record3 = utils.APICallRecord('ts3', 'delete', 'uri_3', 429)
+        self.api_collector.add_record(record1)
+        self.api_collector.add_record(record2)
+        self.api_collector.add_record(record3)
+        self.assertListEqual(list(self.api_collector._api_log_store),
+                             [record2, record3])
+
+    def test_pop_record(self):
+        record1 = utils.APICallRecord('ts1', 'get', 'uri_1', 200)
+        record2 = utils.APICallRecord('ts2', 'post', 'uri_2', 404)
+        self.api_collector.add_record(record1)
+        self.api_collector.add_record(record2)
+        self.assertEqual(self.api_collector.pop_record(), record1)
+        self.assertEqual(self.api_collector.pop_record(), record2)
+
+    def test_pop_all_records(self):
+        record1 = utils.APICallRecord('ts1', 'get', 'uri_1', 200)
+        record2 = utils.APICallRecord('ts2', 'post', 'uri_2', 404)
+        self.api_collector.add_record(record1)
+        self.api_collector.add_record(record2)
+        self.assertListEqual(self.api_collector.pop_all_records(),
+                             [record1, record2])

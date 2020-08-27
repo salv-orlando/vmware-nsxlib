@@ -123,3 +123,7 @@ API_REDUCE_RATE_CODES = [429, 503]
 # Minimum time in seconds to consider a call as blocked due to rate limit
 API_WAIT_MIN_THRESHOLD = 0.01
 API_DEFAULT_MAX_RATE = 100
+
+# API Call Log Related const
+API_CALL_LOG_PER_CLUSTER = 'API_LOG_PER_CLUSTER'
+API_CALL_LOG_PER_ENDPOINT = 'API_LOG_PER_ENDPOINT'
