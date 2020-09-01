@@ -3392,12 +3392,22 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      ip_protocol=nsx_constants.IPV4_IPV6,
                      direction=nsx_constants.IN_OUT,
                      logged=False, tag=None,
-                     tenant=constants.POLICY_INFRA_TENANT):
+                     tenant=constants.POLICY_INFRA_TENANT,
+                     plain_groups=False):
         """Create CommunicationMap Entry.
 
         source_groups/dest_groups should be a list of group ids belonging
         to the domain.
+
+        plain_groups should be True if source_groups/dest_groups is a list
+        of group paths and IP addresses. IP address support from NSX 3.0.0.
         """
+        if (version.LooseVersion(self.version) <
+            version.LooseVersion(nsx_constants.NSX_VERSION_3_0_0) and
+            plain_groups):
+            err_msg = _("plain_groups support is from NSX 3.0.0")
+            raise exceptions.NsxLibInvalidInput(error_message=err_msg)
+
         # get the next available sequence number
         if not sequence_number:
             last_sequence = self._get_last_seq_num(domain_id, map_id,
@@ -3421,7 +3431,8 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                    direction=direction,
                                    logged=logged,
                                    tag=tag,
-                                   tenant=tenant)
+                                   tenant=tenant,
+                                   plain_groups=plain_groups)
 
         self._create_or_store(entry_def)
         return entry_id
