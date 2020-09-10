@@ -4470,10 +4470,12 @@ class NsxPolicyCertApi(NsxPolicyResourceBase):
 
     def find_cert_with_pem(self, cert_pem,
                            tenant=constants.POLICY_INFRA_TENANT):
-        # Find certificate with cert_pem
+        """Find NSX certificates with specific pem and return their IDs"""
+        # First fix Dos to unix possible issues, as the NSX backed also does
+        nsx_style_pem = cert_pem.replace('\r\n', '\n')
         certs = self.list(tenant=tenant)
         cert_ids = [cert['id'] for cert in certs
-                    if cert['pem_encoded'] == cert_pem]
+                    if cert['pem_encoded'] == nsx_style_pem]
         return cert_ids
 
     def update(self, certificate_id, name=IGNORE,
