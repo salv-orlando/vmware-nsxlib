@@ -41,3 +41,26 @@ class TestNsxLibTrustManagement(nsxlib_testcase.NsxClientTestCase):
             create.assert_called_with(
                 'trust-management/certificates?action=import',
                 body)
+
+    def test_find_cert_with_pem_empty(self):
+        pem = 'abc'
+        with mock.patch.object(self.nsxlib.client, 'get',
+                               return_value={'results': []}):
+            results = self.nsxlib.trust_management.find_cert_with_pem(pem)
+            self.assertEqual(0, len(results))
+
+    def test_find_cert_with_pem_found(self):
+        pem = consts.FAKE_CERT_PEM
+        with mock.patch.object(
+            self.nsxlib.client, 'get',
+            return_value={'results': consts.FAKE_CERT_LIST}):
+            results = self.nsxlib.trust_management.find_cert_with_pem(pem)
+            self.assertEqual(1, len(results))
+
+    def test_find_cert_with_pem_rn_found(self):
+        pem = consts.FAKE_CERT_PEM.replace('\n', '\r\n')
+        with mock.patch.object(
+            self.nsxlib.client, 'get',
+            return_value={'results': consts.FAKE_CERT_LIST}):
+            results = self.nsxlib.trust_management.find_cert_with_pem(pem)
+            self.assertEqual(1, len(results))
