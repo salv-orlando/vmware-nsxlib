@@ -284,8 +284,11 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         else:
             if resp.status_code != 200 and resp.status_code != 201:
                 LOG.warning("Session create failed for endpoint %s with "
-                            "response %s",
-                            provider.url, resp.status_code)
+                            "response %s, error message: %s, "
+                            "local NSX time: %s",
+                            provider.url, resp.status_code,
+                            resp.json().get('error_message'),
+                            resp.headers['Date'])
                 # this may will later cause the endpoint to be Down
             else:
                 for header_name in resp.headers:
