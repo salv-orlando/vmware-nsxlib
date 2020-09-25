@@ -765,9 +765,13 @@ class ClusteredAPI(object):
                         kwargs['headers'] = kwargs.get('headers', {})
                         kwargs['headers'].update(conn.default_headers)
                     if not self._silent:
+                        # To censor sensitive headers before logging
+                        kwargs_copy = copy.copy(kwargs)
+                        kwargs_copy['headers'] = utils.censor_headers(
+                            kwargs_copy['headers'])
                         LOG.debug("API cluster proxy %s %s to %s with %s. "
                                   "Waited conn: %2.4f, rate: %2.4f",
-                                  proxy_for.upper(), uri, url, kwargs,
+                                  proxy_for.upper(), uri, url, kwargs_copy,
                                   conn_data.conn_wait, conn_data.rate_wait)
 
                     # call the actual connection method to do the
