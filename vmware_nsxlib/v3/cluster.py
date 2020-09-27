@@ -458,6 +458,7 @@ class ClusteredAPI(object):
         self._print_keepalive = 0
         self._silent = False
         self._api_call_collectors = []
+        self._loops = []
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers, min_conns_per_pool,
@@ -528,6 +529,11 @@ class ClusteredAPI(object):
                 break
             eventlet.sleep(0.5)
 
+        if self._loops:
+            for loop in self._loops:
+                loop.stop()
+            self._loops = []
+
         if len(self._endpoints) > 1:
             # We don't monitor connectivity when one endpoint is available,
             # since there is no alternative to querying this single backend
@@ -540,6 +546,7 @@ class ClusteredAPI(object):
                 loop.start(initial_delay=self._keepalive_interval,
                            periodic_interval_max=self._keepalive_interval,
                            stop_on_exception=False)
+                self._loops.append(loop)
 
         LOG.debug("Done initializing API endpoint(s). "
                   "API cluster health: %s", self.health)
