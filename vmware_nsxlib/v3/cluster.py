@@ -430,6 +430,7 @@ class ClusteredAPI(object):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
+        self._loops = []
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers,
@@ -481,6 +482,11 @@ class ClusteredAPI(object):
                 break
             eventlet.sleep(0.5)
 
+        if self._loops:
+            for loop in self._loops:
+                loop.stop()
+            self._loops = []
+
         for endpoint in self._endpoints.values():
             # dynamic loop for each endpoint to ensure connectivity
             loop = loopingcall.DynamicLoopingCall(
@@ -488,6 +494,7 @@ class ClusteredAPI(object):
             loop.start(initial_delay=self._keepalive_interval,
                        periodic_interval_max=self._keepalive_interval,
                        stop_on_exception=False)
+            self._loops.append(loop)
 
         LOG.debug("Done initializing API endpoint(s). "
                   "API cluster health: %s", self.health)
