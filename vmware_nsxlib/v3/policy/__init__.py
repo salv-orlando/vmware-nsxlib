@@ -145,6 +145,9 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.ipsec_vpn = ipsec_vpn_resources.NsxPolicyIpsecVpnApi(*args)
         self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
 
+    def get_nsxlib_passthrough(self):
+        return self.nsx_api
+
     def get_version(self):
         """Get the NSX Policy manager version
 
