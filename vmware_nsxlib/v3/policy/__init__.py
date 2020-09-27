@@ -144,6 +144,9 @@ class NsxPolicyLib(lib.NsxLibBase):
         # TODO(asarfaty): Find an equivalent api to check policy status
         pass
 
+    def get_nsxlib_passthrough(self):
+        return self.nsx_api
+
     def get_version(self):
         """Get the NSX Policy manager version
 
