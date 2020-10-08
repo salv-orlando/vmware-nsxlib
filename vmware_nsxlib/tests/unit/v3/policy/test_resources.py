@@ -3414,6 +3414,30 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
 
+    def test_update_advertisement_rules_remove(self):
+        tier1_id = '111'
+        old_rule1 = 'old1'
+        old_rule2 = 'old2'
+        get_retval = {
+            'id': tier1_id,
+            'route_advertisement_rules': [
+                {'name': old_rule1},
+                {'name': old_rule2}]}
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=get_retval),\
+            mock.patch.object(self.policy_api,
+                              'create_or_update') as api_call:
+            self.resourceApi.update_advertisement_rules(
+                tier1_id, None, name_prefix='old1', tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1Def(
+                tier1_id=tier1_id,
+                route_advertisement_rules=[
+                    {'name': old_rule2}],
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+
     def test_create_with_unsupported_attr(self):
         name = 'test'
         description = 'test_version_support'
@@ -4083,6 +4107,26 @@ class TestPolicyTier1Segment(NsxPolicyLibTestCase):
             gateway_address=gateway_address, dhcp_ranges=dhcp_ranges)
         self.assertEqual(gateway_address, subnet.gateway_address)
         self.assertEqual(dhcp_ranges, subnet.dhcp_ranges)
+
+    def test_build_dhcp_config_v4(self):
+        server_address = "10.0.0.2/24"
+        dns_servers = ["10.0.0.3/24"]
+        lease_time = 36600
+        dhcp_config_v4 = self.resourceApi.build_dhcp_config_v4(
+            server_address, dns_servers=dns_servers, lease_time=lease_time)
+        self.assertEqual(server_address, dhcp_config_v4.server_address)
+        self.assertEqual(dns_servers, dhcp_config_v4.dns_servers)
+        self.assertEqual(lease_time, dhcp_config_v4.lease_time)
+
+    def test_build_dhcp_config_v6(self):
+        server_address = "2000::01ab/64"
+        dns_servers = ["2000::01ac/64"]
+        lease_time = 36600
+        dhcp_config_v6 = self.resourceApi.build_dhcp_config_v6(
+            server_address, dns_servers=dns_servers, lease_time=lease_time)
+        self.assertEqual(server_address, dhcp_config_v6.server_address)
+        self.assertEqual(dns_servers, dhcp_config_v6.dns_servers)
+        self.assertEqual(lease_time, dhcp_config_v6.lease_time)
 
 
 class TestPolicySegment(NsxPolicyLibTestCase):

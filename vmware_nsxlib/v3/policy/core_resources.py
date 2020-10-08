@@ -1129,7 +1129,8 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             route_advertisement_types=route_advertisement_types,
             subnets=subnets)
 
-    def update_advertisement_rules(self, tier1_id, rules, name_prefix=None,
+    def update_advertisement_rules(self, tier1_id, rules=None,
+                                   name_prefix=None,
                                    tenant=constants.POLICY_INFRA_TENANT):
         """Update the router advertisement rules
 
@@ -1147,8 +1148,9 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                 if (not rule.get('name') or
                     not rule['name'].startswith(name_prefix)):
                     new_rules.append(rule)
-            # add new rules
-            new_rules.extend(rules)
+            # add new rules if provided
+            if rules:
+                new_rules.extend(rules)
         else:
             new_rules = rules
 
@@ -1856,8 +1858,19 @@ class NsxPolicyTier1SegmentApi(NsxPolicyResourceBase):
     def entry_def(self):
         return core_defs.Tier1SegmentDef
 
-    def build_subnet(self, gateway_address, dhcp_ranges=None):
-        return core_defs.Subnet(gateway_address, dhcp_ranges)
+    def build_subnet(self, gateway_address, dhcp_ranges=None,
+                     dhcp_config=None):
+        return core_defs.Subnet(gateway_address, dhcp_ranges, dhcp_config)
+
+    def build_dhcp_config_v4(self, server_address, dns_servers=None,
+                             lease_time=None, options=None):
+        return core_defs.SegmentDhcpConfigV4(server_address, dns_servers,
+                                             lease_time, options)
+
+    def build_dhcp_config_v6(self, server_address, dns_servers=None,
+                             lease_time=None, domain_names=None):
+        return core_defs.SegmentDhcpConfigV6(server_address, dns_servers,
+                                             lease_time, domain_names)
 
     def create_or_overwrite(self, name, tier1_id,
                             segment_id=None,
@@ -1935,8 +1948,19 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def entry_def(self):
         return core_defs.SegmentDef
 
-    def build_subnet(self, gateway_address, dhcp_ranges=None):
-        return core_defs.Subnet(gateway_address, dhcp_ranges)
+    def build_subnet(self, gateway_address, dhcp_ranges=None,
+                     dhcp_config=None):
+        return core_defs.Subnet(gateway_address, dhcp_ranges, dhcp_config)
+
+    def build_dhcp_config_v4(self, server_address, dns_servers=None,
+                             lease_time=None, options=None):
+        return core_defs.SegmentDhcpConfigV4(server_address, dns_servers,
+                                             lease_time, options)
+
+    def build_dhcp_config_v6(self, server_address, dns_servers=None,
+                             lease_time=None, domain_names=None):
+        return core_defs.SegmentDhcpConfigV6(server_address, dns_servers,
+                                             lease_time, domain_names)
 
     def create_or_overwrite(self, name,
                             segment_id=None,
