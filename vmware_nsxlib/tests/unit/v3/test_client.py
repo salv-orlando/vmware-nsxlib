@@ -317,6 +317,14 @@ class NsxV3RESTClientTestCase(nsxlib_testcase.NsxClientTestCase):
         exc = client.http_error_to_exception(requests.codes.FORBIDDEN, 505)
         self.assertEqual(exc, nsxlib_exc.InvalidLicense)
 
+        exc = client.http_error_to_exception(requests.codes.FORBIDDEN, 505,
+                                             [777])
+        self.assertEqual(exc, nsxlib_exc.InvalidLicense)
+
+        exc = client.http_error_to_exception(requests.codes.BAD_REQUEST,
+                                             500157, [777, 500045])
+        self.assertEqual(exc, nsxlib_exc.NsxPendingDelete)
+
 
 class NsxV3JSONClientTestCase(nsxlib_testcase.NsxClientTestCase):
 
