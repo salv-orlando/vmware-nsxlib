@@ -289,6 +289,7 @@ class NsxPolicyResourceBase(object):
     @check_allowed_passthrough
     def _get_realized_id_using_search(self, policy_resource_path,
                                       mp_resource_type, resource_def=None,
+                                      entity_type=None,
                                       sleep=None, max_attempts=None):
         """Wait until the policy path will be found using search api
 
@@ -314,7 +315,8 @@ class NsxPolicyResourceBase(object):
             # From time to time also check the Policy realization state,
             # as if it is in ERROR waiting should be avoided.
             if resource_def and test_num % check_status == (check_status - 1):
-                info = self._get_realization_info(resource_def)
+                info = self._get_realization_info(resource_def,
+                                                  entity_type=entity_type)
                 if info and info['state'] == constants.STATE_ERROR:
                     error_msg, error_code, related_error_codes = \
                         self._get_realization_error_message_and_code(info)
@@ -1257,7 +1259,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             return self._get_realized_id_using_search(
                 self.get_path(tier1_id, tenant=tenant),
                 self.nsx_api.logical_router.resource_type,
-                resource_def=tier1_def)
+                resource_def=tier1_def, entity_type=entity_type)
         return self._get_realized_id(tier1_def, entity_type=entity_type,
                                      realization_info=realization_info)
 
@@ -2010,15 +2012,16 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def get_realized_logical_switch_id(self, segment_id,
                                        tenant=constants.POLICY_INFRA_TENANT):
         segment_def = self.entry_def(segment_id=segment_id, tenant=tenant)
+        entity_type = 'RealizedLogicalSwitch'
         if self.nsx_api:
             # Use MP search api to find the LS ID as it is faster
             return self._get_realized_id_using_search(
                 self.get_path(segment_id, tenant=tenant),
                 self.nsx_api.logical_switch.resource_type,
-                resource_def=segment_def)
+                resource_def=segment_def, entity_type=entity_type)
 
         realization_info = self._wait_until_realized(
-            segment_def, entity_type='RealizedLogicalSwitch')
+            segment_def, entity_type=entity_type)
         return self._get_realized_id(segment_def,
                                      realization_info=realization_info)
 
