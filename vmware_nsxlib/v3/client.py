@@ -69,12 +69,13 @@ def init_http_exception_from_response(response):
         return None
 
     error = http_error_to_exception(error_details['status_code'],
-                                    error_details['error_code'])
+                                    error_details['error_code'],
+                                    error_details['related_error_codes'])
 
     return error(manager='', **error_details)
 
 
-def http_error_to_exception(status_code, error_code):
+def http_error_to_exception(status_code, error_code, related_error_codes=None):
     errors = {
         requests.codes.NOT_FOUND:
             {'202': exceptions.BackendResourceNotFound,
@@ -109,7 +110,13 @@ def http_error_to_exception(status_code, error_code):
             # choose based on error code
             if error_code and str(error_code) in errors[status_code]:
                 return errors[status_code][str(error_code)]
-            elif 'default' in errors[status_code]:
+            # try the related errors
+            if related_error_codes:
+                for err in related_error_codes:
+                    if err and str(err) in errors[status_code]:
+                        return errors[status_code][str(err)]
+
+            if 'default' in errors[status_code]:
                 return errors[status_code]['default']
         else:
             return errors[status_code]
@@ -202,7 +209,8 @@ class RESTClient(object):
     def _raise_error(self, operation, status_code, details,
                      error_code=None, related_error_codes=None,
                      related_status_codes=None):
-        error = http_error_to_exception(status_code, error_code)
+        error = http_error_to_exception(status_code, error_code,
+                                        related_error_codes)
         raise error(manager='', operation=operation, details=details,
                     error_code=error_code,
                     related_error_codes=related_error_codes,
@@ -361,7 +369,8 @@ class NSX3Client(JSONRESTClient):
                      error_code=None, related_error_codes=None,
                      related_status_codes=None):
         """Override the Rest client errors to add the manager IPs"""
-        error = http_error_to_exception(status_code, error_code)
+        error = http_error_to_exception(status_code, error_code,
+                                        related_error_codes)
         raise error(manager=self.nsx_api_managers,
                     operation=operation,
                     details=details,
