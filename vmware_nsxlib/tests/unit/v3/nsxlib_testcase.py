@@ -114,7 +114,9 @@ def get_default_nsxlib_config(allow_passthrough=True):
         plugin_ver=PLUGIN_VER,
         dns_nameservers=DNS_NAMESERVERS,
         dns_domain=DNS_DOMAIN,
-        allow_passthrough=allow_passthrough
+        allow_passthrough=allow_passthrough,
+        realization_max_attempts=3,
+        realization_wait_sec=0.2
     )
 
 
