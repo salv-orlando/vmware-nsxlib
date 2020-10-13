@@ -3089,6 +3089,30 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                               tier1_id, tenant=TEST_TENANT,
                               max_attempts=5, sleep=0.1)
 
+    def test_get_realized_id(self):
+        # Get realized ID using search
+        tier1_id = '111'
+        logical_router_id = 'realized_111'
+        info = {'results': [{'status': {'state': 'success'},
+                             'id': logical_router_id}]}
+        with mock.patch.object(self.resourceApi.nsx_api, "search_by_tags",
+                               return_value=info):
+            realized_id = self.resourceApi.get_realized_id(tier1_id)
+            self.assertEqual(logical_router_id, realized_id)
+
+    def test_get_realized_id_failed(self):
+        # Get realized ID using search
+        tier1_id = '111'
+        logical_router_id = 'realized_111'
+        info = {'results': [{'status': {'state': 'in_progress'},
+                             'id': logical_router_id}]}
+        with mock.patch.object(self.resourceApi.nsx_api, "search_by_tags",
+                               return_value=info),\
+            mock.patch.object(self.resourceApi.policy_api,
+                              "get_realized_entities"):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.get_realized_id, tier1_id)
+
     def test_get_realized_downlink_port(self):
         tier1_id = '111'
         segment_id = '222'
@@ -3509,6 +3533,30 @@ class TestPolicyTier1NoPassthrough(TestPolicyTier1):
                                "get_realized_entities") as realization:
             self.resourceApi.set_dhcp_relay(tier1_id, segment_id, relay_id)
             realization.assert_not_called()
+
+    def test_get_realized_id(self):
+        # Get realized ID using policy api
+        tier1_id = '111'
+        logical_router_id = 'realized_111'
+        result = [{'state': constants.STATE_REALIZED,
+                   'entity_type': 'RealizedLogicalRouter',
+                   'realization_specific_identifier': logical_router_id}]
+        with mock.patch.object(self.resourceApi.policy_api,
+                               "get_realized_entities",
+                               return_value=result):
+            realized_id = self.resourceApi.get_realized_id(tier1_id)
+            self.assertEqual(logical_router_id, realized_id)
+
+    def test_get_realized_id_failed(self):
+        # Get realized ID using policy api
+        tier1_id = '111'
+        result = [{'state': constants.STATE_UNREALIZED,
+                   'entity_type': 'RealizedLogicalRouter'}]
+        with mock.patch.object(self.resourceApi.policy_api,
+                               "get_realized_entities",
+                               return_value=result):
+            realized_id = self.resourceApi.get_realized_id(tier1_id)
+            self.assertEqual(None, realized_id)
 
 
 class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
