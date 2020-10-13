@@ -310,7 +310,10 @@ class NsxPolicyResourceBase(object):
             resources = self.nsx_api.search_by_tags(
                 tags=tag, resource_type=mp_resource_type)['results']
             if resources:
-                return resources[0]['id']
+                # If status exists, make sure the state is successful
+                if (not resources[0].get('status') or
+                    resources[0]['status'].get('state') == 'success'):
+                    return resources[0]['id']
 
             # From time to time also check the Policy realization state,
             # as if it is in ERROR waiting should be avoided.
