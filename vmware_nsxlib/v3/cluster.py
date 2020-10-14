@@ -241,6 +241,12 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         # Add allow-overwrite if configured
         if allow_overwrite_header:
             session.default_headers['X-Allow-Overwrite'] = 'true'
+
+        if session.cert_provider:
+            # Session create will fail with cert provider
+            LOG.debug("Skipping session create with client certificate auth")
+            return
+
         # Perform the initial session create and get the relevant jsessionid &
         # X-XSRF-TOKEN for future requests
         req_data = ''
@@ -258,11 +264,6 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                 LOG.error("Session create failed for endpoint %s due to "
                           "error in retrieving JSON Web Token: %s",
                           provider.url, e)
-        elif session.cert_provider:
-            # Session create will fail without token_provider, returning 403
-            LOG.debug("Skipping get_default_headers due to missing "
-                      "token_provider")
-            return
         else:
             # With client certificate authentication, username and password
             # may not be provided.
