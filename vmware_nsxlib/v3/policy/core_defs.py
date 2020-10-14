@@ -995,7 +995,8 @@ class SegmentDef(BaseSegmentDef):
             if self.get_attr('transport_zone_id'):
                 tz = TransportZoneDef(
                     tz_id=self.get_attr('transport_zone_id'),
-                    ep_id=constants.DEFAULT_ENFORCEMENT_POINT,
+                    ep_id=self.get_attr(
+                        'ep_id') or constants.DEFAULT_ENFORCEMENT_POINT,
                     tenant=self.get_tenant())
                 path = tz.get_resource_full_path()
             self._set_attr_if_specified(body, 'transport_zone_id',

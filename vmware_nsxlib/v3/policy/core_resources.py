@@ -1982,6 +1982,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             admin_state=IGNORE,
                             ls_id=IGNORE,
                             unique_id=IGNORE,
+                            ep_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2007,6 +2008,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             admin_state=admin_state,
             ls_id=ls_id,
             unique_id=unique_id,
+            ep_id=ep_id,
             tags=tags,
             tenant=tenant)
         self._create_or_store(segment_def)
