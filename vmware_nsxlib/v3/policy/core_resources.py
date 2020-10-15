@@ -292,6 +292,48 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
                 attempts=max_attempts,
                 sleep=sleep)
 
+    def _wait_until_state_successful(self, res_def,
+                                     sleep=None, max_attempts=None,
+                                     with_refresh=False):
+        res_path = res_def.get_resource_full_path()
+
+        if sleep is None:
+            sleep = self.nsxlib_config.realization_wait_sec
+        if max_attempts is None:
+            max_attempts = self.nsxlib_config.realization_max_attempts
+
+        @utils.retry_upon_none_result(max_attempts, delay=sleep, random=True)
+        def get_state():
+            state = self.policy_api.get_intent_consolidated_status(
+                res_path, silent=True)
+            if state and state.get('consolidated_status'):
+                con_state = state['consolidated_status'].get(
+                    'consolidated_status')
+                if con_state == 'SUCCESS':
+                    return True
+                if con_state == 'ERROR':
+                    raise exceptions.RealizationErrorStateError(
+                        resource_type=res_def.resource_type(),
+                        resource_id=res_def.get_id(),
+                        error="Unknown")
+            if with_refresh:
+                # Refresh the consolidated state for the next time
+                # (if not, it will be refreshed at the policy level after a
+                # refresh cycle)
+                self.policy_api.refresh_realized_state(res_path)
+
+        try:
+            return get_state()
+        except exceptions.RealizationError as e:
+            raise e
+        except Exception:
+            # max retries reached
+            raise exceptions.RealizationTimeoutError(
+                resource_type=res_def.resource_type(),
+                resource_id=res_def.get_id(),
+                attempts=max_attempts,
+                sleep=sleep)
+
     @check_allowed_passthrough
     def _get_realized_id_using_search(self, policy_resource_path,
                                       mp_resource_type, resource_def=None,
@@ -2139,6 +2181,15 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                                          sleep=sleep,
                                          max_attempts=max_attempts)
 
+    def wait_until_state_successful(self, segment_id,
+                                    tenant=constants.POLICY_INFRA_TENANT,
+                                    sleep=None, max_attempts=None,
+                                    with_refresh=False):
+        segment_def = self.entry_def(segment_id=segment_id, tenant=tenant)
+        self._wait_until_state_successful(segment_def, sleep=sleep,
+                                          max_attempts=max_attempts,
+                                          with_refresh=with_refresh)
+
     @check_allowed_passthrough
     def set_admin_state(self, segment_id, admin_state,
                         tenant=constants.POLICY_INFRA_TENANT):
@@ -3778,44 +3829,9 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
         map_def = self.parent_entry_def(map_id=map_id,
                                         domain_id=domain_id,
                                         tenant=tenant)
-        map_path = map_def.get_resource_full_path()
-
-        if sleep is None:
-            sleep = self.nsxlib_config.realization_wait_sec
-        if max_attempts is None:
-            max_attempts = self.nsxlib_config.realization_max_attempts
-
-        @utils.retry_upon_none_result(max_attempts, delay=sleep, random=True)
-        def get_state():
-            state = self.policy_api.get_intent_consolidated_status(
-                map_path, silent=True)
-            if state and state.get('consolidated_status'):
-                con_state = state['consolidated_status'].get(
-                    'consolidated_status')
-                if con_state == 'SUCCESS':
-                    return True
-                if con_state == 'ERROR':
-                    raise exceptions.RealizationErrorStateError(
-                        resource_type=map_def.resource_type(),
-                        resource_id=map_def.get_id(),
-                        error="Unknown")
-            if with_refresh:
-                # Refresh the consolidated state for the next time
-                # (if not, it will be refreshed at the policy level after a
-                # refresh cycle)
-                self.policy_api.refresh_realized_state(map_path)
-
-        try:
-            return get_state()
-        except exceptions.RealizationError as e:
-            raise e
-        except Exception:
-            # max retries reached
-            raise exceptions.RealizationTimeoutError(
-                resource_type=map_def.resource_type(),
-                resource_id=map_def.get_id(),
-                attempts=max_attempts,
-                sleep=sleep)
+        self._wait_until_state_successful(map_def, sleep=sleep,
+                                          max_attempts=max_attempts,
+                                          with_refresh=with_refresh)
 
 
 class NsxPolicyCommunicationMapApi(NsxPolicySecurityPolicyBaseApi):
