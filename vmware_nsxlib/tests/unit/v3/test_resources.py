@@ -1790,7 +1790,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             user_tags = [{'scope': 'user', 'tag': 'k8s'}]
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_scope_only(self):
         """Test search of resources with the specified tag."""
@@ -1798,7 +1798,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             user_tags = [{'scope': 'user'}]
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_tag_only(self):
         """Test search of resources with the specified tag."""
@@ -1806,7 +1806,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             user_tags = [{'tag': 'k8s'}]
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_with_extra_attribute(self):
         """Test search of resource with specified tags and one attribute."""
@@ -1815,7 +1815,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             query = "%s AND %s" % (self.nsxlib._build_query(tags=user_tags),
                                    'marked_for_delete:False')
             self.nsxlib.search_by_tags(tags=user_tags, marked_for_delete=False)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_with_multi_attributes(self):
         """Test search of resource with tags and multiple attributes."""
@@ -1825,7 +1825,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
                                    'tea:boo AND coffee:False')
             self.nsxlib.search_by_tags(
                 tags=user_tags, tea='boo', coffee=False)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_by_resouce_type_and_attributes(self):
         with mock.patch.object(self.nsxlib.client, 'url_get') as search:
@@ -1868,7 +1868,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             user_tags = [{'tag': 'k8s'}, {'scope': 'user'}]
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_and_resource_type(self):
         """Test search of specified resource with the specified tag."""
@@ -1879,7 +1879,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             # Add resource_type to the query
             query = "resource_type:%s AND %s" % (res_type, query)
             self.nsxlib.search_by_tags(tags=user_tags, resource_type=res_type)
-            search.assert_called_with(self.search_path % query)
+            search.assert_called_with(self.search_path % query, silent=False)
 
     def test_nsx_search_tags_and_cursor(self):
         """Test search of resources with the specified tag and cursor."""
@@ -1888,7 +1888,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags, cursor=50)
             search.assert_called_with(
-                (self.search_path + '&cursor=50') % query)
+                (self.search_path + '&cursor=50') % query, silent=False)
 
     def test_nsx_search_tags_and_page_size(self):
         """Test search of resources with the specified tag and page size."""
@@ -1897,7 +1897,7 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             query = self.nsxlib._build_query(tags=user_tags)
             self.nsxlib.search_by_tags(tags=user_tags, page_size=100)
             search.assert_called_with(
-                (self.search_path + '&page_size=100') % query)
+                (self.search_path + '&page_size=100') % query, silent=False)
 
     def test_nsx_search_invalid_query_fail(self):
         """Test search query failure for missing tag argument."""
@@ -1946,8 +1946,9 @@ class TestNsxSearch(nsxlib_testcase.NsxClientTestCase):
             query = self.nsxlib._build_query(tags=user_tags)
             results = self.nsxlib.search_all_by_tags(tags=user_tags)
             search.assert_has_calls([
-                mock.call(self.search_path % query),
-                mock.call((self.search_path + '&cursor=2') % query)])
+                mock.call(self.search_path % query, silent=False),
+                mock.call((self.search_path + '&cursor=2') % query,
+                          silent=False)])
             self.assertEqual(3, len(results))
 
     @mock.patch("vmware_nsxlib.v3.lib.NsxLibBase._search_all")
