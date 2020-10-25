@@ -138,7 +138,7 @@ class NsxLibBase(object):
     # TODO(abhiraut): Revisit this method to generate complex boolean
     #                 queries to search resources.
     def search_by_tags(self, tags, resource_type=None, cursor=None,
-                       page_size=None):
+                       page_size=None, silent=False):
         """Return the list of resources searched based on tags.
 
         Currently the query only supports AND boolean operator.
@@ -150,6 +150,7 @@ class NsxLibBase(object):
         :param cursor: Opaque cursor to be used for getting next page of
                        records (supplied by current result page).
         :param page_size: Maximum number of results to return in this page.
+        :param silent: Silence the logging if True.
         """
         if not tags:
             reason = _("Missing required argument 'tags'")
@@ -168,7 +169,7 @@ class NsxLibBase(object):
         @utils.retry_upon_exception(exceptions.NsxSearchError,
                                     max_attempts=self.client.max_attempts)
         def do_search(url):
-            return self.client.url_get(url)
+            return self.client.url_get(url, silent=silent)
 
         return do_search(url)
 

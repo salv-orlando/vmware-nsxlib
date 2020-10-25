@@ -257,6 +257,7 @@ class NsxPolicyResourceBase(object):
             sleep = self.nsxlib_config.realization_wait_sec
         if max_attempts is None:
             max_attempts = self.nsxlib_config.realization_max_attempts
+        info = {}
 
         @utils.retry_upon_none_result(max_attempts, delay=sleep, random=True)
         def get_info():
@@ -280,6 +281,10 @@ class NsxPolicyResourceBase(object):
             raise e
         except Exception:
             # max retries reached
+            LOG.error("_wait_until_realized maxed-out for "
+                      "resource: %s. Last realization info was %s",
+                      resource_def.get_resource_full_path(), info)
+
             raise exceptions.RealizationTimeoutError(
                 resource_type=resource_def.resource_type(),
                 resource_id=resource_def.get_id(),
@@ -290,7 +295,7 @@ class NsxPolicyResourceBase(object):
                                      sleep=None, max_attempts=None,
                                      with_refresh=False):
         res_path = res_def.get_resource_full_path()
-
+        state = {}
         if sleep is None:
             sleep = self.nsxlib_config.realization_wait_sec
         if max_attempts is None:
@@ -306,6 +311,9 @@ class NsxPolicyResourceBase(object):
                 if con_state == 'SUCCESS':
                     return True
                 if con_state == 'ERROR':
+                    LOG.error("_wait_until_state_successful errored for "
+                              "resource: %s. Last consolidated_status result "
+                              "was %s", res_path, state)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=res_def.resource_type(),
                         resource_id=res_def.get_id(),
@@ -322,6 +330,10 @@ class NsxPolicyResourceBase(object):
             raise e
         except Exception:
             # max retries reached
+            LOG.error("_wait_until_state_successful maxed-out for "
+                      "resource: %s. Last consolidated_status result was %s",
+                      res_path, state)
+
             raise exceptions.RealizationTimeoutError(
                 resource_type=res_def.resource_type(),
                 resource_id=res_def.get_id(),
@@ -331,7 +343,7 @@ class NsxPolicyResourceBase(object):
     @check_allowed_passthrough
     def _get_realized_id_using_search(self, policy_resource_path,
                                       mp_resource_type, resource_def=None,
-                                      entity_type=None,
+                                      entity_type=None, silent=False,
                                       sleep=None, max_attempts=None):
         """Wait until the policy path will be found using search api
 
@@ -345,12 +357,13 @@ class NsxPolicyResourceBase(object):
 
         tag = [{'scope': 'policyPath',
                 'tag': utils.escape_tag_data(policy_resource_path)}]
-
+        resources = []
         test_num = 0
         while test_num < max_attempts:
             # Use the search api to find the realization id of this entity.
             resources = self.nsx_api.search_by_tags(
-                tags=tag, resource_type=mp_resource_type)['results']
+                tags=tag, resource_type=mp_resource_type,
+                silent=silent)['results']
             if resources:
                 # If status exists, make sure the state is successful
                 if (not resources[0].get('status') or
@@ -365,6 +378,9 @@ class NsxPolicyResourceBase(object):
                 if info and info['state'] == constants.STATE_ERROR:
                     error_msg, error_code, related_error_codes = \
                         self._get_realization_error_message_and_code(info)
+                    LOG.error("_get_realized_id_using_search Failed for "
+                              "resource: %s. Got error in realization info %s",
+                              policy_resource_path, info)
                     raise exceptions.RealizationErrorStateError(
                         resource_type=resource_def.resource_type(),
                         resource_id=resource_def.get_id(),
@@ -380,6 +396,10 @@ class NsxPolicyResourceBase(object):
             test_num += 1
 
         # max retries reached
+        LOG.error("_get_realized_id_using_search maxed-out for "
+                  "resource: %s. Last search result was %s",
+                  policy_resource_path, resources)
+
         raise exceptions.RealizationTimeoutError(
             resource_type=mp_resource_type,
             resource_id=policy_resource_path,
