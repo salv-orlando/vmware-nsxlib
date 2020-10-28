@@ -83,6 +83,7 @@ def http_error_to_exception(status_code, error_code, related_error_codes=None):
              '500030': exceptions.ResourceInUse,
              '500087': exceptions.StaleRevision,
              '500105': exceptions.NsxOverlapAddresses,
+             '500232': exceptions.StaleRevision,  # Missing dependent objects
              '503040': exceptions.NsxSegemntWithVM,
              '100148': exceptions.StaleRevision},
         requests.codes.CONFLICT: exceptions.StaleRevision,
