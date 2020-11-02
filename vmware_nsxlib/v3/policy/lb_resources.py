@@ -587,7 +587,7 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                 member_to_update[0]['weight'] = weight
             if admin_state:
                 member_to_update[0]['admin_state'] = admin_state
-            if backup_member:
+            if backup_member is not None:
                 member_to_update[0]['backup_member'] = backup_member
             self._update(lb_pool_id=lb_pool_id, members=lb_pool_members,
                          tenant=tenant)
