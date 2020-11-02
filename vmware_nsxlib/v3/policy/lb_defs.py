@@ -77,7 +77,7 @@ class LBPoolMemberDef(object):
             body['weight'] = self.weight
         if self.admin_state:
             body['admin_state'] = self.admin_state
-        if self.backup_member:
+        if self.backup_member is not None:
             body['backup_member'] = self.backup_member
         return body
 
