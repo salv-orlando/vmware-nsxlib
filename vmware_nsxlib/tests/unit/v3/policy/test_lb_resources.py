@@ -14,6 +14,7 @@
 #    under the License.
 #
 
+import copy
 from unittest import mock
 
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
@@ -1727,7 +1728,8 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
         ip_address = '1.1.1.1'
         port = '80'
         new_name = 'mem1'
-        member = {'ip_address': ip_address, 'port': port}
+        member = {'ip_address': ip_address, 'port': port,
+                  'backup_member': True}
         with mock.patch.object(self.policy_api, "get",
                                return_value={'id': obj_id,
                                              'members': [member]}), \
@@ -1735,11 +1737,13 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                               "create_or_update") as update_call:
             self.resourceApi.update_pool_member(
                 obj_id, ip_address, port=port, display_name=new_name,
-                tenant=TEST_TENANT)
-            member['display_name'] = new_name
+                backup_member=False, tenant=TEST_TENANT)
+            new_member = copy.copy(member)
+            new_member['display_name'] = new_name
+            new_member['backup_member'] = False
             expected_def = lb_defs.LBPoolDef(
                 lb_pool_id=obj_id,
-                members=[member],
+                members=[new_member],
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
