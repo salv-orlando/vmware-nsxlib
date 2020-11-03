@@ -444,8 +444,15 @@ class LBServiceDef(ResourceDef):
 
 class LBServiceStatisticsDef(ResourceDef):
 
+    def __init__(self, **kwargs):
+        self.realtime = kwargs.pop('realtime')
+        super(LBServiceStatisticsDef, self).__init__(**kwargs)
+
     @property
     def path_pattern(self):
+        if self.realtime:
+            return (LB_SERVICES_PATH_PATTERN +
+                    '%s/statistics?source=realtime')
         return LB_SERVICES_PATH_PATTERN + '%s/statistics/'
 
     @property

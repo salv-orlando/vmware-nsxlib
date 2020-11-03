@@ -720,12 +720,13 @@ class NsxPolicyLoadBalancerServiceApi(NsxPolicyResourceBase):
 
         _update()
 
-    def get_statistics(self, lb_service_id,
+    def get_statistics(self, lb_service_id, realtime=False,
                        tenant=constants.POLICY_INFRA_TENANT,
                        silent=False):
         lb_service_stats_def = (
             lb_defs.LBServiceStatisticsDef(
                 lb_service_id=lb_service_id,
+                realtime=realtime,
                 tenant=tenant))
         return self.policy_api.get(lb_service_stats_def, silent=silent)
 

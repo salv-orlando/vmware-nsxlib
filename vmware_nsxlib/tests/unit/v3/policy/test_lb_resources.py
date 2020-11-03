@@ -931,8 +931,24 @@ class TestPolicyLBService(test_resources.NsxPolicyLibTestCase):
             self.resourceApi.get_statistics(obj_id, tenant=TEST_TENANT)
             expected_def = lb_defs.LBServiceStatisticsDef(
                 lb_service_id=obj_id,
+                realtime=False,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual('%s/lb-services/%s/statistics/',
+                             expected_def.path_pattern)
+
+    def test_get_statistics_realtime(self):
+        obj_id = '111'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            self.resourceApi.get_statistics(obj_id, realtime=True,
+                                            tenant=TEST_TENANT)
+            expected_def = lb_defs.LBServiceStatisticsDef(
+                lb_service_id=obj_id,
+                realtime=True,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual('%s/lb-services/%s/statistics?source=realtime',
+                             expected_def.path_pattern)
 
     def test_get_virtual_server_status(self):
         obj_id = '111'
