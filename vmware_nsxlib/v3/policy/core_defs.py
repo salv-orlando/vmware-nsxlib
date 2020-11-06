@@ -647,7 +647,7 @@ class RouterNatRule(ResourceDef):
                                             'destination_network',
                                             'translated_network',
                                             'firewall_match',
-                                            'log',
+                                            'logging',
                                             'sequence_number',
                                             'enabled'])
         return body

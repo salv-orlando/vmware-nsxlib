@@ -1693,7 +1693,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                             firewall_match=constants.NAT_FIREWALL_MATCH_BYPASS,
                             action=IGNORE,
                             sequence_number=IGNORE,
-                            log=IGNORE,
+                            logging=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT,
                             enabled=IGNORE):
@@ -1710,7 +1710,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                                       firewall_match=firewall_match,
                                       action=action,
                                       sequence_number=sequence_number,
-                                      log=log,
+                                      logging=logging,
                                       tags=tags,
                                       tenant=tenant,
                                       enabled=enabled)
@@ -1745,7 +1745,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                firewall_match=IGNORE,
                action=IGNORE,
                sequence_number=IGNORE,
-               log=IGNORE,
+               logging=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
                enabled=IGNORE):
@@ -1760,7 +1760,7 @@ class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
                      firewall_match=firewall_match,
                      action=action,
                      sequence_number=sequence_number,
-                     log=log,
+                     logging=logging,
                      tags=tags,
                      tenant=tenant,
                      enabled=enabled)
@@ -1783,7 +1783,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                             firewall_match=constants.NAT_FIREWALL_MATCH_BYPASS,
                             action=IGNORE,
                             sequence_number=IGNORE,
-                            log=IGNORE,
+                            logging=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT,
                             enabled=IGNORE):
@@ -1800,7 +1800,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                                       firewall_match=firewall_match,
                                       action=action,
                                       sequence_number=sequence_number,
-                                      log=log,
+                                      logging=logging,
                                       tags=tags,
                                       tenant=tenant,
                                       enabled=enabled)
@@ -1835,7 +1835,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                firewall_match=IGNORE,
                action=IGNORE,
                sequence_number=IGNORE,
-               log=IGNORE,
+               logging=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
                enabled=IGNORE):
@@ -1850,7 +1850,7 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                      firewall_match=firewall_match,
                      action=action,
                      sequence_number=sequence_number,
-                     log=log,
+                     logging=logging,
                      tags=tags,
                      tenant=tenant,
                      enabled=enabled)
