@@ -596,7 +596,7 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
                      enabled=True, rule_priority=None,
                      match_ports=None, match_protocol=None,
                      match_resource_type=None,
-                     bypass_firewall=True,
+                     bypass_firewall=True, logging=None,
                      tags=None,
                      display_name=None):
         self._validate_nat_rule_action(action)
@@ -629,6 +629,8 @@ class NsxLibLogicalRouter(utils.NsxLibApiBase):
             body['tags'] = tags
         if display_name:
             body['display_name'] = display_name
+        if logging is not None:
+            body['logging'] = logging
         return self.client.create(resource, body)
 
     def change_edge_firewall_status(self, logical_router_id, action):

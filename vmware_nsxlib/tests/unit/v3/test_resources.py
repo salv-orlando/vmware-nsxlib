@@ -972,7 +972,8 @@ class LogicalRouterTestCase(BaseTestResource):
         self.assertEqual(test_constants.FAKE_ROUTER_FW_SEC_UUID, section_id)
 
     def _test_nat_rule_create(self, nsx_version, add_bypas_arg=True,
-                              action='SNAT', expect_failure=False):
+                              action='SNAT', expect_failure=False,
+                              logging=False):
         router = self.get_mocked_resource()
         translated_net = '1.1.1.1'
         priority = 10
@@ -983,7 +984,8 @@ class LogicalRouterTestCase(BaseTestResource):
             'display_name': display_name,
             'enabled': True,
             'translated_network': translated_net,
-            'rule_priority': priority
+            'rule_priority': priority,
+            'logging': logging
         }
         if add_bypas_arg:
             # Expect nat_pass to be sent to the backend
@@ -998,7 +1000,8 @@ class LogicalRouterTestCase(BaseTestResource):
                                     translated_network=translated_net,
                                     rule_priority=priority,
                                     bypass_firewall=False,
-                                    display_name=display_name)
+                                    display_name=display_name,
+                                    logging=logging)
             except exceptions.InvalidInput as e:
                 if expect_failure:
                     return
@@ -1015,6 +1018,10 @@ class LogicalRouterTestCase(BaseTestResource):
     def test_nat_rule_create_v1(self):
         # Ignoring 'bypass_firewall' with version 1.1
         self._test_nat_rule_create('1.1.0', add_bypas_arg=False)
+
+    def test_nat_rule_create_with_logging(self):
+        # enable logging parameter in snat obj
+        self._test_nat_rule_create('1.1.0', add_bypas_arg=False, logging=True)
 
     def test_nat_rule_create_v2(self):
         # Sending 'bypass_firewall' with version 1.1
