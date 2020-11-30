@@ -789,7 +789,8 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                             max_concurrent_connections=IGNORE,
                             access_list_control=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT,
-                            tags=IGNORE):
+                            tags=IGNORE, access_log_enabled=IGNORE,
+                            log_significant_event_only=IGNORE):
         virtual_server_id = self._init_obj_uuid(virtual_server_id)
         lbvs_def = self._init_def(
             virtual_server_id=virtual_server_id,
@@ -808,7 +809,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
             waf_profile_binding=waf_profile_binding,
             max_concurrent_connections=max_concurrent_connections,
             access_list_control=access_list_control,
-            tags=tags
+            tags=tags,
+            access_log_enabled=access_log_enabled,
+            log_significant_event_only=log_significant_event_only
         )
         self._create_or_store(lbvs_def)
         return virtual_server_id
@@ -842,7 +845,8 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                access_list_control=IGNORE,
                tags=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
-               allow_partial_updates=True):
+               allow_partial_updates=True, access_log_enabled=IGNORE,
+               log_significant_event_only=IGNORE):
 
         @utils.retry_upon_exception(
             nsxlib_exc.StaleRevision,
@@ -866,7 +870,9 @@ class NsxPolicyLoadBalancerVirtualServerAPI(NsxPolicyResourceBase):
                 max_concurrent_connections=max_concurrent_connections,
                 access_list_control=access_list_control,
                 tags=tags,
-                allow_partial_updates=allow_partial_updates)
+                allow_partial_updates=allow_partial_updates,
+                access_log_enabled=access_log_enabled,
+                log_significant_event_only=log_significant_event_only)
 
         _update()
 
