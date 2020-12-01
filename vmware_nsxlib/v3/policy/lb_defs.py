@@ -242,7 +242,8 @@ class LBPoolDef(ResourceDef):
         body = super(LBPoolDef, self).get_obj_dict()
         self._set_attrs_if_specified(
             body, ['active_monitor_paths',
-                   'algorithm', 'member_group', 'snat_translation'])
+                   'algorithm', 'member_group', 'snat_translation',
+                   'tcp_multiplexing_enabled', 'tcp_multiplexing_number'])
         members = self.get_attr('members')
         if members is None:
             members = []
