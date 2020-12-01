@@ -476,6 +476,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
                             tags=IGNORE, members=IGNORE, algorithm=IGNORE,
                             active_monitor_paths=IGNORE, member_group=IGNORE,
                             snat_translation=IGNORE,
+                            tcp_multiplexing_enabled=IGNORE,
+                            tcp_multiplexing_number=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
         lb_pool_id = self._init_obj_uuid(lb_pool_id)
         lb_pool_def = self._init_def(
@@ -488,6 +490,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
             algorithm=algorithm,
             member_group=member_group,
             snat_translation=snat_translation,
+            tcp_multiplexing_enabled=tcp_multiplexing_enabled,
+            tcp_multiplexing_number=tcp_multiplexing_number,
             tenant=tenant)
 
         self._create_or_store(lb_pool_def)
@@ -512,7 +516,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
     def update(self, lb_pool_id, name=IGNORE, description=IGNORE,
                tags=IGNORE, members=IGNORE, algorithm=IGNORE,
                active_monitor_paths=IGNORE, member_group=IGNORE,
-               snat_translation=IGNORE,
+               snat_translation=IGNORE, tcp_multiplexing_enabled=IGNORE,
+               tcp_multiplexing_number=IGNORE,
                tenant=constants.POLICY_INFRA_TENANT,
                allow_partial_updates=True):
         self._update(
@@ -525,6 +530,8 @@ class NsxPolicyLoadBalancerPoolApi(NsxPolicyResourceBase):
             algorithm=algorithm,
             member_group=member_group,
             snat_translation=snat_translation,
+            tcp_multiplexing_enabled=tcp_multiplexing_enabled,
+            tcp_multiplexing_number=tcp_multiplexing_number,
             tenant=tenant, allow_partial_updates=allow_partial_updates)
 
     def add_monitor_to_pool(self, lb_pool_id, active_monitor_paths,
