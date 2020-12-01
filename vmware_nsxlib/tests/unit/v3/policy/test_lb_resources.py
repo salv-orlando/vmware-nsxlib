@@ -1490,6 +1490,8 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 algorithm=algorithm,
                 member_group=member_group,
                 snat_translation=snat_translation,
+                tcp_multiplexing_enabled=True,
+                tcp_multiplexing_number=10,
                 tenant=TEST_TENANT)
             expected_def = lb_defs.LBPoolDef(
                 lb_pool_id=obj_id,
@@ -1500,6 +1502,8 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 algorithm=algorithm,
                 member_group=member_group,
                 snat_translation=snat_translation,
+                tcp_multiplexing_enabled=True,
+                tcp_multiplexing_number=10,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(obj_id, result)
@@ -1635,6 +1639,8 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                                     algorithm=algorithm,
                                     member_group=member_group,
                                     snat_translation=snat_translation,
+                                    tcp_multiplexing_enabled=True,
+                                    tcp_multiplexing_number=10,
                                     tenant=TEST_TENANT)
             expected_def = lb_defs.LBPoolDef(
                 lb_pool_id=obj_id,
@@ -1645,6 +1651,8 @@ class TestPolicyLBPoolApi(test_resources.NsxPolicyLibTestCase):
                 algorithm=algorithm,
                 member_group=member_group,
                 snat_translation=snat_translation,
+                tcp_multiplexing_enabled=True,
+                tcp_multiplexing_number=10,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
