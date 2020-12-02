@@ -20,9 +20,9 @@ from unittest import mock
 from vmware_nsxlib.tests.unit.v3 import nsxlib_testcase
 from vmware_nsxlib.tests.unit.v3.policy import test_resources
 from vmware_nsxlib.v3 import exceptions as nsxlib_exc
+from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import lb_defs
-
 TEST_TENANT = 'test'
 
 
@@ -1137,6 +1137,52 @@ class TestPolicyLBVirtualServer(test_resources.NsxPolicyLibTestCase):
                 description=description,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
+
+    def test_update_log_parameters(self):
+        obj_id = '111'
+        name = 'new name'
+        description = 'new desc'
+        vs_name = 'name-name'
+        with self.mock_get(obj_id, vs_name), \
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(obj_id,
+                                    name=name,
+                                    description=description,
+                                    tenant=TEST_TENANT,
+                                    access_log_enabled=True,
+                                    log_significant_event_only=True)
+            expected_def = lb_defs.LBVirtualServerDef(
+                nsx_version=nsx_constants.NSX_VERSION_3_0_0,
+                virtual_server_id=obj_id, name=name,
+                description=description,
+                tenant=TEST_TENANT, access_log_enabled=True,
+                log_significant_event_only=True)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_log_parameters_for_version(self):
+        obj_id = '111'
+        name = 'new name'
+        description = 'new desc'
+
+        expected_def = lb_defs.LBVirtualServerDef(
+            nsx_version=nsx_constants.NSX_VERSION_2_5_0,
+            virtual_server_id=obj_id, name=name,
+            description=description,
+            tenant=TEST_TENANT, access_log_enabled=True,
+            log_significant_event_only=True)
+        self.assertFalse('access_log_enabled' in expected_def.get_obj_dict())
+        self.assertFalse('log_significant_event_only' in
+                         expected_def.get_obj_dict())
+
+        expected_def = lb_defs.LBVirtualServerDef(
+            nsx_version=nsx_constants.NSX_VERSION_3_0_0,
+            virtual_server_id=obj_id, name=name,
+            description=description,
+            tenant=TEST_TENANT, access_log_enabled=True,
+            log_significant_event_only=True)
+        self.assertTrue('access_log_enabled' in expected_def.get_obj_dict())
+        self.assertTrue('log_significant_event_only' in
+                        expected_def.get_obj_dict())
 
     def test_non_partial_update(self):
         obj_id = '111'

@@ -276,6 +276,8 @@ class LBVirtualServerDef(ResourceDef):
         body = super(LBVirtualServerDef, self).get_obj_dict()
         self._set_attrs_if_specified(
             body, ['ip_address', 'ports', 'max_concurrent_connections'])
+        self._set_attrs_if_supported(
+            body, ['access_log_enabled', 'log_significant_event_only'])
         client_ssl_binding = self.get_attr('client_ssl_profile_binding')
         if client_ssl_binding:
             self._set_attr_if_specified(
@@ -344,7 +346,9 @@ class LBVirtualServerDef(ResourceDef):
 
     @property
     def version_dependant_attr_map(self):
-        return {'access_list_control': nsx_constants.NSX_VERSION_3_0_0}
+        return {'access_list_control': nsx_constants.NSX_VERSION_3_0_0,
+                'access_log_enabled': nsx_constants.NSX_VERSION_3_0_0,
+                'log_significant_event_only': nsx_constants.NSX_VERSION_3_0_0}
 
 
 class ClientSSLProfileBindingDef(object):
