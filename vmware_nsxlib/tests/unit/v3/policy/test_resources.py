@@ -3336,6 +3336,54 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
 
             self.assert_called_with_def(api_call, expected_def)
 
+    def test_get_multicast(self):
+        tier1_id = '111'
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            api_call.return_value = {'enabled': True}
+            enabled = self.resourceApi.get_multicast(
+                tier1_id,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1MulticastDef(
+                tier1_id=tier1_id,
+                service_id=self.resourceApi._locale_service_id(tier1_id),
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertTrue(enabled)
+
+    def test_enable_multicast(self):
+        tier1_id = '111'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.enable_multicast(
+                tier1_id,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1MulticastDef(
+                tier1_id=tier1_id,
+                service_id=self.resourceApi._locale_service_id(tier1_id),
+                enabled=True,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_disable_multicast(self):
+        tier1_id = '111'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.disable_multicast(
+                tier1_id,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier1MulticastDef(
+                tier1_id=tier1_id,
+                service_id=self.resourceApi._locale_service_id(tier1_id),
+                enabled=False,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+
     def test_add_advertisement_rule(self):
         tier1_id = '111'
         rule_name = 'rule_name'
