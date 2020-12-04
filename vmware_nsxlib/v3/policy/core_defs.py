@@ -564,6 +564,24 @@ class Tier1LocaleServiceDef(RouterLocaleServiceDef):
         return (TenantDef, Tier1Def)
 
 
+class Tier1MulticastDef(ResourceDef):
+
+    @property
+    def path_pattern(self):
+        return TIER1_LOCALE_SERVICES_PATH_PATTERN + "%s/multicast"
+
+    @property
+    def path_ids(self):
+        # 'Dummy' used since multicast is a sub-attribute of a Tier1 GW
+        # which is however set with its own API endpoint
+        return ('tenant', 'tier1_id', 'service_id', 'dummy')
+
+    def get_obj_dict(self):
+        body = super(Tier1MulticastDef, self).get_obj_dict()
+        self._set_attr_if_specified(body, 'enabled')
+        return body
+
+
 class Tier0InterfaceDef(ResourceDef):
 
     @staticmethod
