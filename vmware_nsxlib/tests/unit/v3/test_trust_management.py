@@ -64,3 +64,24 @@ class TestNsxLibTrustManagement(nsxlib_testcase.NsxClientTestCase):
             return_value={'results': consts.FAKE_CERT_LIST}):
             results = self.nsxlib.trust_management.find_cert_with_pem(pem)
             self.assertEqual(1, len(results))
+
+    def test_create_identity_with_cert(self):
+        fake_pem = consts.FAKE_CERT_PEM
+        name = "test-identity"
+        cert_api = self.nsxlib.trust_management
+        body = {
+            'name': name,
+            'certificate_pem': fake_pem,
+            'node_id': 'test_node_id',
+            'role': 'enterprise_admin',
+            'is_protected': True
+        }
+        with mock.patch.object(self.nsxlib.client, 'create') as create:
+            cert_api.create_identity_with_cert(
+                name=name,
+                cert_pem=fake_pem,
+                node_id='test_node_id',
+                role='enterprise_admin')
+            create.assert_called_with(
+                'trust-management/principal-identities/with-certificate',
+                body)
