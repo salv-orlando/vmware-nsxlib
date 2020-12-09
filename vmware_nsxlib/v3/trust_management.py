@@ -19,6 +19,7 @@ from vmware_nsxlib.v3 import utils
 BASE_SECTION = 'trust-management'
 CERT_SECTION = BASE_SECTION + '/certificates'
 ID_SECTION = BASE_SECTION + '/principal-identities'
+ID_WITH_CERT_SECTION = BASE_SECTION + '/principal-identities/with-certificate'
 USER_GROUP_TYPES = [
     'read_only_api_users',
     'read_write_api_users',
@@ -134,3 +135,11 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
         except nsxlib_exc.ManagerError as e:
             self.delete_cert(nsx_cert_id)
             raise e
+
+    def create_identity_with_cert(self, name, cert_pem,
+                                  node_id, role,
+                                  is_protected=True):
+        body = {'name': name, 'certificate_pem': cert_pem,
+                'node_id': node_id, 'role': role,
+                'is_protected': is_protected}
+        self.client.create(ID_WITH_CERT_SECTION, body)
