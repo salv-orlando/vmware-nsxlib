@@ -133,13 +133,15 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             mock_get_def_headers.assert_called_once_with(
                 mock.ANY, cluster_provider, False, token_provider_inst)
 
+    @mock.patch("vmware_nsxlib.v3.debug_retry.RetryDebug.from_int")
     @mock.patch("vmware_nsxlib.v3.cluster.NSXHTTPAdapter.__init__")
-    def test_new_connection_with_ca_file(self, mock_adaptor_init):
+    def test_new_connection_with_ca_file(self, mock_adaptor_init, mock_retry):
         mock_api = mock.Mock()
         mock_api.nsxlib_config = mock.Mock()
         mock_api.nsxlib_config.retries = 100
         mock_api.nsxlib_config.insecure = False
         mock_adaptor_init.return_value = None
+        mock_retry.return_value = 100
         provider = cluster.NSXRequestsHTTPProvider()
         with mock.patch.object(cluster.TimeoutSession, 'request',
                                return_value=get_sess_create_resp()):
@@ -150,15 +152,19 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             self.assertEqual("ca_file", session.verify)
             mock_adaptor_init.assert_called_once_with(
                 pool_connections=1, pool_maxsize=1,
-                max_retries=100, pool_block=False, thumbprint=None)
+                max_retries=100, pool_block=False,
+                thumbprint=None)
 
+    @mock.patch("vmware_nsxlib.v3.debug_retry.RetryDebug.from_int")
     @mock.patch("vmware_nsxlib.v3.cluster.NSXHTTPAdapter.__init__")
-    def test_new_connection_with_thumbprint(self, mock_adaptor_init):
+    def test_new_connection_with_thumbprint(self, mock_adaptor_init,
+                                            mock_retry):
         mock_api = mock.Mock()
         mock_api.nsxlib_config = mock.Mock()
         mock_api.nsxlib_config.retries = 100
         mock_api.nsxlib_config.insecure = False
         mock_adaptor_init.return_value = None
+        mock_retry.return_value = 100
         provider = cluster.NSXRequestsHTTPProvider()
         with mock.patch.object(cluster.TimeoutSession, 'request',
                                return_value=get_sess_create_resp()):
@@ -169,7 +175,8 @@ class RequestsHTTPProviderTestCase(unittest.TestCase):
             self.assertIsNone(session.verify)
             mock_adaptor_init.assert_called_once_with(
                 pool_connections=1, pool_maxsize=1,
-                max_retries=100, pool_block=False, thumbprint="thumbprint")
+                max_retries=100, pool_block=False,
+                thumbprint="thumbprint")
 
     def test_validate_connection_keep_alive(self):
         mock_conn = mocks.MockRequestSessionApi()
