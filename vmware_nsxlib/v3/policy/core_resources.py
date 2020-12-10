@@ -1327,29 +1327,32 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             tenant=tenant)
         return self._list(t1interface_def)
 
-    def get_multicast(self, tier1_id, tenant=constants.POLICY_INFRA_TENANT):
+    def get_multicast(self, tier1_id, service_id=None,
+                      tenant=constants.POLICY_INFRA_TENANT):
         mcast_def = core_defs.Tier1MulticastDef(
             tier1_id=tier1_id,
-            service_id=self._locale_service_id(tier1_id),
+            service_id=(service_id or
+                        self._locale_service_id(tier1_id)),
             tenant=tenant)
         mcast_data = self.policy_api.get(mcast_def)
         return mcast_data.get('enabled')
 
-    def _set_multicast(self, tier1_id, enabled, tenant):
+    def _set_multicast(self, tier1_id, enabled, service_id, tenant):
         args = {'tier1_id': tier1_id,
-                'service_id': self._locale_service_id(tier1_id),
+                'service_id': (service_id or
+                               self._locale_service_id(tier1_id)),
                 'enabled': enabled,
                 'tenant': tenant}
         mcast_def = core_defs.Tier1MulticastDef(**args)
         self.policy_api.create_or_update(mcast_def)
 
-    def enable_multicast(self, tier1_id,
+    def enable_multicast(self, tier1_id, service_id=None,
                          tenant=constants.POLICY_INFRA_TENANT):
-        self._set_multicast(tier1_id, True, tenant)
+        self._set_multicast(tier1_id, True, service_id, tenant)
 
-    def disable_multicast(self, tier1_id,
+    def disable_multicast(self, tier1_id, service_id=None,
                           tenant=constants.POLICY_INFRA_TENANT):
-        self._set_multicast(tier1_id, False, tenant)
+        self._set_multicast(tier1_id, False, service_id, tenant)
 
     def get_realized_state(self, tier1_id, entity_type=None,
                            tenant=constants.POLICY_INFRA_TENANT,
