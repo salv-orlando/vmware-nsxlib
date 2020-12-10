@@ -24,6 +24,7 @@ import logging
 import re
 import time
 from urllib import parse as urlparse
+
 import urllib3
 
 import eventlet
