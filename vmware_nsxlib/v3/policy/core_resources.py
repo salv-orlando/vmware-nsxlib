@@ -1344,7 +1344,7 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                 'enabled': enabled,
                 'tenant': tenant}
         mcast_def = core_defs.Tier1MulticastDef(**args)
-        self.policy_api.create_or_update(mcast_def)
+        self._create_or_store(mcast_def)
 
     def enable_multicast(self, tier1_id, service_id=None,
                          tenant=constants.POLICY_INFRA_TENANT):
