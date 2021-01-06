@@ -967,7 +967,8 @@ class SegmentDef(BaseSegmentDef):
     def version_dependant_attr_map(self):
         return {'metadata_proxy_id': nsx_constants.NSX_VERSION_3_0_0,
                 'dhcp_server_config_id': nsx_constants.NSX_VERSION_3_0_0,
-                'admin_state': nsx_constants.NSX_VERSION_3_0_0}
+                'admin_state': nsx_constants.NSX_VERSION_3_0_0,
+                'overlay_id': nsx_constants.NSX_VERSION_3_1_0}
 
     def get_obj_dict(self):
         body = super(SegmentDef, self).get_obj_dict()
@@ -1040,6 +1041,7 @@ class SegmentDef(BaseSegmentDef):
             self._set_attr_if_specified(body, 'admin_state',
                                         value=admin_state)
 
+        self._set_attr_if_supported(body, 'overlay_id')
         return body
 
 

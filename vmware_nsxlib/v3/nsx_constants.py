@@ -153,6 +153,7 @@ NSX_VERSION_2_5_0 = '2.5.0'
 NSX_VERSION_3_0_0 = '3.0.0'
 NSX_VERSION_3_0_2 = '3.0.2'
 NSX_VERSION_3_1_0 = '3.1.0'
+NSX_VERSION_3_2_0 = '3.2.0'
 
 # Features available depending on the NSX Manager backend version
 FEATURE_MAC_LEARNING = 'MAC Learning'
