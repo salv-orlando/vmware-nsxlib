@@ -2072,6 +2072,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             ls_id=IGNORE,
                             unique_id=IGNORE,
                             ep_id=IGNORE,
+                            overlay_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -2098,6 +2099,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             ls_id=ls_id,
             unique_id=unique_id,
             ep_id=ep_id,
+            overlay_id=overlay_id,
             tags=tags,
             tenant=tenant)
         self._create_or_store(segment_def)

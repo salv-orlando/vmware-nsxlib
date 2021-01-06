@@ -4246,7 +4246,7 @@ class TestPolicySegment(NsxPolicyLibTestCase):
     def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
                      dhcp_server=None, admin_state=None,
                      ip_pool_id='external-ip-pool', ls_id=None,
-                     unique_id=None, tz_id=None, ep_id=None):
+                     unique_id=None, tz_id=None, ep_id=None, overlay_id=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -4267,6 +4267,8 @@ class TestPolicySegment(NsxPolicyLibTestCase):
             kwargs['dhcp_server_config_id'] = dhcp_server
         if admin_state:
             kwargs['admin_state'] = admin_state
+        if overlay_id:
+            kwargs['overlay_id'] = overlay_id
 
         if ls_id:
             kwargs['ls_id'] = ls_id
@@ -4339,6 +4341,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_with_transport_zone_id_and_default_ep(self):
         self._test_create(tz_id='tz_id1')
+
+    def test_create_with_overlay_id(self):
+        self._test_create(overlay_id=100)
 
     def test_delete(self):
         segment_id = '111'
