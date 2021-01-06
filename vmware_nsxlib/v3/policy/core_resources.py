@@ -1953,6 +1953,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             metadata_proxy_id=IGNORE,
                             dhcp_server_config_id=IGNORE,
                             admin_state=IGNORE,
+                            overlay_id=IGNORE,
                             tags=IGNORE,
                             tenant=constants.POLICY_INFRA_TENANT):
 
@@ -1976,6 +1977,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             metadata_proxy_id=metadata_proxy_id,
             dhcp_server_config_id=dhcp_server_config_id,
             admin_state=admin_state,
+            overlay_id=overlay_id,
             tags=tags,
             tenant=tenant)
         self._create_or_store(segment_def)

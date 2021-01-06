@@ -107,7 +107,7 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
                     if cert['pem_encoded'] == cert_pem]
         if not cert_ids:
             raise nsxlib_exc.ResourceNotFound(
-                manager=self.client.nsx_api_managers,
+                manager=getattr(self.client, 'nsx_api_managers'),
                 operation="find_certificate")
 
         identities = self.get_identities(name)
