@@ -3607,6 +3607,136 @@ class TestPolicyTier1NoPassthrough(TestPolicyTier1):
             self.assertEqual(None, realized_id)
 
 
+class TestPolicyTier0Bgp(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyTier0Bgp, self).setUp()
+        self.resourceApi = self.policy_lib.tier0_bgp
+
+    def test_create(self):
+        name = 'test'
+        description = 'bgp'
+        tier0_id = 't0'
+        service_id = "default",
+        ecmp = True,
+        enabled = True,
+        graceful_restart_config = {
+            "mode": "DISABLE",
+            "timer": {
+                "restart_timer": 180,
+                "stale_route_timer": 600
+            }
+        }
+        inter_sr_ibgp = False,
+        local_as_num = "65546",
+        multipath_relax = False,
+        route_aggregations = [{
+            "prefix": "10.1.1.0/24"}, {
+            "prefix": "11.1.0.0/16", "summary_only": "false"}]
+        tags = [{"tag": "tag", "scope": "scope"}]
+        tenant = TEST_TENANT
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                tier0_id, service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant)
+            expected_def = core_defs.BgpRoutingConfigDef(
+                tier0_id=tier0_id,
+                service_id=service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant
+            )
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNone(result)
+
+    def test_update(self):
+        name = 'test'
+        description = 'bgp'
+        tier0_id = 't0'
+        service_id = "default",
+        ecmp = True,
+        enabled = True,
+        graceful_restart_config = {
+            "mode": "DISABLE",
+            "timer": {
+                "restart_timer": 180,
+                "stale_route_timer": 600
+            }
+        }
+        inter_sr_ibgp = False,
+        local_as_num = "65546",
+        multipath_relax = False,
+        route_aggregations = [{
+            "prefix": "10.1.1.0/24"}, {
+            "prefix": "11.1.0.0/16", "summary_only": "false"}]
+        tags = [{"tag": "tag", "scope": "scope"}]
+        tenant = TEST_TENANT
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.update(
+                tier0_id, service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant)
+            expected_def = core_defs.BgpRoutingConfigDef(
+                tier0_id=tier0_id,
+                service_id=service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant
+            )
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNone(result)
+
+    def test_get(self):
+        tier0_id = 't0'
+        service_id = 'default'
+        tenant = TEST_TENANT
+        with mock.patch.object(self.policy_api, "get") as api_call:
+            mock_tier0_bgp = mock.Mock()
+            api_call.return_value = mock_tier0_bgp
+            result = self.resourceApi.get(tier0_id, service_id, tenant=tenant)
+            expected_def = core_defs.BgpRoutingConfigDef(
+                tier0_id=tier0_id, service_id=service_id, tenant=tenant)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(result, mock_tier0_bgp)
+
+
 class TestPolicyTier0NatRule(NsxPolicyLibTestCase):
 
     def setUp(self, *args, **kwargs):
