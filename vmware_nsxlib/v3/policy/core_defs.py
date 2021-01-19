@@ -2715,6 +2715,17 @@ class BgpRoutingConfigDef(ResourceDef):
         # This resource has no keys, since it is a single object
         return ('tenant', 'tier0_id', 'service_id', 'dummy')
 
+    def get_obj_dict(self):
+        body = super(BgpRoutingConfigDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['ecmp',
+                                            'enabled',
+                                            'graceful_restart_config',
+                                            'inter_sr_ibgp',
+                                            'local_as_num',
+                                            'multipath_relax',
+                                            'route_aggregations'])
+        return body
+
 
 class Tier0RouteRedistributionConfig(object):
 

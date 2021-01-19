@@ -1703,6 +1703,83 @@ class NsxPolicyTier0Api(NsxPolicyResourceBase):
         self.policy_api.create_or_update(service_def)
 
 
+class NsxPolicyTier0BgpApi(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.BgpRoutingConfigDef
+
+    def delete(self, tier0_id, service_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = _("This action is currently not supported")
+        raise exceptions.ManagerError(details=err_msg)
+
+    def create_or_overwrite(self, tier0_id, service_id,
+                            name=IGNORE,
+                            description=IGNORE,
+                            ecmp=IGNORE,
+                            enabled=IGNORE,
+                            graceful_restart_config=IGNORE,
+                            inter_sr_ibgp=IGNORE,
+                            local_as_num=IGNORE,
+                            multipath_relax=IGNORE,
+                            route_aggregations=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        bgp_config_def = self._init_def(
+            name=name,
+            description=description,
+            tier0_id=tier0_id,
+            service_id=service_id,
+            ecmp=ecmp,
+            enabled=enabled,
+            graceful_restart_config=graceful_restart_config,
+            inter_sr_ibgp=inter_sr_ibgp,
+            local_as_num=local_as_num,
+            multipath_relax=multipath_relax,
+            route_aggregations=route_aggregations,
+            tags=tags,
+            tenant=tenant)
+        self._create_or_store(bgp_config_def)
+
+    def get(self, tier0_id, service_id,
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
+        bgp_config_def = self.entry_def(
+            tier0_id=tier0_id, service_id=service_id, tenant=tenant)
+        return self.policy_api.get(bgp_config_def, silent=silent)
+
+    def list(self, tier0_id, service_id,
+             tenant=constants.POLICY_INFRA_TENANT):
+        err_msg = _("This action is currently not supported")
+        raise exceptions.ManagerError(details=err_msg)
+
+    def update(self, tier0_id, service_id,
+               name=IGNORE,
+               description=IGNORE,
+               ecmp=IGNORE,
+               enabled=IGNORE,
+               graceful_restart_config=IGNORE,
+               inter_sr_ibgp=IGNORE,
+               local_as_num=IGNORE,
+               multipath_relax=IGNORE,
+               route_aggregations=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(name=name,
+                     description=description,
+                     tier0_id=tier0_id,
+                     service_id=service_id,
+                     ecmp=ecmp,
+                     enabled=enabled,
+                     graceful_restart_config=graceful_restart_config,
+                     inter_sr_ibgp=inter_sr_ibgp,
+                     local_as_num=local_as_num,
+                     multipath_relax=multipath_relax,
+                     route_aggregations=route_aggregations,
+                     tags=tags,
+                     tenant=tenant)
+
+
 class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
     DEFAULT_NAT_ID = 'USER'
 

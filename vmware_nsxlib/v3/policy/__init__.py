@@ -79,6 +79,7 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.tier0_route_map = core_resources.NsxPolicyTier0RouteMapApi(*args)
         self.tier0_prefix_list = core_resources.NsxPolicyTier0PrefixListApi(
             *args)
+        self.tier0_bgp = core_resources.NsxPolicyTier0BgpApi(*args)
         self.tier1 = core_resources.NsxPolicyTier1Api(*args)
         self.tier1_segment = core_resources.NsxPolicyTier1SegmentApi(*args)
         self.tier1_nat_rule = core_resources.NsxPolicyTier1NatRuleApi(
