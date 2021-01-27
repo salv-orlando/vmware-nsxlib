@@ -1144,10 +1144,11 @@ class SegmentPortDef(ResourceDef):
 
     def get_obj_dict(self):
         body = super(SegmentPortDef, self).get_obj_dict()
-        address_bindings = self.get_attr('address_bindings')
-        if address_bindings:
-            body['address_bindings'] = [binding.get_obj_dict()
-                                        for binding in address_bindings]
+        if self.has_attr('address_bindings'):
+            address_bindings = self.get_attr('address_bindings')
+            if address_bindings is not None:
+                body['address_bindings'] = [binding.get_obj_dict()
+                                            for binding in address_bindings]
         if (self.has_attr('attachment_type') or self.has_attr('vif_id') or
             self.has_attr('hyperbus_mode')):
             if (not self.get_attr('attachment_type') and
