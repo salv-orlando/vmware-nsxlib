@@ -282,9 +282,9 @@ class RESTClient(object):
             self._conn.set_silent(False)
 
         if not silent:
-            LOG.debug("REST call: %s %s. Headers: %s. Body: %s. Response: %s. "
-                      "Took %2.4f",
-                      method, request_url,
+            LOG.debug("[%x] REST call: %s %s. Headers: %s. Body: %s. "
+                      "Response: %s. Took %2.4f",
+                      id(self._conn), method, request_url,
                       utils.censor_headers(request_headers),
                       self._mask_password(body),
                       result.json() if result.content else '',

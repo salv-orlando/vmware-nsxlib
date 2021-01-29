@@ -772,10 +772,11 @@ class ClusteredAPI(object):
                         kwargs_copy = copy.copy(kwargs)
                         kwargs_copy['headers'] = utils.censor_headers(
                             kwargs_copy['headers'])
-                        LOG.debug("API cluster proxy %s %s to %s with %s. "
-                                  "Waited conn: %2.4f, rate: %2.4f",
-                                  proxy_for.upper(), uri, url, kwargs_copy,
-                                  conn_data.conn_wait, conn_data.rate_wait)
+                        LOG.debug("[%x] API cluster proxy %s %s to %s "
+                                  "with %s. Waited conn: %2.4f, rate: %2.4f",
+                                  id(conn), proxy_for.upper(), uri, url,
+                                  kwargs_copy, conn_data.conn_wait,
+                                  conn_data.rate_wait)
 
                     # call the actual connection method to do the
                     # http request/response over the wire
@@ -799,7 +800,7 @@ class ClusteredAPI(object):
 
                     return response
                 except Exception as e:
-                    LOG.warning("Request failed due to: %s", e)
+                    LOG.warning("[%x] Request failed due to: %s", id(conn), e)
                     exc_config = self.nsxlib_config.exception_config
                     if exc_config.should_ground_endpoint(e):
                         # consider endpoint inaccessible and move to next
