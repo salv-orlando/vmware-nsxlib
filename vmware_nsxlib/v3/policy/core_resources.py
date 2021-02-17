@@ -141,14 +141,19 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
 
         return resource_def
 
-    def _update(self, allow_partial_updates=True, force=False, **kwargs):
+    def _update(self, allow_partial_updates=True,
+                force=False, put=False, revision=None, **kwargs):
         """Helper for update function - ignore attrs without explicit value"""
+        # DO NOT retry if caller specifies revision
+        max_attempts = (self.policy_api.client.max_attempts
+                        if revision is None else 0)
+
         @utils.retry_upon_exception(
             exceptions.StaleRevision,
-            max_attempts=self.policy_api.client.max_attempts)
+            max_attempts=max_attempts)
         def _do_update_with_retry():
             if (allow_partial_updates and
-                    self.policy_api.partial_updates_supported()):
+                    self.policy_api.partial_updates_supported() and not put):
                 policy_def = self._init_def(**kwargs)
                 partial_updates = True
             else:
@@ -158,8 +163,12 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
             if policy_def.bodyless():
                 # Nothing to update - only keys provided in kwargs
                 return
-            self.policy_api.create_or_update(
-                policy_def, partial_updates=partial_updates, force=force)
+            if put:
+                return self.policy_api.update_with_put(
+                    policy_def, revision=revision)
+            else:
+                self.policy_api.create_or_update(
+                    policy_def, partial_updates=partial_updates, force=force)
 
         return _do_update_with_retry()
 
@@ -1774,20 +1783,24 @@ class NsxPolicyTier0BgpApi(NsxPolicyResourceBase):
                multipath_relax=IGNORE,
                route_aggregations=IGNORE,
                tags=IGNORE,
-               tenant=constants.POLICY_INFRA_TENANT):
-        self._update(name=name,
-                     description=description,
-                     tier0_id=tier0_id,
-                     service_id=service_id,
-                     ecmp=ecmp,
-                     enabled=enabled,
-                     graceful_restart_config=graceful_restart_config,
-                     inter_sr_ibgp=inter_sr_ibgp,
-                     local_as_num=local_as_num,
-                     multipath_relax=multipath_relax,
-                     route_aggregations=route_aggregations,
-                     tags=tags,
-                     tenant=tenant)
+               tenant=constants.POLICY_INFRA_TENANT,
+               put=False,
+               revision=None):
+        return self._update(name=name,
+                            description=description,
+                            tier0_id=tier0_id,
+                            service_id=service_id,
+                            ecmp=ecmp,
+                            enabled=enabled,
+                            graceful_restart_config=graceful_restart_config,
+                            inter_sr_ibgp=inter_sr_ibgp,
+                            local_as_num=local_as_num,
+                            multipath_relax=multipath_relax,
+                            route_aggregations=route_aggregations,
+                            tags=tags,
+                            tenant=tenant,
+                            put=put,
+                            revision=revision)
 
 
 class NsxPolicyTier0NatRuleApi(NsxPolicyResourceBase):
