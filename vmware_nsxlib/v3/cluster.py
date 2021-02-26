@@ -451,18 +451,21 @@ class ClusteredAPI(object):
                  keepalive_interval=33,
                  api_rate_limit=None,
                  api_rate_mode=None,
-                 api_log_mode=None):
+                 api_log_mode=None,
+                 enable_health_check=True):
 
         self._http_provider = http_provider
         self._keepalive_interval = keepalive_interval
         self._print_keepalive = 0
         self._silent = False
         self._api_call_collectors = []
+        self._enable_health_check = enable_health_check
 
         def _init_cluster(*args, **kwargs):
             self._init_endpoints(providers, min_conns_per_pool,
                                  max_conns_per_pool, api_rate_limit,
-                                 api_rate_mode, api_log_mode)
+                                 api_rate_mode, api_log_mode,
+                                 enable_health_check)
 
         _init_cluster()
 
@@ -476,7 +479,7 @@ class ClusteredAPI(object):
 
     def _init_endpoints(self, providers, min_conns_per_pool,
                         max_conns_per_pool, api_rate_limit, api_rate_mode,
-                        api_log_mode):
+                        api_log_mode, enable_health_check=True):
         LOG.debug("Initializing API endpoints")
 
         def _create_conn(p):
@@ -516,30 +519,35 @@ class ClusteredAPI(object):
         # duck type to proxy http invocations
         for method in ClusteredAPI._HTTP_VERBS:
             setattr(self, method, self._proxy_stub(method))
-
-        conns = greenpool.GreenPool()
-        for endpoint in self._endpoints.values():
-            conns.spawn(self._validate, endpoint)
-        eventlet.sleep(0)
-        while conns.running():
-            if (self.health == ClusterHealth.GREEN or
-                self.health == ClusterHealth.ORANGE):
-                # only wait for 1 or more endpoints to reduce init time
-                break
-            eventlet.sleep(0.5)
-
-        if len(self._endpoints) > 1:
-            # We don't monitor connectivity when one endpoint is available,
-            # since there is no alternative to querying this single backend
-            # If endpoint was down, we can tolerate extra roundtrip to
-            # validate connectivity
+        # If health check is disabled, skip endpoint accessiblity check
+        # and health check loop. Set api health to GREEN.
+        if enable_health_check:
+            conns = greenpool.GreenPool()
             for endpoint in self._endpoints.values():
-                # dynamic loop for each endpoint to ensure connectivity
-                loop = loopingcall.DynamicLoopingCall(
-                    self._endpoint_keepalive, endpoint)
-                loop.start(initial_delay=self._keepalive_interval,
-                           periodic_interval_max=self._keepalive_interval,
-                           stop_on_exception=False)
+                conns.spawn(self._validate, endpoint)
+            eventlet.sleep(0)
+            while conns.running():
+                if (self.health == ClusterHealth.GREEN or
+                    self.health == ClusterHealth.ORANGE):
+                    # only wait for 1 or more endpoints to reduce init time
+                    break
+                eventlet.sleep(0.5)
+
+            if len(self._endpoints) > 1:
+                # We don't monitor connectivity when one endpoint is available,
+                # since there is no alternative to querying this single backend
+                # If endpoint was down, we can tolerate extra roundtrip to
+                # validate connectivity
+                for endpoint in self._endpoints.values():
+                    # dynamic loop for each endpoint to ensure connectivity
+                    loop = loopingcall.DynamicLoopingCall(
+                        self._endpoint_keepalive, endpoint)
+                    loop.start(initial_delay=self._keepalive_interval,
+                               periodic_interval_max=self._keepalive_interval,
+                               stop_on_exception=False)
+        else:
+            for endpoint in self._endpoints.values():
+                endpoint.set_state(EndpointState.UP)
 
         LOG.debug("Done initializing API endpoint(s). "
                   "API cluster health: %s", self.health)
@@ -831,7 +839,8 @@ class NSXClusteredAPI(ClusteredAPI):
             keepalive_interval=self.nsxlib_config.conn_idle_timeout,
             api_rate_limit=self.nsxlib_config.api_rate_limit_per_endpoint,
             api_rate_mode=self.nsxlib_config.api_rate_mode,
-            api_log_mode=self.nsxlib_config.api_log_mode)
+            api_log_mode=self.nsxlib_config.api_log_mode,
+            enable_health_check=self.nsxlib_config.enable_health_check)
 
         LOG.debug("Created NSX clustered API with '%s' "
                   "provider", self._http_provider.provider_id)

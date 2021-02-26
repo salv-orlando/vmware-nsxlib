@@ -553,3 +553,11 @@ class ClusteredAPITestCase(nsxlib_testcase.NsxClientTestCase):
             api = self.mock_nsx_clustered_api()
             # just make sure this api is defined, and does not crash
             api._reinit_cluster()
+
+    def test_initialize_cluster_without_health_check(self):
+        conf_managers = ['8.9.10.11', '9.10.11.12']
+        validate_fn = mock.MagicMock()
+        api = self.new_mocked_cluster(conf_managers, validate_fn,
+                                      enable_health_check=False)
+        self.assertEqual(cluster.ClusterHealth.GREEN, api.health)
+        validate_fn.assert_not_called()
