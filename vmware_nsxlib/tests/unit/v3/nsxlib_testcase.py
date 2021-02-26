@@ -396,7 +396,8 @@ class NsxClientTestCase(NsxLibTestCase):
         return client
 
     def new_mocked_cluster(self, conf_managers, validate_conn_func,
-                           concurrent_connections=None, exceptions=None):
+                           concurrent_connections=None, exceptions=None,
+                           enable_health_check=True):
         mock_provider = mock.Mock()
         mock_provider.default_scheme = 'https'
         mock_provider.validate_connection = validate_conn_func
@@ -406,6 +407,7 @@ class NsxClientTestCase(NsxLibTestCase):
             nsxlib_config.exception_config = exceptions
         if concurrent_connections:
             nsxlib_config.concurrent_connections = concurrent_connections
+        nsxlib_config.enable_health_check = enable_health_check
         nsxlib_config.http_provider = mock_provider
         nsxlib_config.nsx_api_managers = conf_managers
 

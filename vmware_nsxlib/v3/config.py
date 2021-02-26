@@ -158,6 +158,14 @@ class NsxLibConfig(object):
                          When set to API_LOG_PER_ENDPOINT, API calls sent to
                          each endpoint will be collected individually.
                          By default, this option is disabled as set to None.
+    :param enable_health_check: Options to enable or disable health check for
+                                all endpoints when initializing cluster API.
+                                The checking including endpoint connection
+                                validation and health check loop.
+                                For some condition, eg election process. It
+                                does not need to check the endpoint's
+                                accessibility.
+                                By default, this option is set to True.
 
     -- Additional parameters which are relevant only for the Policy manager:
     :param allow_passthrough: If True, use nsx manager api for cases which are
@@ -198,7 +206,8 @@ class NsxLibConfig(object):
                  api_rate_limit_per_endpoint=None,
                  api_rate_mode=None,
                  exception_config=None,
-                 api_log_mode=None):
+                 api_log_mode=None,
+                 enable_health_check=True):
 
         self.nsx_api_managers = nsx_api_managers
         self._username = username
@@ -230,6 +239,7 @@ class NsxLibConfig(object):
         self.api_rate_mode = api_rate_mode
         self.exception_config = exception_config or ExceptionConfig()
         self.api_log_mode = api_log_mode
+        self.enable_health_check = enable_health_check
 
         if len(nsx_api_managers) == 1 and not self.cluster_unavailable_retry:
             LOG.warning("When only one endpoint is provided, keepalive probes"
