@@ -256,10 +256,19 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
                        'Content-Type': 'application/x-www-form-urlencoded'}
         # Insert the JWT in Auth header if using tokens for auth
         if token_provider:
-            # Don't call /api/session/create when using
-            # JWT Token Based Principal Identity auth scheme
-            LOG.debug("Skipping session create with JWT based auth")
-            return
+            try:
+                token_value = token_provider.get_token()
+                bearer_token = token_provider.get_header_value(token_value)
+                token_header = {"Authorization": bearer_token}
+                session.default_headers.update(token_header)
+                # Don't call /api/session/create when using
+                # JWT Token Based Principal Identity auth scheme
+                LOG.debug("Skipping session create with JWT based auth")
+                return
+            except exceptions.BadJSONWebTokenProviderRequest as e:
+                LOG.error("Session create failed for endpoint %s due to "
+                          "error in retrieving JSON Web Token: %s",
+                          provider.url, e)
         else:
             # With client certificate authentication, username and password
             # may not be provided.
