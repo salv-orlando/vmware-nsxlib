@@ -3186,16 +3186,19 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
     def test_set_edge_cluster(self):
         tier1_id = '111'
         path = 'dummy/path'
+        preferred_edge_paths = ['dummy/path/edge/0', 'dummy/path/edge/1']
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
             self.resourceApi.set_edge_cluster_path(
                 tier1_id, path,
+                preferred_edge_paths=preferred_edge_paths,
                 tenant=TEST_TENANT)
 
             expected_def = core_defs.Tier1LocaleServiceDef(
                 tier1_id=tier1_id,
                 service_id=self.resourceApi._locale_service_id(tier1_id),
                 edge_cluster_path=path,
+                preferred_edge_paths=preferred_edge_paths,
                 tenant=TEST_TENANT)
 
             self.assert_called_with_def(api_call, expected_def)
@@ -3541,6 +3544,20 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
+
+    def test_get_preferred_edge_paths(self):
+        tier1_id = "1111"
+        preferred_edge_paths = [
+            "/fake/edge-clusters/edge-nodes/0",
+            "/fake/edge-clusters/edge-nodes/0"
+        ]
+        with mock.patch.object(
+                self.resourceApi, "get_locale_tier1_services",
+                return_value=[{"preferred_edge_paths": preferred_edge_paths}]):
+            result = self.resourceApi.get_preferred_edge_paths(tier1_id)
+            self.assertEqual(
+                preferred_edge_paths,
+                result)
 
 
 class TestPolicyTier1NoPassthrough(TestPolicyTier1):
