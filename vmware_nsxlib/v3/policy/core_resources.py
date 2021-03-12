@@ -1248,13 +1248,23 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
             tenant=tenant)
         self._delete_with_retry(t1service_def)
 
+    def get_preferred_edge_paths(self, tier1_id,
+                                 tenant=constants.POLICY_INFRA_TENANT):
+        services = self.get_locale_tier1_services(tier1_id, tenant=tenant)
+        for srv in services:
+            if 'preferred_edge_paths' in srv:
+                return srv['preferred_edge_paths']
+
     def set_edge_cluster_path(self, tier1_id, edge_cluster_path,
+                              preferred_edge_paths=IGNORE,
                               tenant=constants.POLICY_INFRA_TENANT):
-        t1service_def = core_defs.Tier1LocaleServiceDef(
-            tier1_id=tier1_id,
-            service_id=self._locale_service_id(tier1_id),
+        kwargs = self._get_user_args(
+            tier1_id=tier1_id, service_id=self._locale_service_id(tier1_id),
             edge_cluster_path=edge_cluster_path,
-            tenant=tenant)
+            preferred_edge_paths=preferred_edge_paths,
+            tenant=tenant
+        )
+        t1service_def = core_defs.Tier1LocaleServiceDef(**kwargs)
         self._create_or_store(t1service_def)
 
     def remove_edge_cluster(self, tier1_id,
