@@ -324,7 +324,7 @@ class NsxPolicyLoadBalancerCookiePersistenceProfileApi(
         results = self._list(lb_cookie_persistence_profile_def)
         # filter the results by resource type
         return [res for res in results
-                if res.get('resource_type') == self.entry_def.resource_type]
+                if res.get('resource_type') == self.entry_def.resource_type()]
 
     def update(self, persistence_profile_id,
                name=IGNORE,
@@ -388,7 +388,7 @@ class NsxPolicyLoadBalancerSourceIpPersistenceProfileApi(
         results = self._list(lb_source_ip_persistence_profile_def)
         # filter the results by resource type
         return [res for res in results
-                if res.get('resource_type') == self.entry_def.resource_type]
+                if res.get('resource_type') == self.entry_def.resource_type()]
 
     def update(self, persistence_profile_id,
                name=IGNORE,

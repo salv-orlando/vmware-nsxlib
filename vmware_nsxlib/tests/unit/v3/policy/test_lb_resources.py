@@ -292,7 +292,7 @@ class TestPolicyLBCookiePersistenceProfile(
         with mock.patch.object(
             self.policy_api, "list",
             return_value={'results': [
-                {'resource_type': self.resourceApi.entry_def.resource_type,
+                {'resource_type': self.resourceApi.entry_def.resource_type(),
                  'display_name': name}]}) as api_call:
             obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
             self.assertIsNotNone(obj)
@@ -305,7 +305,7 @@ class TestPolicyLBCookiePersistenceProfile(
         with mock.patch.object(
             self.policy_api, "list",
             return_value={'results': [
-                {'resource_type': self.resourceApi.entry_def.resource_type,
+                {'resource_type': self.resourceApi.entry_def.resource_type(),
                  'display_name': 'profile1'},
                 {'resource_type': 'wrong_type',
                  'display_name': 'profile2'}]}) as api_call:
@@ -436,7 +436,7 @@ class TestPolicyLBSourceIpProfileApi(test_resources.NsxPolicyLibTestCase):
         with mock.patch.object(
             self.policy_api, "list",
             return_value={'results': [
-                {'resource_type': self.resourceApi.entry_def.resource_type,
+                {'resource_type': self.resourceApi.entry_def.resource_type(),
                  'display_name': name}]}) as api_call:
             obj = self.resourceApi.get_by_name(name, tenant=TEST_TENANT)
             self.assertIsNotNone(obj)
@@ -446,6 +446,32 @@ class TestPolicyLBSourceIpProfileApi(test_resources.NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
 
     def test_list(self):
+        profiles = [{'resource_type': 'LBSourceIpPersistenceProfile',
+                     'id': 'default-source-ip-lb-persistence-profile',
+                     'display_name': 'default-source-ip-profile'}]
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': profiles}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = (
+                lb_defs.LBSourceIpPersistenceProfileDef(
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual(profiles, result)
+
+    def test_list_different_type(self):
+        profiles = [{'resource_type': 'LBSourceCookiePersistenceProfile',
+                     'id': 'default-source-ip-lb-persistence-profile',
+                     'display_name': 'default-source-ip-profile'}]
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': profiles}) as api_call:
+            result = self.resourceApi.list(tenant=TEST_TENANT)
+            expected_def = (
+                lb_defs.LBSourceIpPersistenceProfileDef(
+                    tenant=TEST_TENANT))
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_list_empty(self):
         with mock.patch.object(self.policy_api, "list",
                                return_value={'results': []}) as api_call:
             result = self.resourceApi.list(tenant=TEST_TENANT)
