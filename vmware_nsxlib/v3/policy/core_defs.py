@@ -516,6 +516,7 @@ class RouterLocaleServiceDef(ResourceDef):
     def get_obj_dict(self):
         body = super(RouterLocaleServiceDef, self).get_obj_dict()
         self._set_attr_if_specified(body, 'edge_cluster_path')
+        self._set_attr_if_specified(body, 'preferred_edge_paths')
         return body
 
 
