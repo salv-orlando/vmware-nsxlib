@@ -2483,6 +2483,21 @@ class NsxPolicyApi(object):
     def partial_updates_supported(self):
         return self.partial_updates
 
+    def update_with_put(self, resource_def, revision=None):
+        """Create or update a policy object with PUT
+
+        During concurrent read-updates, using PUT can be safer as it requires
+        revision number in the object. Policy API rejects the request if
+        revision number is not latest
+        """
+        path = resource_def.get_resource_path()
+        if resource_def.resource_use_cache():
+            self.cache.remove(path)
+        body = resource_def.get_obj_dict()
+        if revision is not None:
+            body.update({"_revision": revision})
+        return self.client.update(path, body)
+
     def create_or_update(self, resource_def, partial_updates=False,
                          force=False):
         """Create or update a policy object.
