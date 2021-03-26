@@ -87,6 +87,13 @@ class NsxPolicyLibTestCase(policy_testcase.TestPolicyApi):
         actual_dict = mock_api.call_args_list[call_num][0][0].body
         self.assertEqual(expected_dict, actual_dict)
 
+    def assert_called_with_def_and_kwargs(self, mock_api, expected_def,
+                                          call_num=0, **kwargs):
+        # verify the api & resource definition
+        self.assert_called_with_def(mock_api, expected_def, call_num=call_num)
+        actual_kwargs = mock_api.call_args_list[call_num][1]
+        self.assertDictEqual(actual_kwargs, kwargs)
+
     def mock_get(self, obj_id, obj_name, **kwargs):
         obj_dict = {
             'id': obj_id,
@@ -3685,7 +3692,7 @@ class TestPolicyTier0Bgp(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNone(result)
 
-    def test_update(self):
+    def test_update_patch(self):
         name = 'test'
         description = 'bgp'
         tier0_id = 't0'
@@ -3739,6 +3746,66 @@ class TestPolicyTier0Bgp(NsxPolicyLibTestCase):
             )
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNone(result)
+
+    def test_update_put(self):
+        name = 'test'
+        description = 'bgp'
+        tier0_id = 't0'
+        service_id = "default",
+        ecmp = True,
+        enabled = True,
+        graceful_restart_config = {
+            "mode": "DISABLE",
+            "timer": {
+                "restart_timer": 180,
+                "stale_route_timer": 600
+            }
+        }
+        inter_sr_ibgp = False,
+        local_as_num = "65546",
+        multipath_relax = False,
+        route_aggregations = [{
+            "prefix": "10.1.1.0/24"}, {
+            "prefix": "11.1.0.0/16", "summary_only": "false"}]
+        tags = [{"tag": "tag", "scope": "scope"}]
+        tenant = TEST_TENANT
+        with mock.patch.object(self.policy_api, "get",
+                               return_value={}),\
+            mock.patch.object(self.policy_api,
+                              "update_with_put") as api_call:
+            result = self.resourceApi.update(
+                tier0_id, service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant,
+                put=True,
+                revision=1)
+            expected_def = core_defs.BgpRoutingConfigDef(
+                tier0_id=tier0_id,
+                service_id=service_id,
+                name=name,
+                description=description,
+                ecmp=ecmp,
+                enabled=enabled,
+                graceful_restart_config=graceful_restart_config,
+                inter_sr_ibgp=inter_sr_ibgp,
+                local_as_num=local_as_num,
+                multipath_relax=multipath_relax,
+                route_aggregations=route_aggregations,
+                tags=tags,
+                tenant=tenant
+            )
+            self.assert_called_with_def_and_kwargs(
+                api_call, expected_def, revision=1)
+            self.assertIsNotNone(result)
 
     def test_get(self):
         tier0_id = 't0'
