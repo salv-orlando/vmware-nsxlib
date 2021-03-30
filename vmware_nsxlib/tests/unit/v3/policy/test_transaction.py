@@ -164,6 +164,21 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
 
         self.assert_infra_patch_call(expected_body)
 
+    def test_ip_address_pool_delete(self):
+
+        pool = {'id': 'pool1',
+                'resource_type': 'IpAddressPool'}
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.ip_pool.delete(ip_pool_id=pool['id'])
+
+        expected_body = {'resource_type': 'Infra',
+                         'children': [{'resource_type': 'ChildIpAddressPool',
+                                       'IpAddressPool': pool,
+                                       'marked_for_delete': True}]}
+
+        self.assert_infra_patch_call(expected_body)
+
     def test_groups_only(self):
 
         g1 = {'resource_type': 'Group', 'id': 'group1',
