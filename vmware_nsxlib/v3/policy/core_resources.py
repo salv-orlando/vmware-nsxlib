@@ -3222,7 +3222,7 @@ class NsxPolicyIpPoolApi(NsxPolicyResourceBase):
     def delete(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT):
         ip_pool_def = self.entry_def(ip_pool_id=ip_pool_id,
                                      tenant=tenant)
-        self._delete_with_retry(ip_pool_def)
+        self._delete_or_store(ip_pool_def)
 
     def get(self, ip_pool_id, tenant=constants.POLICY_INFRA_TENANT,
             silent=False):
