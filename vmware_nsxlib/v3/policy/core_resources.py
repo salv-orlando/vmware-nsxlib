@@ -191,8 +191,9 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
                 return obj
 
     def _get_realization_info(self, resource_def, entity_type=None,
-                              silent=False):
+                              silent=False, all_results=False):
         entities = []
+        results = []
         try:
             path = resource_def.get_resource_full_path()
             entities = self.policy_api.get_realized_entities(
@@ -202,11 +203,18 @@ class NsxPolicyResourceBase(object, metaclass=abc.ABCMeta):
                     # look for the entry with the right entity_type
                     for entity in entities:
                         if entity.get('entity_type') == entity_type:
-                            return entity
+                            if all_results:
+                                results.append(entity)
+                            else:
+                                return entity
+                    return results
                 else:
                     # return the first realization entry
                     # (Useful for resources with single realization entity)
-                    return entities[0]
+                    if not all_results:
+                        return entities[0]
+                    else:
+                        return entities
         except exceptions.ResourceNotFound:
             pass
 
@@ -1397,7 +1405,16 @@ class NsxPolicyTier1Api(NsxPolicyResourceBase):
                              silent=False,
                              tenant=constants.POLICY_INFRA_TENANT):
         tier1_def = self.entry_def(tier1_id=tier1_id, tenant=tenant)
-        return self._get_realization_info(tier1_def, silent=silent)
+        return self._get_realization_info(tier1_def, silent=silent,
+                                          entity_type=entity_type)
+
+    def get_realized_router_port(self, tier1_id, silent=False,
+                                 tenant=constants.POLICY_INFRA_TENANT):
+        tier1_def = self.entry_def(tier1_id=tier1_id, tenant=tenant)
+        ports = self._get_realization_info(
+            tier1_def, entity_type='RealizedLogicalRouterPort',
+            all_result=True, silent=silent)
+        return ports
 
     def wait_until_realized(self, tier1_id, entity_type=None,
                             tenant=constants.POLICY_INFRA_TENANT,
