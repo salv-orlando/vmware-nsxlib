@@ -2000,6 +2000,68 @@ class NsxPolicyTier1NatRuleApi(NsxPolicyResourceBase):
                      enabled=enabled)
 
 
+class NSXPolicyTier0StaticRouteApi(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.Tier0StaticRoute
+
+    def create_or_overwrite(self, name, tier0_id,
+                            static_route_id=None,
+                            description=IGNORE,
+                            network=IGNORE,
+                            next_hop=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_INFRA_TENANT):
+        static_route_id = self._init_obj_uuid(static_route_id)
+        static_route_def = self._init_def(tier0_id=tier0_id,
+                                          static_route_id=static_route_id,
+                                          name=name,
+                                          description=description,
+                                          network=network,
+                                          next_hop=next_hop,
+                                          tags=tags,
+                                          tenant=tenant)
+        self._create_or_store(static_route_def)
+        return static_route_id
+
+    def delete(self, tier0_id, static_route_id,
+               tenant=constants.POLICY_INFRA_TENANT):
+        static_route_def = self.entry_def(tier0_id=tier0_id,
+                                          static_route_id=static_route_id,
+                                          tenant=tenant)
+        self._delete_with_retry(static_route_def)
+
+    def get(self, tier0_id, static_route_id,
+            tenant=constants.POLICY_INFRA_TENANT, silent=False):
+        static_route_def = self.entry_def(tier0_id=tier0_id,
+                                          static_route_id=static_route_id,
+                                          tenant=tenant)
+        return self.policy_api.get(static_route_def, silent=silent)
+
+    def list(self, tier0_id,
+             tenant=constants.POLICY_INFRA_TENANT):
+        static_route_def = self.entry_def(tier0_id=tier0_id,
+                                          tenant=tenant)
+        return self._list(static_route_def)
+
+    def update(self, tier0_id, static_route_id,
+               name=IGNORE,
+               description=IGNORE,
+               network=IGNORE,
+               next_hop=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_INFRA_TENANT):
+        self._update(tier0_id=tier0_id,
+                     static_route_id=static_route_id,
+                     name=name,
+                     description=description,
+                     network=network,
+                     next_hop=next_hop,
+                     tags=tags,
+                     tenant=tenant)
+
+
 class NsxPolicyTier1StaticRouteApi(NsxPolicyResourceBase):
 
     @property
