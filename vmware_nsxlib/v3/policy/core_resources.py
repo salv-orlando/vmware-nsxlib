@@ -3644,7 +3644,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                      description=None, sequence_number=None, service_ids=None,
                      action=constants.ACTION_ALLOW,
                      source_groups=None, dest_groups=None,
-                     scope=None,
+                     scope=None, tags=IGNORE,
                      ip_protocol=nsx_constants.IPV4_IPV6,
                      direction=nsx_constants.IN_OUT,
                      logged=False, tag=None,
@@ -3688,6 +3688,7 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
                                    direction=direction,
                                    logged=logged,
                                    tag=tag,
+                                   tags=tags,
                                    service_entries=service_entries,
                                    tenant=tenant,
                                    plain_groups=plain_groups)
