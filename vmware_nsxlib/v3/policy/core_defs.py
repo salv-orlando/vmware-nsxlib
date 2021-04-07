@@ -75,6 +75,9 @@ TIER0_LOCALE_SERVICES_PATH_PATTERN = (TIER0S_PATH_PATTERN +
 TIER1_LOCALE_SERVICES_PATH_PATTERN = (TIER1S_PATH_PATTERN +
                                       "%s/locale-services/")
 
+OBJECT_PERMISSIONS_PATH_PATTERN = (TENANTS_PATH_PATTERN +
+                                   "object-permissions")
+
 
 class ResourceDef(object, metaclass=abc.ABCMeta):
     def __init__(self, nsx_version=None, **kwargs):
@@ -2779,4 +2782,44 @@ class Tier0RouteRedistributionRule(object):
         if self.route_map_path:
             body['route_map_path'] = self.route_map_path
 
+        return body
+
+
+class ObjectRolePermissionGroupDef(ResourceDef):
+
+    @staticmethod
+    def resource_type():
+        return 'ObjectRolePermissionGroupDef'
+
+    # GET and DELETE accept query parameters in url, but PATCH url does not
+    # accept query parameters. path_prefix and role_name uniquely defines
+    # this resource on NSX
+    @property
+    def path_pattern(self):
+        path_prefix = self.get_attr('path_prefix')
+        role_name = self.get_attr('role_name')
+        if path_prefix and path_prefix.startswith('/'):
+            path_prefix = path_prefix[1:]
+        if not self.get_attr('patch') and (path_prefix or role_name):
+            url_query = utils.params_to_url_query(
+                path_prefix=path_prefix,
+                role_name=role_name
+            )
+            return OBJECT_PERMISSIONS_PATH_PATTERN + "?" + url_query
+        return OBJECT_PERMISSIONS_PATH_PATTERN
+
+    @property
+    def path_ids(self):
+        return ('tenant', 'dummy')
+
+    def get_obj_dict(self):
+        body = super(ObjectRolePermissionGroupDef, self).get_obj_dict()
+        self._set_attrs_if_specified(body, ['inheritance_disabled',
+                                            'operation',
+                                            'path_prefix',
+                                            'role_name',
+                                            'rule_disabled'])
+        obj_id = self.get_attr("orbac_id")
+        if obj_id:
+            body.update({"id": obj_id})
         return body
