@@ -5095,7 +5095,7 @@ class NsxPolicyGlobalConfig(NsxPolicyResourceBase):
         raise exceptions.ManagerError(details=err_msg)
 
     def _set_l3_forwarding_mode(self, mode, tenant):
-        # Using PUT as PATCH is not supported for this API
+        # Using PUT as PATCH is not supported for this API.
         config = self.get()
         if config['l3_forwarding_mode'] != mode:
             config['l3_forwarding_mode'] = mode
@@ -5108,3 +5108,77 @@ class NsxPolicyGlobalConfig(NsxPolicyResourceBase):
 
     def disable_ipv6(self, tenant=constants.POLICY_INFRA_TENANT):
         return self._set_l3_forwarding_mode('IPV4_ONLY', tenant)
+
+
+class NsxPolicyObjectRolePermissionGroupApi(NsxPolicyResourceBase):
+
+    @property
+    def entry_def(self):
+        return core_defs.ObjectRolePermissionGroupDef
+
+    # This will send a PATCH call: /policy/api/v1/aaa/object-permissions.
+    def create_or_overwrite(self, name, operation, path_prefix, role_name,
+                            orbac_id=IGNORE,
+                            description=IGNORE,
+                            inheritance_disabled=IGNORE,
+                            rule_disabled=IGNORE,
+                            tags=IGNORE,
+                            tenant=constants.POLICY_AAA_TENANT):
+
+        orbac_def = self._init_def(name=name,
+                                   operation=operation,
+                                   path_prefix=path_prefix,
+                                   role_name=role_name,
+                                   orbac_id=orbac_id,
+                                   description=description,
+                                   inheritance_disabled=inheritance_disabled,
+                                   rule_disabled=rule_disabled,
+                                   tags=tags,
+                                   tenant=tenant,
+                                   patch=True)
+        self.policy_api.create_or_update(orbac_def)
+
+    # This will send a PATCH call: /policy/api/v1/aaa/object-permissions.
+    def update(self, name, operation, path_prefix, role_name,
+               orbac_id=IGNORE,
+               description=IGNORE,
+               inheritance_disabled=IGNORE,
+               rule_disabled=IGNORE,
+               tags=IGNORE,
+               tenant=constants.POLICY_AAA_TENANT):
+        self._update(name=name,
+                     operation=operation,
+                     path_prefix=path_prefix,
+                     role_name=role_name,
+                     orbac_id=orbac_id,
+                     description=description,
+                     inheritance_disabled=inheritance_disabled,
+                     rule_disabled=rule_disabled,
+                     tags=tags,
+                     tenant=tenant,
+                     patch=True)
+
+    def get(self, path_prefix, role_name, tenant=constants.POLICY_AAA_TENANT):
+        err_msg = (_("This action is not supported"))
+        raise exceptions.ManagerError(details=err_msg)
+
+    # This will send a GET call:
+    # /policy/api/v1/aaa/object-permissions?path_prefix=...&role_name=...
+    def list(self, path_prefix=None, role_name=None,
+             tenant=constants.POLICY_AAA_TENANT):
+        orbac_def = self.entry_def(path_prefix=path_prefix,
+                                   role_name=role_name,
+                                   tenant=tenant)
+        return self._list(orbac_def)
+
+    # This will send a DELETE call:
+    # /policy/api/v1/aaa/object-permissions?path_prefix=...&role_name=...
+    # path_prefix and role_name must be specified in the url as they are
+    # the identifier for an ORBAC object on NSX. Otherwise, NSX will
+    # still return success but actually delete nothing.
+    def delete(self, path_prefix, role_name,
+               tenant=constants.POLICY_AAA_TENANT):
+        orbac_def = self.entry_def(path_prefix=path_prefix,
+                                   role_name=role_name,
+                                   tenant=tenant)
+        self._delete_with_retry(orbac_def)

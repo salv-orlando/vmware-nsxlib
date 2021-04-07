@@ -147,6 +147,8 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.load_balancer = lb_resources.NsxPolicyLoadBalancerApi(*args)
         self.ipsec_vpn = ipsec_vpn_resources.NsxPolicyIpsecVpnApi(*args)
         self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
+        self.object_permission = (
+            core_resources.NsxPolicyObjectRolePermissionGroupApi(*args))
 
     def get_nsxlib_passthrough(self):
         return self.nsx_api
@@ -172,6 +174,8 @@ class NsxPolicyLib(lib.NsxLibBase):
             version.LooseVersion(nsx_constants.NSX_VERSION_2_4_0)):
             # Features available since 2.4
             if (feature == nsx_constants.FEATURE_NSX_POLICY_NETWORKING):
+                return True
+            if (feature == nsx_constants.FEATURE_NSX_POLICY_ORBAC):
                 return True
 
         if (version.LooseVersion(self.get_version()) >=

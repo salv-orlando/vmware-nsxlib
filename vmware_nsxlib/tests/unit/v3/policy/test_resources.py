@@ -6969,3 +6969,89 @@ class TestPolicyTier0StaticRoute(NsxPolicyLibTestCase):
                 static_route_id=static_route_id,
                 tenant=TEST_TENANT)
             self.assert_called_with_def(api_call, expected_def)
+
+
+class TestNsxPolicyObjectRolePermissionGroup(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestNsxPolicyObjectRolePermissionGroup, self).setUp()
+        self.resourceApi = self.policy_lib.object_permission
+
+    def test_create(self):
+        name = 'orbac_test'
+        operation = 'none'
+        path_prefix = '/fake/path/prefix'
+        role_name = 'cloud_admin'
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            self.resourceApi.create_or_overwrite(
+                name, operation, path_prefix, role_name, tenant=TEST_TENANT)
+            expected_def = core_defs.ObjectRolePermissionGroupDef(
+                name=name,
+                operation=operation,
+                path_prefix=path_prefix,
+                role_name=role_name,
+                tenant=TEST_TENANT,
+                patch=True)
+
+            self.assert_called_with_def(api_call, expected_def)
+
+    def test_update(self):
+        name = 'orbac_test'
+        operation = 'none'
+        path_prefix = '/fake/path/prefix'
+        role_name = 'cloud_admin'
+        entry_body = {
+            "path_prefix": path_prefix,
+            "role_name": role_name,
+            "operation": "read",
+            "name": name
+        }
+        with mock.patch.object(self.policy_api,
+                               "get",
+                               return_value=entry_body),\
+            self.mock_create_update() as update_call:
+            self.resourceApi.update(
+                name, operation, path_prefix, role_name, tenant=TEST_TENANT)
+
+            expected_def = core_defs.ObjectRolePermissionGroupDef(
+                name=name,
+                operation=operation,
+                path_prefix=path_prefix,
+                role_name=role_name,
+                tenant=TEST_TENANT,
+                patch=True)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_get(self):
+        self.skipTest("The action is not supported by this resource")
+
+    def test_list(self):
+        path_prefix = '/fake/path/prefix'
+        role_name = 'cloud_admin'
+        with mock.patch.object(self.policy_api, "list",
+                               return_value={'results': []}) as api_call:
+            result = self.resourceApi.list(path_prefix=path_prefix,
+                                           role_name=role_name,
+                                           tenant=TEST_TENANT)
+            expected_def = core_defs.ObjectRolePermissionGroupDef(
+                path_prefix=path_prefix,
+                role_name=role_name,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertEqual([], result)
+
+    def test_delete(self):
+        path_prefix = '/fake/path/prefix'
+        role_name = 'cloud_admin'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(path_prefix=path_prefix,
+                                    role_name=role_name,
+                                    tenant=TEST_TENANT)
+            expected_def = core_defs.ObjectRolePermissionGroupDef(
+                path_prefix=path_prefix,
+                role_name=role_name,
+                tenant=TEST_TENANT)
+
+            self.assert_called_with_def(api_call, expected_def)

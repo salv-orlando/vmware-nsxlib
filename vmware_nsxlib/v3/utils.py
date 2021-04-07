@@ -694,6 +694,14 @@ def get_dhcp_opt_code(name):
     return _supported_options.get(name)
 
 
+def params_to_url_query(**kwargs):
+    queries = []
+    for key, val in kwargs.items():
+        if key not in ("", None) and val not in ("", None):
+            queries.append("%s=%s" % (key, val))
+    return "&".join(queries)
+
+
 class APIRateLimiter(object):
     def __init__(self, max_calls, period=1.0):
         self._enabled = max_calls is not None
