@@ -6919,3 +6919,53 @@ class TestPolicyGlobalConfig(NsxPolicyLibTestCase):
             self.resourceApi.disable_ipv6(tenant=TEST_TENANT)
             api_get.assert_called_once()
             api_put.assert_not_called()
+
+
+class TestPolicyTier0StaticRoute(NsxPolicyLibTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(TestPolicyTier0StaticRoute, self).setUp()
+        self.resourceApi = self.policy_lib.tier0_static_route
+
+    def test_create(self):
+        name = 'test'
+        description = 'desc'
+        tier0_id = '111'
+        static_route_id = '222'
+        network = '1.1.1.1/24'
+        nexthop = '2.2.2.2'
+
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite(
+                name, tier0_id,
+                static_route_id=static_route_id,
+                description=description,
+                network=network,
+                next_hop=nexthop,
+                tenant=TEST_TENANT)
+
+            expected_def = core_defs.Tier0StaticRoute(
+                tier0_id=tier0_id,
+                static_route_id=static_route_id,
+                name=name,
+                description=description,
+                network=network,
+                next_hop=nexthop,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
+    def test_delete(self):
+        tier0_id = '111'
+        static_route_id = '222'
+        with mock.patch.object(self.policy_api, "delete") as api_call:
+            self.resourceApi.delete(
+                tier0_id,
+                static_route_id,
+                tenant=TEST_TENANT)
+            expected_def = core_defs.Tier0StaticRoute(
+                tier0_id=tier0_id,
+                static_route_id=static_route_id,
+                tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
