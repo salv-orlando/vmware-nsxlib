@@ -740,8 +740,17 @@ class RouterStaticRoute(ResourceDef):
 
         # next hops
         if self.has_attr('next_hop'):
+            next_hops = []
+            param_dict = dict()
             next_hop = self.get_attr('next_hop')
-            next_hops = [{'ip_address': next_hop}]
+            param_dict['ip_address'] = next_hop
+
+            # scope parameter
+            if self.has_attr('scope'):
+                scope_path = self.get_attr('scope')
+                param_dict['scope'] = [scope_path]
+
+            next_hops.append(param_dict)
             self._set_attr_if_specified(body, 'next_hop',
                                         body_attr='next_hops',
                                         value=next_hops)
