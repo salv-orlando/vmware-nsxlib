@@ -2012,7 +2012,8 @@ class NSXPolicyTier0StaticRouteApi(NsxPolicyResourceBase):
                             network=IGNORE,
                             next_hop=IGNORE,
                             tags=IGNORE,
-                            tenant=constants.POLICY_INFRA_TENANT):
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            scope=IGNORE):
         static_route_id = self._init_obj_uuid(static_route_id)
         static_route_def = self._init_def(tier0_id=tier0_id,
                                           static_route_id=static_route_id,
@@ -2021,7 +2022,8 @@ class NSXPolicyTier0StaticRouteApi(NsxPolicyResourceBase):
                                           network=network,
                                           next_hop=next_hop,
                                           tags=tags,
-                                          tenant=tenant)
+                                          tenant=tenant,
+                                          scope=scope)
         self._create_or_store(static_route_def)
         return static_route_id
 

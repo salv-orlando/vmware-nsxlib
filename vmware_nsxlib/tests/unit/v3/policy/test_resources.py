@@ -6934,6 +6934,7 @@ class TestPolicyTier0StaticRoute(NsxPolicyLibTestCase):
         static_route_id = '222'
         network = '1.1.1.1/24'
         nexthop = '2.2.2.2'
+        scope = 'ContainerT0'
 
         with mock.patch.object(self.policy_api,
                                "create_or_update") as api_call:
@@ -6943,7 +6944,9 @@ class TestPolicyTier0StaticRoute(NsxPolicyLibTestCase):
                 description=description,
                 network=network,
                 next_hop=nexthop,
-                tenant=TEST_TENANT)
+                tenant=TEST_TENANT,
+                scope=scope
+            )
 
             expected_def = core_defs.Tier0StaticRoute(
                 tier0_id=tier0_id,
@@ -6952,7 +6955,9 @@ class TestPolicyTier0StaticRoute(NsxPolicyLibTestCase):
                 description=description,
                 network=network,
                 next_hop=nexthop,
-                tenant=TEST_TENANT)
+                tenant=TEST_TENANT,
+                scope=scope
+            )
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
 
