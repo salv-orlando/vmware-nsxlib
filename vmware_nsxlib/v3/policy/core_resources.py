@@ -2045,6 +2045,18 @@ class NsxPolicyTier1StaticRouteApi(NsxPolicyResourceBase):
                      tags=tags,
                      tenant=tenant)
 
+    def wait_until_realized(self, tier1_id, static_route_id,
+                            entity_type=None,
+                            tenant=constants.POLICY_INFRA_TENANT,
+                            sleep=None, max_attempts=None):
+        static_route_def = self.entry_def(tier1_id=tier1_id,
+                                          static_route_id=static_route_id,
+                                          tenant=tenant)
+        return self._wait_until_realized(static_route_def,
+                                         entity_type=entity_type,
+                                         sleep=sleep,
+                                         max_attempts=max_attempts)
+
 
 class NsxPolicyTier1SegmentApi(NsxPolicyResourceBase):
     """NSX Tier1 Segment API """
