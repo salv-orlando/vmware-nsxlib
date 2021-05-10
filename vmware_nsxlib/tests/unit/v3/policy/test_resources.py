@@ -4145,6 +4145,16 @@ class TestPolicyTier1StaticRoute(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertEqual(mock_get, result)
 
+    def test_wait_until_realized_failed(self):
+        tier1_id = 'tier1'
+        route_id = 'route1'
+        with mock.patch.object(self.resourceApi, "_get_realization_info",
+                               return_value=[]):
+            self.assertRaises(nsxlib_exc.RealizationTimeoutError,
+                              self.resourceApi.wait_until_realized,
+                              tier1_id, route_id, tenant=TEST_TENANT,
+                              max_attempts=3, sleep=0.1)
+
 
 class TestPolicyTier0(NsxPolicyLibTestCase):
 
