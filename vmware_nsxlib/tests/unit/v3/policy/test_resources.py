@@ -3145,6 +3145,34 @@ class TestPolicyTier1(NsxPolicyLibTestCase):
                 tier1_id, segment_id)
             self.assertEqual(lrp_id, actual_id)
 
+    def test_get_realization_info(self):
+        tier1_id = 'id-rtr'
+        with mock.patch.object(self.resourceApi, "_get_realization_info") as\
+                mock_call:
+            self.resourceApi.get_realization_info(
+                tier1_id, entity_type='RealizedLogicalRouterPort', tenant=None)
+            expected_def = core_defs.Tier1Def(tier1_id=tier1_id, tenant=None)
+            self.assert_called_with_def_and_kwargs(
+                mock_call,
+                expected_def,
+                entity_type='RealizedLogicalRouterPort',
+                silent=False)
+
+    def test_get_realized_router_port(self):
+        tier1_id = 'id-rtr'
+        with mock.patch.object(self.resourceApi, "_get_realization_info") as \
+                mock_call:
+            self.resourceApi.get_realized_router_port(
+                tier1_id, tenant=None)
+            expected_def = core_defs.Tier1Def(tier1_id=tier1_id, tenant=None)
+            self.assert_called_with_def_and_kwargs(
+                mock_call,
+                expected_def,
+                entity_type='RealizedLogicalRouterPort',
+                all_result=True,
+                silent=False
+            )
+
     def test_set_dhcp_relay(self):
         tier1_id = '111'
         segment_id = '222'
