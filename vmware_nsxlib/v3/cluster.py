@@ -39,6 +39,7 @@ from requests import adapters
 from vmware_nsxlib._i18n import _
 from vmware_nsxlib.v3 import client as nsx_client
 from vmware_nsxlib.v3 import constants
+from vmware_nsxlib.v3.debug_retry import RetryDebug
 from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3 import utils
 
@@ -224,7 +225,7 @@ class NSXRequestsHTTPProvider(AbstractHTTPProvider):
         # we are pooling with eventlet in the cluster class
         adapter = NSXHTTPAdapter(
             pool_connections=1, pool_maxsize=1,
-            max_retries=config.retries,
+            max_retries=RetryDebug.from_int(config.retries),
             pool_block=False, thumbprint=thumbprint)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
