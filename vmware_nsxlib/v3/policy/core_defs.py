@@ -1163,10 +1163,11 @@ class SegmentPortDef(ResourceDef):
                 body['address_bindings'] = [binding.get_obj_dict()
                                             for binding in address_bindings]
         if (self.has_attr('attachment_type') or self.has_attr('vif_id') or
-            self.has_attr('hyperbus_mode')):
+            self.has_attr('hyperbus_mode') or self.has_attr('app_id')):
             if (not self.get_attr('attachment_type') and
                 not self.get_attr('vif_id') and
-                not self.get_attr('hyperbus_mode')):
+                not self.get_attr('hyperbus_mode') and
+                not self.get_attr('app_id')):
                 # detach operation
                 body['attachment'] = None
             else:
