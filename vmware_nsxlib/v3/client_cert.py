@@ -334,9 +334,8 @@ class ClientCertificateManager(object):
     def _register_cert(self, cert, node_id):
         cert_pem = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
 
-        self._nsx_trust_management.create_cert_and_identity(self._identity,
-                                                            cert_pem,
-                                                            node_id)
+        self._nsx_trust_management.create_identity_with_cert(
+            self._identity, cert_pem, node_id, 'enterprise_admin')
 
 
 class ClientCertProvider(object):
