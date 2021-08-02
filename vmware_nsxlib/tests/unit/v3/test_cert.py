@@ -72,13 +72,9 @@ class NsxV3ClientCertificateTestCase(nsxlib_testcase.NsxClientTestCase):
                              'error_message': 'bad luck'}))
 
     def _get_mocked_trust(self, action, cert_pem):
-
         fake_responses = []
         if 'create' in action:
-            # import cert and return its id
-            results = [{'id': self.cert_id}]
-            fake_responses.append(self._get_mocked_response(201, results))
-            # and then bind this id to principal identity
+            # Create principal identity with cert
             fake_responses.append(self._get_mocked_response(201, []))
 
         if 'delete' in action:
@@ -119,18 +115,12 @@ class NsxV3ClientCertificateTestCase(nsxlib_testcase.NsxClientTestCase):
         """Verify API calls to create cert and identity on backend"""
         # verify API call to import cert on backend
         base_uri = 'https://1.2.3.4/api/v1/trust-management'
-        uri = base_uri + '/certificates?action=import'
-        expected_body = {'pem_encoded': cert_pem}
-        test_client.assert_json_call('post', mocked_trust.client, uri,
-                                     single_call=False,
-                                     data=jsonutils.dumps(expected_body))
-
-        # verify API call to bind cert to identity on backend
-        uri = base_uri + '/principal-identities'
+        # verify API call to create identity with cert on backend
+        uri = base_uri + '/principal-identities/with-certificate'
         expected_body = {'name': self.identity,
+                         'certificate_pem': cert_pem,
                          'node_id': self.node_id,
-                         'permission_group': 'read_write_api_users',
-                         'certificate_id': self.cert_id,
+                         'role': 'enterprise_admin',
                          'is_protected': True}
         test_client.assert_json_call('post', mocked_trust.client, uri,
                                      single_call=False,
