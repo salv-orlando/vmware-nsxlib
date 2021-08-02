@@ -86,7 +86,7 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
                 arg_val=permission_group,
                 arg_name='permission_group')
         body = {'name': name, 'certificate_id': cert_id,
-                'node_id': node_id, 'permission_group': permission_group,
+                'node_id': node_id, 'role': permission_group,
                 'is_protected': True}
         self.client.create(ID_SECTION, body)
 
@@ -103,7 +103,6 @@ class NsxLibTrustManagement(utils.NsxLibApiBase):
 
         if not isinstance(cert_pem, six.text_type):
             cert_pem = cert_pem.decode('ascii')
-
         cert_ids = [cert['id'] for cert in certs
                     if cert['pem_encoded'] == cert_pem]
         if not cert_ids:
