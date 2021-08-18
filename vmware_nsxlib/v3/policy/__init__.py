@@ -25,6 +25,7 @@ from vmware_nsxlib.v3 import lib
 from vmware_nsxlib.v3 import nsx_constants
 from vmware_nsxlib.v3 import utils as lib_utils
 
+from vmware_nsxlib.v3.policy import alb_auth_token_provider
 from vmware_nsxlib.v3.policy import core_defs
 from vmware_nsxlib.v3.policy import core_resources
 from vmware_nsxlib.v3.policy import ipsec_vpn_resources
@@ -149,6 +150,8 @@ class NsxPolicyLib(lib.NsxLibBase):
         self.global_config = core_resources.NsxPolicyGlobalConfig(*args)
         self.object_permission = (
             core_resources.NsxPolicyObjectRolePermissionGroupApi(*args))
+        self.alb_token_provider = alb_auth_token_provider.AlbAuthTokenProvider(
+            self.client)
 
     def get_nsxlib_passthrough(self):
         return self.nsx_api
