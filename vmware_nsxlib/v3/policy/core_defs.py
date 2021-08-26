@@ -938,12 +938,15 @@ class BaseSegmentDef(ResourceDef):
                            for subnet in self.get_attr('subnets')]
             self._set_attr_if_specified(body, 'subnets', value=subnets)
 
+        adv_cfg = {}
         if self.has_attr('ip_pool_id'):
             ip_pool_id = self.get_attr('ip_pool_id')
-            adv_cfg = self._get_adv_config(ip_pool_id)
-            self._set_attr_if_specified(body, 'ip_pool_id',
-                                        body_attr='advanced_config',
-                                        value=adv_cfg)
+            adv_cfg.update(self._get_adv_config_ip_pool(ip_pool_id))
+        if self.has_attr('multicast'):
+            adv_cfg['multicast'] = self.get_attr('multicast')
+        if adv_cfg:
+            body['advanced_config'] = adv_cfg
+
         self._set_attrs_if_specified(
             body, ['domain_name', 'vlan_ids', 'ls_id'])
         return body
@@ -952,7 +955,7 @@ class BaseSegmentDef(ResourceDef):
     def resource_type():
         return 'Segment'
 
-    def _get_adv_config(self, ip_pool_id):
+    def _get_adv_config_ip_pool(self, ip_pool_id):
         if ip_pool_id is None:
             return {'address_pool_paths': []}
         ip_pool_def = IpPoolDef(ip_pool_id=ip_pool_id)

@@ -2259,6 +2259,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                             vlan_ids=IGNORE,
                             transport_zone_id=IGNORE,
                             ip_pool_id=IGNORE,
+                            multicast=IGNORE,
                             metadata_proxy_id=IGNORE,
                             dhcp_server_config_id=IGNORE,
                             admin_state=IGNORE,
@@ -2286,6 +2287,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
             vlan_ids=vlan_ids,
             transport_zone_id=transport_zone_id,
             ip_pool_id=ip_pool_id,
+            multicast=multicast,
             metadata_proxy_id=metadata_proxy_id,
             dhcp_server_config_id=dhcp_server_config_id,
             admin_state=admin_state,
@@ -2323,10 +2325,14 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
     def update(self, segment_id, name=IGNORE, description=IGNORE,
                tier1_id=IGNORE, tier0_id=IGNORE, subnets=IGNORE,
                dns_domain_name=IGNORE,
-               vlan_ids=IGNORE, metadata_proxy_id=IGNORE,
+               vlan_ids=IGNORE, multicast=IGNORE, metadata_proxy_id=IGNORE,
                dhcp_server_config_id=IGNORE, admin_state=IGNORE,
                tags=IGNORE, tenant=constants.POLICY_INFRA_TENANT):
 
+        # NOTE: Setting multicast upon update will reset any other advanced
+        # config attribute that might have been set previously
+        # TODO(sorlando): Regardless of patch strategy always fetch advanced
+        # config and merge before updating
         self._update(segment_id=segment_id,
                      name=name,
                      description=description,
@@ -2335,6 +2341,7 @@ class NsxPolicySegmentApi(NsxPolicyResourceBase):
                      subnets=subnets,
                      dns_domain_name=dns_domain_name,
                      vlan_ids=vlan_ids,
+                     multicast=multicast,
                      metadata_proxy_id=metadata_proxy_id,
                      dhcp_server_config_id=dhcp_server_config_id,
                      admin_state=admin_state,
