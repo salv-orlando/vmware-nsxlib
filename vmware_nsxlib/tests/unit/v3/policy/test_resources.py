@@ -3930,7 +3930,8 @@ class TestPolicySegment(NsxPolicyLibTestCase):
         self.resourceApi = self.policy_lib.segment
 
     def _test_create(self, tier1_id=None, tier0_id=None, mdproxy=None,
-                     dhcp_server=None, admin_state=None, overlay_id=None):
+                     dhcp_server=None, admin_state=None, multicast=None,
+                     overlay_id=None):
         name = 'test'
         description = 'desc'
         subnets = [core_defs.Subnet(gateway_address="2.2.2.0/24")]
@@ -3938,6 +3939,8 @@ class TestPolicySegment(NsxPolicyLibTestCase):
                   'subnets': subnets,
                   'ip_pool_id': 'external-ip-pool',
                   'tenant': TEST_TENANT}
+        if multicast:
+            kwargs['multicast'] = multicast
         if tier1_id:
             kwargs['tier1_id'] = tier1_id
 
@@ -3968,6 +3971,13 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
+            # In tests we are always putting an ip pool, verify it exists
+            expected_advanced_config = {
+                'address_pool_paths': ['/infra/ip-pools/external-ip-pool']}
+            if multicast is not None:
+                expected_advanced_config.update({'multicast': multicast})
+            self.assertEqual(expected_def.get_obj_dict()['advanced_config'],
+                             expected_advanced_config)
 
     def test_create_with_t1(self):
         self._test_create(tier1_id='111')
@@ -3994,6 +4004,9 @@ class TestPolicySegment(NsxPolicyLibTestCase):
 
     def test_create_with_overlay_id(self):
         self._test_create(overlay_id=100)
+
+    def test_create_with_multicast(self):
+        self._test_create(tier1_id='111', multicast=True)
 
     def test_delete(self):
         segment_id = '111'
@@ -4037,6 +4050,25 @@ class TestPolicySegment(NsxPolicyLibTestCase):
                                                 name=name,
                                                 admin_state=admin_state,
                                                 tenant=TEST_TENANT)
+            self.assert_called_with_def(update_call, expected_def)
+
+    def test_update_with_multicast(self):
+        # Test and update call which sets advanced_config
+        segment_id = '111'
+        admin_state = False
+        with self.mock_get(segment_id, 'xxx'), \
+            self.mock_create_update() as update_call:
+
+            self.resourceApi.update(segment_id,
+                                    admin_state=admin_state,
+                                    multicast=False,
+                                    tenant=TEST_TENANT)
+            expected_def = core_defs.SegmentDef(
+                nsx_version="3.2.0",
+                segment_id=segment_id,
+                multicast=False,
+                admin_state=admin_state,
+                tenant=TEST_TENANT)
             self.assert_called_with_def(update_call, expected_def)
 
     def test_remove_connectivity_and_subnets(self):
