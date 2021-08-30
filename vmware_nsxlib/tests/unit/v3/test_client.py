@@ -314,6 +314,9 @@ class NsxV3RESTClientTestCase(nsxlib_testcase.NsxClientTestCase):
         exc = client.http_error_to_exception(500, 607)
         self.assertEqual(exc, nsxlib_exc.APITransactionAborted)
 
+        exc = client.http_error_to_exception(500, 610)
+        self.assertEqual(exc, nsxlib_exc.APITransactionAborted)
+
         exc = client.http_error_to_exception(
             requests.codes.INTERNAL_SERVER_ERROR, 98, [777])
         self.assertEqual(exc, nsxlib_exc.CannotConnectToServer)
