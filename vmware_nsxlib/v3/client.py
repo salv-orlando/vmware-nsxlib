@@ -98,7 +98,8 @@ def http_error_to_exception(status_code, error_code, related_error_codes=None):
         requests.codes.INTERNAL_SERVER_ERROR:
             {'98': exceptions.CannotConnectToServer,
              '99': exceptions.ClientCertificateNotTrusted,
-             '607': exceptions.APITransactionAborted},
+             '607': exceptions.APITransactionAborted,
+             '610': exceptions.APITransactionAborted},
         requests.codes.FORBIDDEN:
             {'98': exceptions.BadXSRFToken,
              '403': exceptions.InvalidCredentials,
