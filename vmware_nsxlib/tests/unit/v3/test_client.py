@@ -314,6 +314,9 @@ class NsxV3RESTClientTestCase(nsxlib_testcase.NsxClientTestCase):
         exc = client.http_error_to_exception(500, 607)
         self.assertEqual(exc, nsxlib_exc.APITransactionAborted)
 
+        exc = client.http_error_to_exception(500, 610)
+        self.assertEqual(exc, nsxlib_exc.APITransactionAborted)
+
         exc = client.http_error_to_exception(requests.codes.FORBIDDEN, 505)
         self.assertEqual(exc, nsxlib_exc.InvalidLicense)
 
