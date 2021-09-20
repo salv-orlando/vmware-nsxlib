@@ -41,6 +41,7 @@ ENFORCEMENT_POINT_PATTERN = (TENANTS_PATH_PATTERN +
                              "sites/default/enforcement-points/")
 TRANSPORT_ZONE_PATTERN = ENFORCEMENT_POINT_PATTERN + "%s/transport-zones/"
 EDGE_CLUSTER_PATTERN = ENFORCEMENT_POINT_PATTERN + "%s/edge-clusters/"
+AVI_ENDPOINT_PATTERN = ENFORCEMENT_POINT_PATTERN + "alb-endpoint"
 
 SEGMENT_SECURITY_PROFILES_PATH_PATTERN = (TENANTS_PATH_PATTERN +
                                           "segment-security-profiles/")
