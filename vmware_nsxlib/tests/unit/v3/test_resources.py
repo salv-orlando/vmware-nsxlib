@@ -325,7 +325,7 @@ class TestSwitchingProfileTestCase(BaseTestResource):
         mocked_resource.list()
         test_client.assert_json_call(
             'get', mocked_resource,
-            'https://1.2.3.4/api/v1/switching-profiles/'
+            'https://1.2.3.4/api/v1/switching-profiles'
             '?include_system_owned=True',
             data=None,
             headers=self.default_headers())

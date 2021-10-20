@@ -285,9 +285,17 @@ class NsxLibSwitchingProfile(utils.NsxLibApiBase):
     def uri_segment(self):
         return 'switching-profiles'
 
+    def get_path(self, resource=None, query_params=None):
+        path = super().get_path(resource)
+        if query_params:
+            param_str = "&".join("%s=%s" % (k, v) for (k, v) in
+                                 query_params.items())
+            path = '%s?%s' % (path, param_str)
+        return path
+
     def list(self):
         return self.client.list(
-            self.get_path('?include_system_owned=True'))
+            self.get_path(query_params={'include_system_owned': True}))
 
     def create(self, profile_type, display_name=None,
                description=None, **api_args):
