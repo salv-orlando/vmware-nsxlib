@@ -1611,18 +1611,33 @@ class IpPoolStaticSubnetDef(IpPoolSubnetDef):
 class Condition(object):
     def __init__(self, value, key=constants.CONDITION_KEY_TAG,
                  member_type=constants.CONDITION_MEMBER_PORT,
-                 operator=constants.CONDITION_OP_EQUALS):
+                 operator=constants.CONDITION_OP_EQUALS,
+                 scope_operator=None, nsx_version=None):
+        # Adding NSX version for 3.2.0, new field 'scope_operator' added
         self.value = value
         self.key = key
         self.member_type = member_type
         self.operator = operator
+        self.scope_operator = scope_operator
+        self.nsx_version = nsx_version
 
     def get_obj_dict(self):
-        return {'resource_type': 'Condition',
+        body = {'resource_type': 'Condition',
                 'member_type': self.member_type,
                 'key': self.key,
                 'value': self.value,
                 'operator': self.operator}
+        if self.scope_operator is not None:
+            if (version.LooseVersion(self.nsx_version) >=
+                    version.LooseVersion(nsx_constants.NSX_VERSION_3_2_0)):
+                body['scope_operator'] = self.scope_operator
+            else:
+                LOG.warning(
+                    "Ignoring scope_operator '%s' for NSX Policy Group : this "
+                    "feature is not supported.Current NSX version: %s. Minimum"
+                    " supported version: %s", self.scope_operator,
+                    self.nsx_version, '3.2.0')
+        return body
 
     def __eq__(self, other):
         if isinstance(other, Condition):

@@ -576,14 +576,17 @@ class NsxPolicyGroupApi(NsxPolicyResourceBase):
         return group_id
 
     def build_condition(
-        self, cond_val=None,
-        cond_key=constants.CONDITION_KEY_TAG,
-        cond_op=constants.CONDITION_OP_EQUALS,
-        cond_member_type=constants.CONDITION_MEMBER_PORT):
+            self, cond_val=None,
+            cond_key=constants.CONDITION_KEY_TAG,
+            cond_op=constants.CONDITION_OP_EQUALS,
+            cond_scope_op=None,
+            cond_member_type=constants.CONDITION_MEMBER_PORT):
         return core_defs.Condition(value=cond_val,
                                    key=cond_key,
                                    operator=cond_op,
-                                   member_type=cond_member_type)
+                                   scope_operator=cond_scope_op,
+                                   member_type=cond_member_type,
+                                   nsx_version=self.version)
 
     def build_ip_address_expression(self, ip_addresses):
         return core_defs.IPAddressExpression(ip_addresses)

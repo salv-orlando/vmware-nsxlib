@@ -356,6 +356,45 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
             self.assert_called_with_def(api_call, expected_def)
             self.assertIsNotNone(result)
 
+    def test_create_with_simple_condition_nsx_3_2_0(self):
+        # New field 'scope_operator' has been added for nsx_version 3.2.0
+        domain_id = '111'
+        name = 'g1'
+        description = 'desc'
+        cond_val = '123'
+        cond_op = constants.CONDITION_OP_EQUALS
+        cond_member_type = constants.CONDITION_MEMBER_VM
+        cond_key = constants.CONDITION_KEY_TAG
+        cond_scope_op = constants.CONDITION_OP_EQUALS
+        version = '3.2.0'
+        with mock.patch.object(self.resourceApi, 'version', version):
+            cond = self.resourceApi.build_condition(
+                cond_val=cond_val,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+        with mock.patch.object(self.policy_api,
+                               "create_or_update") as api_call:
+            result = self.resourceApi.create_or_overwrite_with_conditions(
+                name, domain_id, description=description,
+                conditions=[cond],
+                tenant=TEST_TENANT)
+            exp_cond = core_defs.Condition(value=cond_val,
+                                           key=cond_key,
+                                           operator=cond_op,
+                                           scope_operator=cond_scope_op,
+                                           member_type=cond_member_type,
+                                           nsx_version=version)
+            expected_def = core_defs.GroupDef(domain_id=domain_id,
+                                              group_id=mock.ANY,
+                                              name=name,
+                                              description=description,
+                                              conditions=[exp_cond],
+                                              tenant=TEST_TENANT)
+            self.assert_called_with_def(api_call, expected_def)
+            self.assertIsNotNone(result)
+
     def _test_create_with_condition(self, condition, exp_condition):
         domain_id = '111'
         name = 'g1'
@@ -423,7 +462,6 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
         cond_op = constants.CONDITION_OP_EQUALS
         cond_member_type = constants.CONDITION_MEMBER_VM
         cond_key = constants.CONDITION_KEY_TAG
-
         cond1 = self.resourceApi.build_condition(
             cond_val=cond_val1,
             cond_op=cond_op,
@@ -436,7 +474,6 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
             cond_key=cond_key)
         nested = self.resourceApi.build_nested_condition(
             conditions=[cond1, cond2])
-
         exp_cond1 = core_defs.Condition(value=cond_val1,
                                         key=cond_key,
                                         operator=cond_op,
@@ -447,6 +484,101 @@ class TestPolicyGroup(NsxPolicyLibTestCase):
                                         member_type=cond_member_type)
         and_cond = core_defs.ConjunctionOperator()
         expressions = list(set([exp_cond1, exp_cond2]))
+        expressions.insert(1, and_cond)
+        exp_cond = core_defs.NestedExpression(expressions=expressions)
+        self._test_create_with_condition(nested, exp_cond)
+
+    def test_create_with_union_condition_nsx_3_2_0(self):
+        # New field 'scope_operator' has been added for nsx_version 3.2.0
+        cond_val1 = '123'
+        cond_val2 = '456'
+        cond_op = constants.CONDITION_OP_EQUALS
+        cond_member_type = constants.CONDITION_MEMBER_VM
+        cond_key = constants.CONDITION_KEY_TAG
+        cond_scope_op = constants.CONDITION_OP_EQUALS
+        version = '3.2.0'
+        with mock.patch.object(self.resourceApi, 'version', version):
+            cond1 = self.resourceApi.build_condition(
+                cond_val=cond_val1,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+            cond2 = self.resourceApi.build_condition(
+                cond_val=cond_val2,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+            cond1_dup = self.resourceApi.build_condition(
+                cond_val=cond_val1,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+
+        union_cond_no_dup = self.resourceApi.build_union_condition(
+            conditions=[cond1, cond2])
+        union_cond_dup = self.resourceApi.build_union_condition(
+            conditions=[cond1, cond1_dup])
+
+        exp_cond1 = core_defs.Condition(value=cond_val1,
+                                        key=cond_key,
+                                        operator=cond_op,
+                                        scope_operator=cond_scope_op,
+                                        member_type=cond_member_type,
+                                        nsx_version=version)
+        exp_cond2 = core_defs.Condition(value=cond_val2,
+                                        key=cond_key,
+                                        operator=cond_op,
+                                        scope_operator=cond_scope_op,
+                                        member_type=cond_member_type,
+                                        nsx_version=version)
+        or_cond = core_defs.ConjunctionOperator(
+            operator=constants.CONDITION_OP_OR)
+        exp_cond = list({exp_cond1, exp_cond2})
+        exp_cond.insert(1, or_cond)
+        self._test_create_with_condition(union_cond_no_dup, exp_cond)
+        self._test_create_with_condition(union_cond_dup, [exp_cond1])
+
+    def test_create_with_nested_condition_nsx_3_2_0(self):
+        # New field 'scope_operator' has been added for nsx_version 3.2.0
+        cond_val1 = '123'
+        cond_val2 = '456'
+        cond_op = constants.CONDITION_OP_EQUALS
+        cond_member_type = constants.CONDITION_MEMBER_VM
+        cond_key = constants.CONDITION_KEY_TAG
+        cond_scope_op = constants.CONDITION_OP_EQUALS
+        version = '3.2.0'
+        with mock.patch.object(self.resourceApi, 'version', version):
+            cond1 = self.resourceApi.build_condition(
+                cond_val=cond_val1,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+            cond2 = self.resourceApi.build_condition(
+                cond_val=cond_val2,
+                cond_op=cond_op,
+                cond_scope_op=cond_scope_op,
+                cond_member_type=cond_member_type,
+                cond_key=cond_key)
+            nested = self.resourceApi.build_nested_condition(
+                conditions=[cond1, cond2])
+        exp_cond1 = core_defs.Condition(value=cond_val1,
+                                        key=cond_key,
+                                        operator=cond_op,
+                                        scope_operator=cond_scope_op,
+                                        member_type=cond_member_type,
+                                        nsx_version=version)
+        exp_cond2 = core_defs.Condition(value=cond_val2,
+                                        key=cond_key,
+                                        operator=cond_op,
+                                        scope_operator=cond_scope_op,
+                                        member_type=cond_member_type,
+                                        nsx_version=version)
+        and_cond = core_defs.ConjunctionOperator()
+        expressions = list({exp_cond1, exp_cond2})
         expressions.insert(1, and_cond)
         exp_cond = core_defs.NestedExpression(expressions=expressions)
         self._test_create_with_condition(nested, exp_cond)
