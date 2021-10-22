@@ -16,6 +16,8 @@
 
 import threading
 
+from oslo_log import log
+
 from vmware_nsxlib._i18n import _
 
 from vmware_nsxlib.v3 import exceptions
@@ -23,6 +25,9 @@ from vmware_nsxlib.v3 import exceptions
 from vmware_nsxlib.v3.policy import constants
 from vmware_nsxlib.v3.policy import core_defs
 from vmware_nsxlib.v3 import utils
+
+
+LOG = log.getLogger(__name__)
 
 
 class NsxPolicyTransactionException(exceptions.NsxLibException):
@@ -100,11 +105,19 @@ class NsxPolicyTransaction(object):
 
         self.defs = sorted_defs
 
-    def _build_wrapper_dict(self, resource_class, node, delete=False):
-        wrapper_dict = {'resource_type': 'Child%s' % resource_class,
-                        resource_class: node}
+    def _build_wrapper_dict(self, resource_class, node, delete=False,
+                            child_resource_ref=False):
+        if child_resource_ref:
+            wrapper_dict = {'resource_type': 'ChildResourceReference',
+                            'target_type': resource_class,
+                            'id': node['id'],
+                            'children': []}
+        else:
+            wrapper_dict = {'resource_type': 'Child%s' % resource_class,
+                            resource_class: node}
         if delete:
             wrapper_dict.update({'marked_for_delete': True})
+        LOG.debug("### WRAPPER DICT:%s", wrapper_dict)
         return wrapper_dict
 
     def _find_parent_in_dict(self, d, resource_def, level=1):
@@ -124,21 +137,26 @@ class NsxPolicyTransaction(object):
             node = {'resource_type': resource_type,
                     'id': parent_id,
                     'children': []}
+            LOG.debug("#### UNEXPECTED: %s", resource_type)
             return self._build_wrapper_dict(resource_class, node), node
 
         # iterate over all objects in d, and look for resource type
         for child in d:
+            parent = None
+            if (child.get('target_type') == resource_type and
+                child['resource_type'] == 'ChildResourceReference'):
+                parent = child
             if resource_type in child and child[resource_type]:
                 parent = child[resource_type]
-                # If resource type matches, check for id
-                if parent['id'] == parent_id:
-                    if is_leaf:
-                        return parent
-                    if 'children' not in parent:
-                        parent['children'] = []
+            # If resource type matches, check for id
+            if parent and parent['id'] == parent_id:
+                if is_leaf:
+                    return parent
+                if 'children' not in parent:
+                    parent['children'] = []
 
-                    return self._find_parent_in_dict(
-                        parent['children'], resource_def, level + 1)
+                return self._find_parent_in_dict(
+                    parent['children'], resource_def, level + 1)
 
         # Parent not found - create a node for missing parent
         wrapper, node = create_missing_node()
@@ -162,6 +180,7 @@ class NsxPolicyTransaction(object):
         url = top_def.get_resource_path()
         body = {'resource_type': top_def.resource_type(),
                 'children': []}
+
         # iterate over defs (except top level def)
         for resource_def in self.defs[1:]:
             parent_dict = None
@@ -185,10 +204,18 @@ class NsxPolicyTransaction(object):
                 child_def = resource_def.mandatory_child_def
                 child_dict_key = child_def.get_last_section_dict_key
                 node[child_dict_key] = [child_def.get_obj_dict()]
-            parent_dict['children'].append(
-                self._build_wrapper_dict(resource_class,
-                                         node,
-                                         resource_def.get_delete()))
+            child_resource_ref = (
+                resource_def.has_attr('child_resource_ref') and
+                resource_def.get_attr('child_resource_ref'))
+            LOG.debug("#### BEFORE WRAP CALL")
+            LOG.debug("#### NODE XXX: %s", node)
+            LOG.debug("#### CHILD REF:%s", child_resource_ref)
+            meh = self._build_wrapper_dict(resource_class,
+                                           node,
+                                           resource_def.get_delete(),
+                                           child_resource_ref)
+            parent_dict['children'].append(meh)
+
         if body:
             headers = {'nsx-enable-partial-patch': 'true'}
 
