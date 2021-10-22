@@ -484,6 +484,84 @@ class TestPolicyTransaction(policy_testcase.TestPolicyApi):
         return self._test_updating_security_policy_and_dfw_rules(False)
 
     @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
+    def test_updating_security_policy_patch_rules(self, mock_get_api):
+        dfw_rule1 = {'id': 'rule_id1', 'action': 'ALLOW',
+                     'display_name': 'rule1', 'description': None,
+                     'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                     'logged': False,
+                     'destination_groups': ['destination_url'],
+                     'source_groups': ['src_url'], 'resource_type': 'Rule',
+                     'scope': None, 'sequence_number': None, 'tag': None,
+                     'services': ['ANY']}
+        dfw_rule2 = {'id': 'rule_id2', 'action': 'DROP',
+                     'display_name': 'rule2', 'description': None,
+                     'direction': 'IN_OUT', 'ip_protocol': 'IPV4_IPV6',
+                     'logged': False,
+                     'destination_groups': ['destination_url'],
+                     'source_groups': ['src_url'], 'resource_type': 'Rule',
+                     'scope': None, 'sequence_number': None, 'tag': None,
+                     'services': ['ANY']}
+        security_policy = {'id': 'security_policy_id1',
+                           'display_name': 'security_policy',
+                           'category': 'Application',
+                           'resource_type': 'SecurityPolicy'}
+        domain = {'resource_type': 'Domain', 'id': 'domain1'}
+        domain_id = domain['id']
+        map_id = security_policy['id']
+        dfw_rule_entries = [self.policy_lib.comm_map.build_entry(
+            name=rule['display_name'],
+            domain_id=domain_id,
+            map_id=map_id,
+            entry_id=rule['id'],
+            source_groups=rule['source_groups'],
+            dest_groups=rule['destination_groups'],
+            ip_protocol=rule['ip_protocol'],
+            action=rule['action'],
+            direction=rule['direction']
+        ) for rule in [dfw_rule1, dfw_rule2]]
+
+        def get_group_path(group_id, domain_id):
+            return '/infra/domains/' + domain_id + '/groups/' + group_id
+
+        for dfw_rule in [dfw_rule1, dfw_rule2]:
+            dfw_rule['destination_groups'] = [get_group_path(group_id,
+                                                             domain_id)
+                                              for group_id in
+                                              dfw_rule['destination_groups']]
+            dfw_rule['source_groups'] = [get_group_path(group_id, domain_id)
+                                         for group_id in
+                                         dfw_rule['source_groups']]
+
+        security_policy_values = copy.deepcopy(security_policy)
+        security_policy_values.update({'rules':
+                                      copy.deepcopy([dfw_rule1, dfw_rule2])})
+        mock_get_api.return_value = security_policy_values
+
+        with trans.NsxPolicyTransaction():
+            self.policy_lib.comm_map.patch_entries(
+                domain_id=domain_id,
+                map_id=map_id,
+                entries=dfw_rule_entries,
+            )
+
+        child_security_policies = [{
+            'resource_type': 'ChildResourceReference',
+            'target_type': 'SecurityPolicy',
+            'id': security_policy['id'],
+        }]
+        child_rules = [{'resource_type': 'ChildRule', 'Rule': dfw_rule1},
+                       {'resource_type': 'ChildRule', 'Rule': dfw_rule2}]
+        child_security_policies[0].update({'children': child_rules})
+        domain.update({'children': child_security_policies})
+        child_domains = [{
+            'resource_type': 'ChildDomain',
+            'Domain': domain
+        }]
+        expected_body = {'resource_type': 'Infra',
+                         'children': child_domains}
+        self.assert_infra_patch_call(expected_body)
+
+    @mock.patch('vmware_nsxlib.v3.policy.core_defs.NsxPolicyApi.get')
     def test_updating_security_policy_with_no_entries_set(self, mock_get_api):
         dfw_rule1 = {'id': 'rule_id1', 'action': 'ALLOW',
                      'display_name': 'rule1', 'description': None,

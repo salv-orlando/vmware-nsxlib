@@ -3707,6 +3707,35 @@ class NsxPolicySecurityPolicyBaseApi(NsxPolicyResourceBase):
 
         _update()
 
+    def patch_entries(self, domain_id, map_id, entries,
+                      tenant=constants.POLICY_INFRA_TENANT):
+        # Specify that we want to use a childresourcerefence
+        map_def = self._init_parent_def(
+            domain_id=domain_id, map_id=map_id, tenant=tenant,
+            child_resource_ref=True)
+
+        @utils.retry_upon_exception(
+            exceptions.StaleRevision,
+            max_attempts=self.policy_api.client.max_attempts)
+        def _update():
+            transaction = trans.NsxPolicyTransaction.get_current()
+            if not transaction:
+                err_msg = ("patch_entries can only be used within "
+                           "H-API transactions")
+                raise exceptions.ManagerException(
+                    details=err_msg)
+            patch_entries = []
+            for entry in entries:
+                rule = entry.get_obj_dict()
+                LOG.debug("#### ADDING ENTRY: %s", entry)
+                patch_entries.append(
+                    self.entry_def.adapt_from_rule_dict(
+                        rule, domain_id, map_id))
+
+            self._create_or_store(map_def, patch_entries)
+
+        _update()
+
     def update_entries_logged(self, domain_id, map_id, logged,
                               tenant=constants.POLICY_INFRA_TENANT):
         """Update all communication map entries logged flags"""
