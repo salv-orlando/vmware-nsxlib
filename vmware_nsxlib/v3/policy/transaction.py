@@ -192,9 +192,11 @@ class NsxPolicyTransaction(object):
         if body:
             headers = {'nsx-enable-partial-patch': 'true'}
 
-            @utils.retry_upon_exception(
+            @utils.retry_random_upon_exception(
                 (exceptions.NsxPendingDelete, exceptions.StaleRevision),
-                max_attempts=self.client.max_attempts)
+                delay=1,
+                max_delay=10,
+                max_attempts=self.client.max_attempts + 5)
             def _do_patch_with_retry():
                 self.client.patch(url, body, headers=headers)
 
